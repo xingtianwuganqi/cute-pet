@@ -10,7 +10,7 @@ type UserInfo struct {
 	Password  string    `json:"password"`
 	Avatar    string    `json:"avatar"`
 	Wx        string    `json:"wx"`
-	UserToken UserToken `gorm:"foreignKey:UserId"`
+	UserToken UserToken `gorm:"foreignKey:UserId" json:"-"`
 }
 
 type UserToken struct {

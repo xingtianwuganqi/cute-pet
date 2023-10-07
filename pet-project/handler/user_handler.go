@@ -1,24 +1,63 @@
 package handler
 
 import (
+	"errors"
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 	"net/http"
 	"pet-project/db"
 	"pet-project/models"
+	"pet-project/util"
 )
 
 type LoginInfo struct {
 	Phone    string `form:"phone" json:"phone" binding:"required"`
-	Password string `form:"password" json:"password" binding:"required"`
+	Password string `form:"password" json:"password"`
+	Code     string `form:"code" json:"code"`
 }
 
 type LoginUserInfo struct {
-	user  models.UserInfo
-	token string
+	UserId uint   `json:"userId"`
+	Phone  string `json:"phone"`
+	Email  string `json:"email"`
+	Avatar string `json:"avatar"`
+	Token  string `json:"token"`
 }
 
 // UserRegister 注册
 func UserRegister(c *gin.Context) {
+	var login LoginInfo
+	if err := c.ShouldBind(&login); err != nil {
+		util.Fail(c, util.ApiCode.ParamError, util.ApiMessage.ParamError)
+		return
+	}
+	var findUser models.UserInfo
+	findResult := db.DB.Where("phone = ?", login.Phone).First(&findUser)
+	if errors.Is(findResult.Error, gorm.ErrRecordNotFound) {
+		token := util.Md5String(login.Phone)
+		user := models.UserInfo{
+			Phone:    login.Phone,
+			Password: login.Password,
+			UserToken: models.UserToken{
+				Token: token,
+			},
+		}
+		result := db.DB.Create(&user)
+		if result.Error != nil {
+			util.Fail(c, util.ApiCode.CreateErr, util.ApiMessage.CreateErr)
+			return
+		}
+		data := LoginUserInfo{
+			UserId: user.ID,
+			Phone:  user.Phone,
+			Avatar: user.Avatar,
+			Email:  user.Email,
+			Token:  token,
+		}
+		util.Success(c, data)
+	} else {
+		util.Fail(c, 400, "fail")
+	}
 
 }
 
@@ -26,25 +65,20 @@ func UserRegister(c *gin.Context) {
 func UserLogin(c *gin.Context) {
 	var login LoginInfo
 	if err := c.ShouldBind(&login); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"code": 400,
-			"msg":  err,
-		})
+		util.Fail(c, util.ApiCode.ParamError, util.ApiMessage.ParamError)
 		return
 	}
 	var user models.UserInfo
 	result := db.DB.Where("phone = ?", login.Phone).First(&user)
-	if result.Error != nil {
-		c.JSON(http.StatusGone, gin.H{
-			"code": 400,
-			"msg":  "not find",
-		})
+	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+		util.Fail(c, util.ApiCode.QueryError, "该手机号未注册")
 		return
 	}
 	if user.Password == login.Password {
 		// 密码正确, 生成token，登录完成
-		token := "300200"
-		tokenResult := db.DB.Where("userId = ?", user.ID).Update("token", token)
+		token := util.Md5String(user.Phone)
+		var tokenInfo models.UserToken
+		tokenResult := db.DB.Where("id = ?", user.ID).First(&tokenInfo)
 		if tokenResult.Error != nil {
 			c.JSON(http.StatusGone, gin.H{
 				"code": 400,
@@ -52,20 +86,17 @@ func UserLogin(c *gin.Context) {
 			})
 			return
 		}
-		info := LoginUserInfo{
-			user:  user,
-			token: token,
+		tokenInfo.Token = token
+		db.DB.Save(&tokenInfo)
+		data := LoginUserInfo{
+			UserId: user.ID,
+			Phone:  user.Phone,
+			Avatar: user.Avatar,
+			Email:  user.Email,
+			Token:  token,
 		}
-		c.JSON(http.StatusOK, gin.H{
-			"code": 200,
-			"data": info,
-			"msg":  "success",
-		})
+		util.Success(c, data)
 	} else {
-		c.JSON(http.StatusGone, gin.H{
-			"code": 400,
-			"msg":  "密码错误",
-		})
-		return
+		util.Fail(c, 300, "密码错误")
 	}
 }
