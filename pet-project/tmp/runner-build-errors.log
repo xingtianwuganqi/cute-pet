@@ -1,0 +1,2 @@
+# pet-project/handler
+handler\user_handler.go:41:4: unknown field UserToken in struct literal of type models.UserInfo

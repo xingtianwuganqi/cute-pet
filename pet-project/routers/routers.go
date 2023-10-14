@@ -7,5 +7,6 @@ import (
 func RegisterRouter() *gin.Engine {
 	r := gin.Default()
 	RegisterUserRouter(r)
+	RegisterRecordRouter(r)
 	return r
 }
