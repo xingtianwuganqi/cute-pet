@@ -4,8 +4,8 @@ import (
 	"errors"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
-	"net/http"
 	"pet-project/db"
+	"pet-project/middleware"
 	"pet-project/models"
 	"pet-project/util"
 )
@@ -38,9 +38,6 @@ func UserRegister(c *gin.Context) {
 		user := models.UserInfo{
 			Phone:    login.Phone,
 			Password: login.Password,
-			UserToken: models.UserToken{
-				Token: token,
-			},
 		}
 		result := db.DB.Create(&user)
 		if result.Error != nil {
@@ -61,8 +58,8 @@ func UserRegister(c *gin.Context) {
 
 }
 
-// UserLogin 用户登录
-func UserLogin(c *gin.Context) {
+// UserPhoneLogin 用户登录
+func UserPhoneLogin(c *gin.Context) {
 	var login LoginInfo
 	if err := c.ShouldBind(&login); err != nil {
 		util.Fail(c, util.ApiCode.ParamError, util.ApiMessage.ParamError)
@@ -76,18 +73,12 @@ func UserLogin(c *gin.Context) {
 	}
 	if user.Password == login.Password {
 		// 密码正确, 生成token，登录完成
-		token := util.Md5String(user.Phone)
-		var tokenInfo models.UserToken
-		tokenResult := db.DB.Where("id = ?", user.ID).First(&tokenInfo)
-		if tokenResult.Error != nil {
-			c.JSON(http.StatusGone, gin.H{
-				"code": 400,
-				"msg":  "查询失败",
-			})
+		userId := user.ID
+		token, err := middleware.GenToken(userId)
+		if err != nil {
+			util.Fail(c, util.ApiCode.ServerError, util.ApiMessage.ServerError)
 			return
 		}
-		tokenInfo.Token = token
-		db.DB.Save(&tokenInfo)
 		data := LoginUserInfo{
 			UserId: user.ID,
 			Phone:  user.Phone,

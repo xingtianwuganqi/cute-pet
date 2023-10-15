@@ -2,28 +2,32 @@ package models
 
 import "gorm.io/gorm"
 
+/*
+location: 位置，默认0国内
+*/
+
 type UserInfo struct {
 	gorm.Model
-	Phone    string `json:"phone"`
-	Email    string `json:"email"`
-	Username string `json:"username"`
-	Password string `json:"password"`
-	Avatar   string `json:"avatar"`
-	Wx       string `json:"wx"`
-	Location uint   `json:"location"`
+	Phone    string `json:"phone" gorm:"size:32"`
+	Email    string `json:"email" gorm:"size:32"`
+	Username string `json:"username" gorm:"size:32"`
+	Password string `json:"password" gorm:"size:64"`
+	Avatar   string `json:"avatar" gorm:"size:126"`
+	Wx       string `json:"wx" gorm:"size:126"`
+	Location uint   `json:"location" gorm:"default:0"`
 }
 
 func (UserInfo) TableName() string {
 	return "user_info"
 }
 
-type UserToken struct {
-	gorm.Model
-	UserId uint     `json:"userId"`
-	User   UserInfo `json:"user" gorm:"foreignKey:UserId"`
-	Token  string   `json:"token"`
-}
-
-func (UserToken) TableName() string {
-	return "user_token"
-}
+//type UserToken struct {
+//	gorm.Model
+//	UserId uint     `json:"userId"`
+//	User   UserInfo `json:"user" gorm:"foreignKey:UserId"`
+//	Token  string   `json:"token" gorm:"size:64"`
+//}
+//
+//func (UserToken) TableName() string {
+//	return "user_token"
+//}

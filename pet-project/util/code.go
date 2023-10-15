@@ -164,6 +164,7 @@ type Messages struct {
 	PhoneUsed string // 212
 	//MSG_PHONE_USED = '该手机号已被使用'
 	CreateErr string
+	// MSG_CREATE_ERR = '创建失败'
 }
 
 var ApiMessage = &Messages{

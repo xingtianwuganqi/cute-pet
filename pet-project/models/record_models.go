@@ -2,17 +2,18 @@ package models
 
 import (
 	"gorm.io/gorm"
-	"time"
 )
 
 type RecordList struct {
 	gorm.Model
+	User            UserInfo      `json:"user" gorm:"foreignKey:UserId"`
+	UserId          uint          `json:"userId"`
 	ActionType      PetActionType `json:"action_type" gorm:"foreignKey:PetActionTypeId"`
-	PetActionTypeId uint
+	PetActionTypeId uint          `json:"petActionTypeId"`
 	CustomType      PetCustomType `json:"custom_type" gorm:"foreignKey:PetCustomTypeId"`
-	PetCustomTypeId uint
-	Spend           float32
-	Desc            string
+	PetCustomTypeId uint          `json:"petCustomTypeId"`
+	Spend           float32       `json:"spend"`
+	Desc            string        `json:"desc"`
 }
 
 type PetActionType struct {
@@ -27,8 +28,9 @@ func (PetActionType) TableName() string {
 
 type PetCustomType struct {
 	gorm.Model
-	User   UserInfo `json:"user" gorm:"foreignKey:UserId"`
-	UserId uint     `json:"userId"`
+	User       UserInfo `json:"user" gorm:"foreignKey:UserId"`
+	UserId     uint     `json:"userId"`
+	CustomName string   `json:"customName" gorm:"size:32"`
 }
 
 func (PetCustomType) TableName() string {
@@ -36,7 +38,7 @@ func (PetCustomType) TableName() string {
 }
 
 /*
-pettype : 0:默认值，1：猫咪，2：狗，3：其他
+pet_type : 0:默认值，1：猫咪，2：狗，3：其他
 */
 
 type PetInfo struct {
@@ -44,9 +46,10 @@ type PetInfo struct {
 	User     UserInfo `json:"user" gorm:"foreignKey:UserId"`
 	UserId   uint     `json:"userId"`
 	PetType  uint     `json:"pet_type" gorm:"default:0"`
-	Age      uint     `json:"age"`
+	Age      uint     `json:"age" gorm:"default:0"`
 	Name     string   `json:"name" gorm:"size:32"`
-	BirthDay time.Time
+	Avatar   string   `json:"avatar" gorm:"size:64"`
+	BirthDay string   `json:"birthDay" gorm:"size:32"`
 }
 
 func (PetInfo) TableName() string {
