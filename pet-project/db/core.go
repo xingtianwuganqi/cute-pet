@@ -32,5 +32,7 @@ func LinkInit() {
 }
 
 func autoMigrateTable() {
-	DB.AutoMigrate(&models.UserInfo{}, &models.UserToken{})
+	DB.AutoMigrate(&models.UserInfo{}, &models.PetActionType{},
+		&models.PetCustomType{}, &models.PetInfo{}, &models.RecordList{},
+	)
 }

@@ -69,7 +69,8 @@ type Codes struct {
 	PhoneUsed uint // 212
 	//MSG_PHONE_USED = '该手机号已被使用'
 
-	CreateErr uint
+	CreateErr   uint
+	UserNotFont uint
 }
 
 var ApiCode = &Codes{
@@ -92,6 +93,7 @@ var ApiCode = &Codes{
 	EmailError:      4011,
 	PhoneUsed:       4012,
 	CreateErr:       4013,
+	UserNotFont:     4014,
 }
 
 type Messages struct {
@@ -165,6 +167,7 @@ type Messages struct {
 	//MSG_PHONE_USED = '该手机号已被使用'
 	CreateErr string
 	// MSG_CREATE_ERR = '创建失败'
+	UserNotFound string
 }
 
 var ApiMessage = &Messages{
@@ -187,4 +190,5 @@ var ApiMessage = &Messages{
 	EmailError:      "暂不支持邮箱登录",
 	PhoneUsed:       "该手机号已被使用",
 	CreateErr:       "创建失败",
+	UserNotFound:    "用户不存在",
 }

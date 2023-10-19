@@ -7,9 +7,12 @@ import (
 )
 
 func RegisterRecordRouter(r *gin.Engine) {
-	r.Group("v1/record")
+	recordRouter := r.Group("/v1/record")
 	{
-		r.GET("/petAction/list", handler.GetPetActionList)
-		r.POST("/pet/create", middleware.JWTTokenMiddleware(), handler.PetInfoCreate)
+		recordRouter.GET("/petAction/list", handler.GetPetActionList)
+		recordRouter.POST("/pet/create", middleware.JWTTokenMiddleware(), handler.PetInfoCreate)
+		recordRouter.POST("/pet/action", handler.CreatePetActionType)
+		recordRouter.GET("/list", middleware.JWTTokenMiddleware(), handler.GetRecordList)
+
 	}
 }

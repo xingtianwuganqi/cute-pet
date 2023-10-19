@@ -34,7 +34,6 @@ func UserRegister(c *gin.Context) {
 	var findUser models.UserInfo
 	findResult := db.DB.Where("phone = ?", login.Phone).First(&findUser)
 	if errors.Is(findResult.Error, gorm.ErrRecordNotFound) {
-		token := util.Md5String(login.Phone)
 		user := models.UserInfo{
 			Phone:    login.Phone,
 			Password: login.Password,
@@ -42,6 +41,12 @@ func UserRegister(c *gin.Context) {
 		result := db.DB.Create(&user)
 		if result.Error != nil {
 			util.Fail(c, util.ApiCode.CreateErr, util.ApiMessage.CreateErr)
+			return
+		}
+		userId := user.ID
+		token, err := middleware.GenToken(userId)
+		if err != nil {
+			util.Fail(c, util.ApiCode.ServerError, util.ApiMessage.ServerError)
 			return
 		}
 		data := LoginUserInfo{
@@ -53,7 +58,7 @@ func UserRegister(c *gin.Context) {
 		}
 		util.Success(c, data)
 	} else {
-		util.Fail(c, 400, "fail")
+		util.Fail(c, util.ApiCode.UserExistsError, util.ApiMessage.UserExistsError)
 	}
 
 }

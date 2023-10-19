@@ -4,7 +4,11 @@ import (
 	"errors"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 	"net/http"
+	"pet-project/db"
+	"pet-project/models"
+	"pet-project/util"
 	"time"
 )
 
@@ -12,8 +16,6 @@ type MyClaims struct {
 	UserId uint `json:"userId"`
 	jwt.StandardClaims
 }
-
-const TokenExpireDuration = time.Hour * 2
 
 var mySecret = []byte("伍c七Alz1θVx2ψLHNpfωv九nξ捌τD六053λwGμrMνRuegsη八γ陆jOBX8ρ三E9πFS零bδοmkχ7K6PβϵϕoZ五iυU一Jq柒ydYt四QhW4玖κCIαζTaι二σ")
 
@@ -23,8 +25,8 @@ func GenToken(userId uint) (string, error) {
 	c := MyClaims{
 		userId, // 自定义字段
 		jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(TokenExpireDuration).Unix(), // 过期时间
-			Issuer:    "pet-project",                              // 签发人
+			ExpiresAt: time.Now().AddDate(0, 10, 0).Unix(), // 过期时间
+			Issuer:    "pet-project",                       // 签发人
 		},
 	}
 	// 使用指定的签名方法创建签名对象
@@ -60,6 +62,15 @@ func JWTTokenMiddleware() func(c *gin.Context) {
 			c.Abort()
 			return
 		}
+
+		// 查询这个user是不是空
+		var user models.UserInfo
+		userResult := db.DB.Where("ID = ?", mc.UserId).Find(&user)
+		if errors.Is(userResult.Error, gorm.ErrRecordNotFound) {
+			util.Fail(c, util.ApiCode.UserNotFont, util.ApiMessage.UserNotFound)
+			return
+		}
+
 		// 将当前请求的userId信息保存到请求的上下文c上
 		c.Set("userId", mc.UserId)
 		c.Next()

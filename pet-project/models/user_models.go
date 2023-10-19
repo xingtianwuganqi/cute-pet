@@ -20,14 +20,3 @@ type UserInfo struct {
 func (UserInfo) TableName() string {
 	return "user_info"
 }
-
-//type UserToken struct {
-//	gorm.Model
-//	UserId uint     `json:"userId"`
-//	User   UserInfo `json:"user" gorm:"foreignKey:UserId"`
-//	Token  string   `json:"token" gorm:"size:64"`
-//}
-//
-//func (UserToken) TableName() string {
-//	return "user_token"
-//}
