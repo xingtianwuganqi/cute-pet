@@ -29,17 +29,17 @@ type Config struct {
 }
 
 // 配置开发环境
-var env = "dev"
+var env = "local"
 var Conf Config
 
 func ConfigEnvironment() {
-	configFile := "config.dev.yaml" // 默认使用开发环境配置
+	configFile := "config/dev.yaml" // 默认使用开发环境配置
 	if env == "production" {
-		configFile = "config.production.yaml"
+		configFile = "config/production.yaml"
 	} else if env == "local" {
-		configFile = "config.local.yaml"
+		configFile = "config/local.yaml"
 	} else if env == "test" {
-		configFile = "config.test.yaml"
+		configFile = "config/test.yaml"
 	}
 	// 读取配置文件
 	data, err := ioutil.ReadFile(configFile)
