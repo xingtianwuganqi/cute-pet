@@ -29,7 +29,7 @@ type Config struct {
 }
 
 // 配置开发环境
-var env = "local"
+var env = "dev"
 var Conf Config
 
 func ConfigEnvironment() {
