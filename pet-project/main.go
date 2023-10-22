@@ -10,5 +10,5 @@ func main() {
 	settings.ConfigEnvironment()
 	db.LinkInit()
 	r := routers.RegisterRouter()
-	r.Run()
+	r.Run("8082")
 }
