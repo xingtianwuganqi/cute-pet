@@ -1,5 +1,5 @@
 database:
-  host: 127.0.0.1
+  host: 172.21.0.7
   port: 3306
   username: root
   password: YhKiwmATtRJ2Jhme
