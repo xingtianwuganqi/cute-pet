@@ -1,7 +1,7 @@
 database:
-  host: 172.17.0.2
+  host: 172.17.0.1
   port: 3306
-  username: admin
+  username: root
   password: YhKiwmATtRJ2Jhme
   database: petproject
   charset: utf8mb4
