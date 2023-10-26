@@ -44,7 +44,7 @@ ENV ENVIRONMENT=production
 EXPOSE 8082
 
 # 启动应用程序
-CMD ["./main"]
+CMD ["/app/main"]
 
 
 
