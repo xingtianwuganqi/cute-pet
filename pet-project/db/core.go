@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
-	"pet-project/config/settings"
 	"pet-project/models"
+	"pet-project/settings"
 )
 
 var DB *gorm.DB

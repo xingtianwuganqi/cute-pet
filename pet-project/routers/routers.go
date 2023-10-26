@@ -2,7 +2,7 @@ package routers
 
 import (
 	"github.com/gin-gonic/gin"
-	"pet-project/config/settings"
+	"pet-project/settings"
 )
 
 func RegisterRouter() *gin.Engine {

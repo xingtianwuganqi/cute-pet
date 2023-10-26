@@ -3,6 +3,7 @@ package settings
 import (
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
+	"os"
 )
 
 type Config struct {
@@ -29,30 +30,40 @@ type Config struct {
 }
 
 // 配置开发环境
-var env = "dev"
+var env = getEnvironment()
 var Conf Config
 
-func ConfigEnvironment() {
+func getEnvironment() string {
+	env := os.Getenv("ENVIRONMENT")
+	if env == "" {
+		// 如果未设置 ENVIRONMENT 环境变量，默认为开发环境
+		return "dev"
+	}
+	return env
+}
+
+func LoadConfig() error {
 	configFile := "config/dev.yaml" // 默认使用开发环境配置
 	if env == "production" {
 		configFile = "config/production.yaml"
-	} else if env == "local" {
+	} else if env == "dev" {
+		configFile = "config/dev.yaml"
+	} else {
 		configFile = "config/local.yaml"
-	} else if env == "test" {
-		configFile = "config/test.yaml"
 	}
 	// 读取配置文件
 	data, err := ioutil.ReadFile(configFile)
 	if err != nil {
 		// 处理错误
-		panic(err)
+		return err
 	}
 
 	// 解析配置
 	var configInfo Config
 	if err := yaml.Unmarshal(data, &configInfo); err != nil {
 		// 处理错误
-		panic(err)
+		return err
 	}
 	Conf = configInfo
+	return nil
 }
