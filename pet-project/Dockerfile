@@ -13,38 +13,48 @@ COPY . .
 RUN go build -o main
 
 # 第二阶段：开发环境
+#FROM alpine:latest as dev
+#
+#WORKDIR /app
+#
+## 从第一阶段复制编译后的可执行文件
+#COPY --from=build /app/main .
+#
+## 设置生产环境的配置
+#COPY ./config /config
+#
+## 设置环境变量
+#ENV ENVIRONMENT=dev
+
+# 阶段二：构建最终镜像
 FROM alpine:latest as dev
 
 WORKDIR /app
 
-# 从第一阶段复制编译后的可执行文件
-COPY --from=build . /app/main
-
-# 设置生产环境的配置
-COPY ./config /config
-
+COPY --from=build /app/main .
 # 设置环境变量
 ENV ENVIRONMENT=dev
 
+
 # 第三阶段：生产环境
-FROM alpine:latest as production
-
-WORKDIR /app
-
-# 从第一阶段复制编译后的可执行文件
-COPY --from=build . /app/main
-
-# 设置生产环境的配置
-COPY ./config /config
-
-# 设置环境变量
-ENV ENVIRONMENT=production
+#FROM alpine:latest as production
+#
+#WORKDIR /app
+#
+## 从第一阶段复制编译后的可执行文件
+#COPY --from=build /app/main .
+#
+### 设置生产环境的配置
+##COPY ./config /config
+#
+## 设置环境变量
+#ENV ENVIRONMENT=production
 
 # 暴露应用程序端口
 EXPOSE 8082
 
 # 启动应用程序
-CMD ["/app/main"]
+CMD ["./main"]
 
 
 
