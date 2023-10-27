@@ -18,7 +18,7 @@ FROM alpine:latest as dev
 WORKDIR /app
 
 # 从第一阶段复制编译后的可执行文件
-COPY --from=build . /app/main
+COPY --from=build /app/main .
 
 # 设置生产环境的配置
 COPY ./config /config
@@ -32,7 +32,7 @@ FROM alpine:latest as production
 WORKDIR /app
 
 # 从第一阶段复制编译后的可执行文件
-COPY --from=build . /app/main
+COPY --from=build /app/main .
 
 # 设置生产环境的配置
 COPY ./config /config
