@@ -4,11 +4,11 @@ FROM golang:1.20 as build
 ENV GOPROXY=https://goproxy.cn,direct
 
 # 设置工作目录
-WORKDIR /app
+WORKDIR /app/pro
 
 # 复制项目代码到容器中
 #COPY . .
-
+COPY . /app
 COPY ./config /config
 
 # 编译 Go 项目
