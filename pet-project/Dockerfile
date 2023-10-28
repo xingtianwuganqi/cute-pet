@@ -27,13 +27,13 @@ RUN go build -o main
 #ENV ENVIRONMENT=dev
 
 # 阶段二：构建最终镜像
-FROM alpine:latest as dev
-
-WORKDIR /app
-
-COPY --from=build /app/main .
-# 设置环境变量
-ENV ENVIRONMENT=dev
+#FROM alpine:latest as dev
+#
+#WORKDIR /app
+#
+#COPY --from=build /app/main .
+## 设置环境变量
+#ENV ENVIRONMENT=dev
 
 
 # 第三阶段：生产环境
