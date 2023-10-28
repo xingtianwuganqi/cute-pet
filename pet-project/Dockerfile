@@ -54,7 +54,7 @@ RUN go build -o main
 # 暴露应用程序端口
 EXPOSE 8082
 
-CMD ["./pro/main"]
+CMD ["./main"]
 
 # 启动应用程序
 #CMD ["./main"]
