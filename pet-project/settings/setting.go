@@ -45,9 +45,9 @@ func getEnvironment() string {
 func LoadConfig() error {
 	configFile := "config/dev.yaml" // 默认使用开发环境配置
 	if env == "production" {
-		configFile = "config/production.yaml"
+		configFile = "/config/production.yaml"
 	} else if env == "dev" {
-		configFile = "config/dev.yaml"
+		configFile = "/config/dev.yaml"
 	} else {
 		configFile = "config/local.yaml"
 	}
