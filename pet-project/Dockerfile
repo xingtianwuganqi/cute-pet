@@ -8,7 +8,7 @@ WORKDIR /app
 
 # 复制项目代码到容器中
 #COPY . .
-COPY . /app/pro
+
 COPY ./config /config
 
 # 编译 Go 项目
@@ -45,10 +45,8 @@ RUN go build -o main
 # 暴露应用程序端口
 EXPOSE 8082
 
-CMD ["./main"]
-
 # 启动应用程序
-#CMD ["./main"]
+CMD ["./main"]
 
 
 
