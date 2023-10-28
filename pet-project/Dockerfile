@@ -45,7 +45,7 @@ RUN go build -o main
 #COPY --from=build /app/main .
 #
 ### 设置生产环境的配置
-##COPY ./config /config
+COPY ./config /config
 #
 ## 设置环境变量
 #ENV ENVIRONMENT=production
