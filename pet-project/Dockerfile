@@ -4,7 +4,7 @@ FROM golang:1.20 as build
 ENV GOPROXY=https://goproxy.cn,direct
 
 # 设置工作目录
-WORKDIR /app/pro
+WORKDIR /app
 
 # 复制项目代码到容器中
 COPY . .
@@ -54,7 +54,7 @@ RUN go build -o main
 # 暴露应用程序端口
 EXPOSE 8082
 
-CMD ["/app/pro/main"]
+CMD ["./pro/main"]
 
 # 启动应用程序
 #CMD ["./main"]
