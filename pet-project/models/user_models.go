@@ -20,3 +20,15 @@ type UserInfo struct {
 func (UserInfo) TableName() string {
 	return "user_info"
 }
+
+type SuggestionModel struct {
+	gorm.Model
+	UserId  uint `json:"userId"`
+	User    UserInfo
+	Contact string `json:"contact" gorm:"size:32"`
+	Content string `json:"content" gorm:"size:256"`
+}
+
+func (SuggestionModel) TableName() string {
+	return "suggestion"
+}

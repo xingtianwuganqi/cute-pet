@@ -1,53 +1,31 @@
-# 使用官方的 Go 镜像作为基础镜像
-FROM golang:1.20 as build
-
+# 第一阶段：编译Go应用
+FROM golang:1.20 AS builder
 ENV GOPROXY=https://goproxy.cn,direct
-
-# 设置工作目录
-WORKDIR /app/pro
-
-# 复制项目代码到容器中
-#COPY . .
-COPY . /app
+WORKDIR /app
+# 复制源代码到容器中
+COPY . .
 COPY ./config /config
+# 编译Go应用
+#Alpine镜像基于musl libc而不是glibc，因此如果你的Go应用依赖于glibc，
+#那么它可能无法在Alpine镜像中运行。这可能就是为什么你看到no such file or directory错误的原因。
+#为了解决这个问题，你可以尝试在构建Go应用时设置CGO_ENABLED=0环境变量以禁用cgo。
+#这将生成一个静态二进制文件，它不依赖于系统的C库（如glibc或musl libc），因此可以在任何Linux系统上运行。
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o main .
+# 设置环境变量
+ARG ENVIRONMENT
+ENV ENVIRONMENT ${ENVIRONMENT}
 
-# 编译 Go 项目
-RUN go build -o main
-
-# 第二阶段：开发环境
-#FROM alpine:latest as dev
-##
-#WORKDIR /app
-##
-### 从第一阶段复制编译后的可执行文件
-#COPY --from=build /app/main .
-##
-### 设置生产环境的配置
-#COPY --from=build /config /config
-##
-### 设置环境变量
-#ENV ENVIRONMENT=dev
-
-# 第三阶段：生产环境
-#FROM alpine:latest as production
-#
-#WORKDIR /app
-#
-## 从第一阶段复制编译后的可执行文件
-#COPY --from=build /app/main .
-#
-### 设置生产环境的配置
-
-#
-## 设置环境变量
-#ENV ENVIRONMENT=production
-
-# 暴露应用程序端口
-EXPOSE 8082
-
-# 启动应用程序
-CMD ["./main"]
-
-
+# 第二阶段：运行Go应用
+FROM alpine:latest
+WORKDIR /app
+# 从builder阶段复制编译好的应用到当前镜像
+COPY --from=builder /app/main /app
+COPY --from=builder /config /config
+# 设置环境变量
+ARG PORT
+# 暴露端口
+EXPOSE ${PORT}
+# 运行应用
+CMD ["/app/main"]
 
 

@@ -1,7 +1,7 @@
 package settings
 
 import (
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 	"io/ioutil"
 	"os"
 )
@@ -44,13 +44,13 @@ func getEnvironment() string {
 
 func LoadConfig() error {
 	configFile := "config/dev.yaml" // 默认使用开发环境配置
-	if env == "production" {
-		configFile = "/config/production.yaml"
-	} else if env == "dev" {
-		configFile = "/config/dev.yaml"
-	} else {
-		configFile = "config/local.yaml"
-	}
+	//if env == "production" {
+	//	configFile = "/config/production.yaml"
+	//} else if env == "dev" {
+	//	configFile = "/config/dev.yaml"
+	//} else {
+	configFile = "config/local.yaml"
+	//}
 	// 读取配置文件
 	data, err := ioutil.ReadFile(configFile)
 	if err != nil {

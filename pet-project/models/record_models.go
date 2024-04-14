@@ -18,8 +18,8 @@ type RecordList struct {
 
 type PetActionType struct {
 	gorm.Model
-	Type       uint   `json:"type" form:"type"`
 	ActionName string `json:"action_name" form:"action_name"`
+	Icon       string `json:"icon" form:"icon"`
 }
 
 func (PetActionType) TableName() string {
@@ -28,9 +28,10 @@ func (PetActionType) TableName() string {
 
 type PetCustomType struct {
 	gorm.Model
-	User       UserInfo `json:"user" gorm:"foreignKey:UserId"`
-	UserId     uint     `json:"userId"`
-	CustomName string   `json:"customName" gorm:"size:32"`
+	User       UserInfo `json:"user" from:"user" gorm:"foreignKey:UserId"`
+	UserId     uint     `json:"userId" from:"userId"`
+	CustomName string   `json:"customName" from:"customName" gorm:"size:32"`
+	CustomIcon string   `json:"customIcon" from:"customIcon" gorm:"size:256"`
 }
 
 func (PetCustomType) TableName() string {

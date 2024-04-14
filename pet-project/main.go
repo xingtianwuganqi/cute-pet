@@ -12,5 +12,16 @@ func main() {
 	}
 	db.LinkInit()
 	r := routers.RegisterRouter()
-	r.Run()
+	if settings.Conf.App.Env == "dev" {
+		err := r.Run(":8086")
+		if err != nil {
+			return
+		}
+	} else {
+		err := r.Run(":8082")
+		if err != nil {
+			return
+		}
+	}
+
 }
