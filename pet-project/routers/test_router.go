@@ -10,6 +10,7 @@ func RegisterTestRouter(router *gin.Engine) {
 	{
 		testRouter.GET("/get/test", handler.QueryTestNetworking)
 		testRouter.POST("/post/test", handler.FormTestNetworking)
-
+		testRouter.POST("/path/:name", handler.PathTestNetworking)
+		testRouter.POST("/binding/test", handler.BindingNetworking)
 	}
 }
