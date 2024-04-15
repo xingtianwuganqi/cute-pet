@@ -11,7 +11,6 @@ func RegisterUserRouter(r *gin.Engine) {
 	{
 		userRouter.POST("/register", handler.UserRegister)
 		userRouter.POST("/login", handler.UserPhoneLogin)
-		userRouter.POST("/test", handler.TestNetworking)
 	}
 
 }

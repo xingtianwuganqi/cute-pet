@@ -20,6 +20,7 @@ func GetTencentCode(c *gin.Context) {
 	num, _ := strconv.Atoi(code)
 	if num != 200 {
 		response.Fail(c, util.ApiCode.ParamError, util.ApiMessage.ParamError)
+		return
 	}
 	c.JSON(http.StatusOK, gin.H{
 		"code": http.StatusOK,
@@ -98,9 +99,4 @@ func UserPhoneLogin(c *gin.Context) {
 	} else {
 		response.Fail(c, 300, "密码错误")
 	}
-}
-
-func TestNetworking(c *gin.Context) {
-	m := models.EmptyModel{}
-	response.Success(c, m)
 }

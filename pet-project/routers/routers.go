@@ -15,5 +15,6 @@ func RegisterRouter() *gin.Engine {
 	r := gin.Default()
 	RegisterUserRouter(r)
 	RegisterRecordRouter(r)
+	RegisterTestRouter(r)
 	return r
 }
