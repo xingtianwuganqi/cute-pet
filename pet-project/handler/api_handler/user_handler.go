@@ -31,10 +31,18 @@ func GetTencentCode(c *gin.Context) {
 // UserRegister 注册
 func UserRegister(c *gin.Context) {
 	var login models.LoginInfo
+
 	if err := c.ShouldBind(&login); err != nil {
 		response.Fail(c, util.ApiCode.ParamError, util.ApiMessage.ParamError)
 		return
 	}
+
+	// 验证验证码
+	if login.Code != 2024 {
+		response.Fail(c, util.ApiCode.ParamError, util.ApiMessage.ParamError)
+		return
+	}
+
 	var findUser models.UserInfo
 	findResult := db.DB.Where("phone = ?", login.Phone).First(&findUser)
 	if errors.Is(findResult.Error, gorm.ErrRecordNotFound) {

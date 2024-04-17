@@ -24,6 +24,7 @@ func PetInfoCreate(c *gin.Context) {
 	}
 
 	// 如果token的userId和参数的userId不一样，说明不是同一个人
+	log.Println("userId is", userId)
 	log.Println("+++++++", reflect.TypeOf(petInfo.UserId), petInfo.UserId, petInfo.PetType)
 	log.Println("0000", c.PostForm("pet_type"))
 	if petInfo.UserId != userId {
