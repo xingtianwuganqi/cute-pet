@@ -69,11 +69,13 @@ func GetPetActionList(c *gin.Context) {
 }
 
 func CreatePetCustomType(c *gin.Context) {
-	var _ = c.MustGet("userId").(uint)
+	var userId = c.MustGet("userId").(uint)
 	var petCustomType models.PetCustomType
 	if err := c.ShouldBind(&petCustomType); err != nil {
 		response.Fail(c, util.ApiCode.ParamError, util.ApiMessage.ParamError)
 	}
+	log.Println("userId is", userId)
+	petCustomType.UserId = userId
 	result := db.DB.Create(&petCustomType)
 	if result.Error != nil {
 		response.Fail(c, util.ApiCode.CreateErr, util.ApiMessage.CreateErr)
@@ -83,13 +85,22 @@ func CreatePetCustomType(c *gin.Context) {
 }
 
 func GetCustomActionList(c *gin.Context) {
+	userId := c.MustGet("userId").(uint)
 	var customActionList []models.PetCustomType
-	result := db.DB.Model(&models.PetCustomType{}).Find(&customActionList)
+	// 如果只返回特定字段，
+	//var customActionList []models.PetCustomTypeInfo ,
+	//查询db.DB.Model(&models.PetCustomType{}).Where("user_id = ?", userId).Find(&customActionList)
+	// 定义为UserId的字段，GORM 自动将结构体字段名称转换为 user_id 作为数据库中的列名。
+	//result := db.DB.Preload("User").Where("user_id = ?", userId).Find(&customActionList)
+	// Select 或 Omit的字段，不会消失，会显示零值
+	result := db.DB.Model(&models.PetCustomType{}).Select("id, created_at, deleted_at, custom_name").
+		Find(&customActionList, "user_id = ?", userId)
 	if result.Error != nil {
 		response.Fail(c, util.ApiCode.QueryError, util.ApiMessage.QueryError)
 		return
 	}
 	response.Success(c, customActionList)
+
 }
 
 // GetRecordList 查询记录列表

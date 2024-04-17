@@ -28,10 +28,10 @@ func (PetActionType) TableName() string {
 
 type PetCustomType struct {
 	gorm.Model
-	User       UserInfo `json:"user" from:"user" gorm:"foreignKey:UserId"`
-	UserId     uint     `json:"userId" from:"userId"`
-	CustomName string   `json:"customName" from:"customName" gorm:"size:32"`
-	CustomIcon string   `json:"customIcon" from:"customIcon" gorm:"size:256"`
+	User       UserInfo `json:"user" form:"user" gorm:"foreignKey:UserId"`
+	UserId     uint     `json:"userId" form:"userId"`
+	CustomName string   `json:"customName" form:"customName" gorm:"size:32"`
+	CustomIcon string   `json:"customIcon" form:"customIcon" gorm:"size:256"`
 }
 
 func (PetCustomType) TableName() string {

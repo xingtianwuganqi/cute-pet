@@ -54,13 +54,21 @@ func JWTTokenMiddleware() func(c *gin.Context) {
 	return func(c *gin.Context) {
 		token := c.GetHeader("token")
 		if len(token) == 0 {
-			c.JSON(http.StatusUnauthorized, gin.H{})
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"code": http.StatusUnauthorized,
+				"msg":  util.ApiMessage.AuthError,
+				"data": map[string]interface{}{},
+			})
 			c.Abort()
 			return
 		}
 		mc, err := ParseToken(token)
 		if err != nil {
-			c.JSON(http.StatusUnauthorized, gin.H{})
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"code": http.StatusUnauthorized,
+				"msg":  util.ApiMessage.AuthError,
+				"data": map[string]interface{}{},
+			})
 			c.Abort()
 			return
 		}
