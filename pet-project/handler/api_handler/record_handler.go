@@ -86,21 +86,21 @@ func CreatePetCustomType(c *gin.Context) {
 
 func GetCustomActionList(c *gin.Context) {
 	userId := c.MustGet("userId").(uint)
-	var customActionList []models.PetCustomType
+	var customActionList []models.PetCustomTypeInfo
 	// 如果只返回特定字段，
 	//var customActionList []models.PetCustomTypeInfo ,
 	//查询db.DB.Model(&models.PetCustomType{}).Where("user_id = ?", userId).Find(&customActionList)
 	// 定义为UserId的字段，GORM 自动将结构体字段名称转换为 user_id 作为数据库中的列名。
 	//result := db.DB.Preload("User").Where("user_id = ?", userId).Find(&customActionList)
 	// Select 或 Omit的字段，不会消失，会显示零值
-	result := db.DB.Model(&models.PetCustomType{}).Select("id, created_at, deleted_at, custom_name").
+	result := db.DB.Model(&models.PetCustomType{}).Select("id, created_at, updated_at, deleted_at, custom_name, custom_icon").
+		Order("created_at DESC").
 		Find(&customActionList, "user_id = ?", userId)
 	if result.Error != nil {
 		response.Fail(c, util.ApiCode.QueryError, util.ApiMessage.QueryError)
 		return
 	}
 	response.Success(c, customActionList)
-
 }
 
 // GetRecordList 查询记录列表
