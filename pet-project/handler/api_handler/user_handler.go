@@ -24,7 +24,7 @@ func GetTencentCode(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{
 		"code": http.StatusOK,
-		"data": 1008,
+		"data": 2024,
 	})
 }
 
@@ -44,11 +44,26 @@ func UserRegister(c *gin.Context) {
 	}
 
 	var findUser models.UserInfo
-	findResult := db.DB.Where("phone = ?", login.Phone).First(&findUser)
+	var findResult *gorm.DB
+	if len(login.Phone) > 0 {
+		findResult = db.DB.Where("phone = ?", login.Phone).First(&findUser)
+	} else if len(login.Email) > 0 {
+		if util.IsValidEmail(login.Email) {
+			findResult = db.DB.Where("email = ?", login.Email).First(&findUser)
+		} else {
+			response.Fail(c, util.ApiCode.EmailError, util.ApiMessage.EmailError)
+			return
+		}
+	} else {
+		response.Fail(c, util.ApiCode.ParamLack, util.ApiMessage.ParamLack)
+		return
+	}
+
 	if errors.Is(findResult.Error, gorm.ErrRecordNotFound) {
 		user := models.UserInfo{
 			Phone:    login.Phone,
 			Password: login.Password,
+			Email:    login.Email,
 		}
 		result := db.DB.Create(&user)
 		if result.Error != nil {
@@ -70,6 +85,7 @@ func UserRegister(c *gin.Context) {
 		}
 		response.Success(c, data)
 	} else {
+		println("用户已存在", util.ApiCode.UserExistsError)
 		response.Fail(c, util.ApiCode.UserExistsError, util.ApiMessage.UserExistsError)
 	}
 

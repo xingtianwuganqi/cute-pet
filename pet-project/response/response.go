@@ -17,7 +17,7 @@ func Response(c *gin.Context, code uint, data interface{}, msg string) {
 		data = gin.H{}
 	}
 	res := BaseResponse{}
-	res.Code = http.StatusOK
+	res.Code = code
 	res.Msg = msg
 	res.Data = data
 
