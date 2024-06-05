@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/nicksnyder/go-i18n/v2/i18n"
 	"gopkg.in/gomail.v2"
 	"gorm.io/gorm"
 	"math/rand"
@@ -43,7 +44,11 @@ func GetTencentCode(c *gin.Context) {
 		return
 	}
 	// 将code保存到redis，设置10分钟失效
-	saveAccountCodeInRedis(c, email, code)
+	saveErr := saveAccountCodeInRedis(c, email, code)
+	if saveErr != nil {
+		response.Fail(c, util.ApiCode.ServerError, util.ApiMessage.ServerError)
+		return
+	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"code": http.StatusOK,
@@ -66,40 +71,15 @@ func getCodeFromRedis(c *gin.Context, email string) (string, error) {
 
 // UserRegister 注册
 func UserRegister(c *gin.Context) {
+	locale := c.MustGet("locale").(*i18n.Localizer)
+	userExist := locale.MustLocalize(&i18n.LocalizeConfig{
+		MessageID: "UserNotFund",
+	})
 	var login models.LoginInfo
 
 	if err := c.ShouldBind(&login); err != nil {
 		response.Fail(c, util.ApiCode.ParamError, util.ApiMessage.ParamError)
 		return
-	}
-
-	// 取出redis中的验证码
-	if len(login.Email) > 0 {
-		code, error := getCodeFromRedis(c, login.Email)
-		if error != nil {
-			response.Fail(c, util.ApiCode.ServerError, util.ApiMessage.ServerError)
-			return
-		}
-
-		// 验证验证码是否正确
-		codeValue, _ := strconv.Atoi(code)
-		if codeValue != login.Code {
-			response.Fail(c, util.ApiCode.ParamError, util.ApiMessage.ParamError)
-			return
-		}
-	} else { // 验证手机验证码
-		code, error := getCodeFromRedis(c, login.Phone)
-		if error != nil {
-			response.Fail(c, util.ApiCode.ServerError, util.ApiMessage.ServerError)
-			return
-		}
-
-		// 验证验证码是否正确
-		codeValue, _ := strconv.Atoi(code)
-		if codeValue != login.Code {
-			response.Fail(c, util.ApiCode.ParamError, util.ApiMessage.ParamError)
-			return
-		}
 	}
 
 	var findUser models.UserInfo
@@ -118,7 +98,37 @@ func UserRegister(c *gin.Context) {
 		return
 	}
 
+	// 如果查不到，则开始验证验证码
 	if errors.Is(findResult.Error, gorm.ErrRecordNotFound) {
+		// 取出redis中的验证码
+		if len(login.Email) > 0 {
+			code, err := getCodeFromRedis(c, login.Email)
+			if err != nil {
+				response.Fail(c, util.ApiCode.ServerError, util.ApiMessage.ServerError)
+				return
+			}
+
+			// 验证验证码是否正确
+			codeValue, _ := strconv.Atoi(code)
+			if codeValue != login.Code {
+				response.Fail(c, util.ApiCode.ParamError, util.ApiMessage.ParamError)
+				return
+			}
+		} else { // 验证手机验证码
+			code, err := getCodeFromRedis(c, login.Phone)
+			if err != nil {
+				response.Fail(c, util.ApiCode.ServerError, util.ApiMessage.ServerError)
+				return
+			}
+
+			// 验证验证码是否正确
+			codeValue, _ := strconv.Atoi(code)
+			if codeValue != login.Code {
+				response.Fail(c, util.ApiCode.ParamError, util.ApiMessage.ParamError)
+				return
+			}
+		}
+
 		user := models.UserInfo{
 			Phone:    login.Phone,
 			Password: login.Password,
@@ -144,7 +154,7 @@ func UserRegister(c *gin.Context) {
 		}
 		response.Success(c, data)
 	} else {
-		response.Fail(c, util.ApiCode.UserExistsError, util.ApiMessage.UserExistsError)
+		response.Fail(c, util.ApiCode.UserExistsError, userExist)
 	}
 
 }

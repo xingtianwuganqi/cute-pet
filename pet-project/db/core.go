@@ -18,7 +18,7 @@ var (
 	err error
 )
 
-func LinkInit() {
+func linkInit() {
 	host := settings.Conf.Database.Host
 	port := settings.Conf.Database.Port
 	database := settings.Conf.Database.DataBase
@@ -26,7 +26,7 @@ func LinkInit() {
 	password := settings.Conf.Database.Password
 	charset := settings.Conf.Database.Charset
 	var err error
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=%s&parseTime=true&loc=Local",
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=%s&parseTime=true&loc=Local",
 		username,
 		password,
 		host,
@@ -50,7 +50,7 @@ func autoMigrateTable() {
 	}
 }
 
-func LinkRedis() {
+func linkRedis() {
 	addr := fmt.Sprintf("%s:%d", settings.Conf.Redis.Host, settings.Conf.Redis.Port)
 	password := settings.Conf.Redis.Password
 	redisDb := settings.Conf.Redis.DB
@@ -64,4 +64,9 @@ func LinkRedis() {
 		log.Fatalf("Could not connect to Redis: %v", err)
 	}
 	log.Println("Redis connected to", pong)
+}
+
+func LinkDataBase() {
+	linkInit()
+	linkRedis()
 }

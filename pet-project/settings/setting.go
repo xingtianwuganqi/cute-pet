@@ -1,6 +1,9 @@
 package settings
 
 import (
+	"github.com/BurntSushi/toml"
+	"github.com/nicksnyder/go-i18n/v2/i18n"
+	"golang.org/x/text/language"
 	"gopkg.in/yaml.v3"
 	"os"
 )
@@ -51,20 +54,21 @@ func getEnvironment() string {
 	env := os.Getenv("ENVIRONMENT")
 	if env == "" {
 		// 如果未设置 ENVIRONMENT 环境变量，默认为开发环境
-		return "dev"
+		return "local"
 	}
 	return env
 }
 
+// LoadConfig 加载配置文件
 func LoadConfig() error {
 	configFile := "config/local.yaml" // 默认使用开发环境配置
-	//if env == "production" {
-	//	configFile = "/config/production.yaml"
-	//} else if env == "dev" {
-	//	configFile = "/config/dev.yaml"
-	//} else {
-	configFile = "config/local.yaml"
-	//}
+	if env == "production" {
+		configFile = "/config/production.yaml"
+	} else if env == "dev" {
+		configFile = "/config/dev.yaml"
+	} else {
+		configFile = "config/local.yaml"
+	}
 	// 读取配置文件
 	data, err := os.ReadFile(configFile)
 	if err != nil {
@@ -80,4 +84,15 @@ func LoadConfig() error {
 	}
 	Conf = configInfo
 	return nil
+}
+
+// ReloadLocalBundle ReloadThird 加载本地国际化文件
+func ReloadLocalBundle() *i18n.Bundle {
+	bundle := i18n.NewBundle(language.English)
+	bundle.RegisterUnmarshalFunc("toml", toml.Unmarshal)
+
+	// 加载翻译文件
+	bundle.MustLoadMessageFile("locales/active.en.toml")
+	bundle.MustLoadMessageFile("locales/active.zh.toml")
+	return bundle
 }

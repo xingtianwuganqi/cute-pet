@@ -10,16 +10,15 @@ func main() {
 	if err := settings.LoadConfig(); err != nil {
 		panic(err)
 	}
-	db.LinkInit()
-	db.LinkRedis()
+	db.LinkDataBase()
 	r := routers.RegisterRouter()
-	if settings.Conf.App.Env == "dev" {
-		err := r.Run(":8086")
+	if settings.Conf.App.Env == "production" {
+		err := r.Run(":8082")
 		if err != nil {
 			return
 		}
 	} else {
-		err := r.Run(":8082")
+		err := r.Run(":8086")
 		if err != nil {
 			return
 		}
