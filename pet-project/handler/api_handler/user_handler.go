@@ -12,7 +12,10 @@ import (
 	"pet-project/middleware"
 	"pet-project/models"
 	"pet-project/response"
+	"pet-project/settings"
 	"pet-project/util"
+	"strconv"
+	"time"
 )
 
 func GetTencentCode(c *gin.Context) {
@@ -24,27 +27,41 @@ func GetTencentCode(c *gin.Context) {
 		return
 	}
 
-	smptServer := "smtp.163.com"
-	smptPort := 465
-	username := "xingtianwuganqi123@163.com"
-	password := "DQHEPDTSYPAVKEFB"
+	smptServer := settings.Conf.EmailService.Host
+	smptPort := settings.Conf.EmailService.Port
+	username := settings.Conf.EmailService.Username
+	password := settings.Conf.EmailService.Password
 	code := generateValidationCode(6)
 	// 对方的邮箱
 	recipient := email
 	subject := "【您的验证码】"
 	body := fmt.Sprintf("您的验证码为 %s,请在10分钟内使用。", code)
 
-	// 将code保存到redis，设置10分钟失效
-
 	err := sendEmail(recipient, subject, body, smptServer, smptPort, username, password)
 	if err != nil {
 		response.Fail(c, util.ApiCode.ServerError, util.ApiMessage.ServerError)
 		return
 	}
+	// 将code保存到redis，设置10分钟失效
+	saveAccountCodeInRedis(c, email, code)
+
 	c.JSON(http.StatusOK, gin.H{
 		"code": http.StatusOK,
 		"data": gin.H{},
 	})
+}
+
+// 保存到redis
+func saveAccountCodeInRedis(c *gin.Context, email string, code string) error {
+	expiration := 10 * time.Minute
+	err := db.Rdb.Set(c, email, code, expiration).Err()
+	return err
+}
+
+// redis中取出code值
+func getCodeFromRedis(c *gin.Context, email string) (string, error) {
+	value, err := db.Rdb.Get(c, email).Result()
+	return value, err
 }
 
 // UserRegister 注册
@@ -56,10 +73,33 @@ func UserRegister(c *gin.Context) {
 		return
 	}
 
-	// 验证验证码
-	if login.Code != 2024 {
-		response.Fail(c, util.ApiCode.ParamError, util.ApiMessage.ParamError)
-		return
+	// 取出redis中的验证码
+	if len(login.Email) > 0 {
+		code, error := getCodeFromRedis(c, login.Email)
+		if error != nil {
+			response.Fail(c, util.ApiCode.ServerError, util.ApiMessage.ServerError)
+			return
+		}
+
+		// 验证验证码是否正确
+		codeValue, _ := strconv.Atoi(code)
+		if codeValue != login.Code {
+			response.Fail(c, util.ApiCode.ParamError, util.ApiMessage.ParamError)
+			return
+		}
+	} else { // 验证手机验证码
+		code, error := getCodeFromRedis(c, login.Phone)
+		if error != nil {
+			response.Fail(c, util.ApiCode.ServerError, util.ApiMessage.ServerError)
+			return
+		}
+
+		// 验证验证码是否正确
+		codeValue, _ := strconv.Atoi(code)
+		if codeValue != login.Code {
+			response.Fail(c, util.ApiCode.ParamError, util.ApiMessage.ParamError)
+			return
+		}
 	}
 
 	var findUser models.UserInfo
@@ -104,7 +144,6 @@ func UserRegister(c *gin.Context) {
 		}
 		response.Success(c, data)
 	} else {
-		println("用户已存在", util.ApiCode.UserExistsError)
 		response.Fail(c, util.ApiCode.UserExistsError, util.ApiMessage.UserExistsError)
 	}
 
@@ -144,7 +183,6 @@ func UserPhoneLogin(c *gin.Context) {
 	}
 }
 
-// 获取验证码
 // 生成指定长度的随机数字验证码
 func generateValidationCode(length int) string {
 	var code string

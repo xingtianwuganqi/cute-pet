@@ -6,12 +6,24 @@ database:
   database: petproject
   charset: utf8mb4
 
+redis:
+  host: localhost
+  port: 6379
+  password:
+  DB: 0
+
 app:
   port: 8082
   debug: false
   log_level: debug
   secret_key: testsecret
   env: dev
+
+email_service:
+  host: smtp.163.com
+  port: 465
+  username: xingtianwuganqi123@163.com
+  password: DQHEPDTSYPAVKEFB
 
 api_keys:
   google: test-google-api-key

@@ -11,6 +11,7 @@ func main() {
 		panic(err)
 	}
 	db.LinkInit()
+	db.LinkRedis()
 	r := routers.RegisterRouter()
 	if settings.Conf.App.Env == "dev" {
 		err := r.Run(":8086")

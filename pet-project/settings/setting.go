@@ -2,19 +2,25 @@ package settings
 
 import (
 	"gopkg.in/yaml.v3"
-	"io/ioutil"
 	"os"
 )
 
 type Config struct {
 	Database struct {
 		Host     string `yaml:"host"`
-		Port     string `yaml:"port"`
+		Port     int    `yaml:"port"`
 		Username string `yaml:"username"`
 		Password string `yaml:"password"`
 		DataBase string `yaml:"database"`
 		Charset  string `yaml:"charset"`
 	} `yaml:"database"`
+
+	Redis struct {
+		Host     string `yaml:"host"`
+		Port     int    `yaml:"port"`
+		Password string `yaml:"password"`
+		DB       int    `yaml:"db"`
+	} `yaml:"redis"`
 
 	App struct {
 		Port      int    `yaml:"port"`
@@ -23,6 +29,14 @@ type Config struct {
 		SecretKey string `yaml:"secret_key"`
 		Env       string `yaml:"env"`
 	} `yaml:"app"`
+
+	EmailService struct {
+		Host     string `yaml:"host"`
+		Port     int    `yaml:"port"`
+		Username string `yaml:"username"`
+		Password string `yaml:"password"`
+	} `yaml:"email_service"`
+
 	ApiKeys struct {
 		Google   string `yaml:"google"`
 		Facebook string `yaml:"facebook"`
@@ -52,7 +66,7 @@ func LoadConfig() error {
 	configFile = "config/local.yaml"
 	//}
 	// 读取配置文件
-	data, err := ioutil.ReadFile(configFile)
+	data, err := os.ReadFile(configFile)
 	if err != nil {
 		// 处理错误
 		return err

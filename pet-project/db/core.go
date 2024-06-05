@@ -1,14 +1,22 @@
 package db
 
 import (
+	"context"
 	"fmt"
+	"github.com/go-redis/redis/v8"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
+	"log"
 	"pet-project/models"
 	"pet-project/settings"
 )
 
-var DB *gorm.DB
+var (
+	ctx = context.Background()
+	Rdb *redis.Client
+	DB  *gorm.DB
+	err error
+)
 
 func LinkInit() {
 	host := settings.Conf.Database.Host
@@ -40,4 +48,20 @@ func autoMigrateTable() {
 	if err != nil {
 		return
 	}
+}
+
+func LinkRedis() {
+	addr := fmt.Sprintf("%s:%d", settings.Conf.Redis.Host, settings.Conf.Redis.Port)
+	password := settings.Conf.Redis.Password
+	redisDb := settings.Conf.Redis.DB
+	Rdb = redis.NewClient(&redis.Options{
+		Addr:     addr,
+		Password: password,
+		DB:       redisDb,
+	})
+	pong, err := Rdb.Ping(context.Background()).Result()
+	if err != nil {
+		log.Fatalf("Could not connect to Redis: %v", err)
+	}
+	log.Println("Redis connected to", pong)
 }
