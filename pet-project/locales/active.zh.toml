@@ -1,2 +1,10 @@
 [UserExists]
 other = "用户已存在"
+[VerificationTitle]
+other = "您的验证码"
+[VerificationDesc]
+other = "您的验证码为 {{.Count}},请在10分钟内使用。"
+[AccountUnRegister]
+other = "账号未注册"
+[PasswordErr]
+other = "密码错误"

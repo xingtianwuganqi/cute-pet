@@ -12,7 +12,7 @@ func LocaleMiddleware(bundle *i18n.Bundle) func(c *gin.Context) {
 			lang = "zh"
 		}
 		locale := i18n.NewLocalizer(bundle, lang)
-		ctx.Set("locale", locale)
+		ctx.Set("lang", locale)
 		ctx.Next()
 	}
 

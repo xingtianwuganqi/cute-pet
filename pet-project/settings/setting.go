@@ -1,9 +1,6 @@
 package settings
 
 import (
-	"github.com/BurntSushi/toml"
-	"github.com/nicksnyder/go-i18n/v2/i18n"
-	"golang.org/x/text/language"
 	"gopkg.in/yaml.v3"
 	"os"
 )
@@ -84,15 +81,4 @@ func LoadConfig() error {
 	}
 	Conf = configInfo
 	return nil
-}
-
-// ReloadLocalBundle ReloadThird 加载本地国际化文件
-func ReloadLocalBundle() *i18n.Bundle {
-	bundle := i18n.NewBundle(language.English)
-	bundle.RegisterUnmarshalFunc("toml", toml.Unmarshal)
-
-	// 加载翻译文件
-	bundle.MustLoadMessageFile("locales/active.en.toml")
-	bundle.MustLoadMessageFile("locales/active.zh.toml")
-	return bundle
 }
