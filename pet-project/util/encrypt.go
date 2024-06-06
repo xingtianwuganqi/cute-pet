@@ -10,9 +10,12 @@ import (
 	"fmt"
 	"io"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 )
+
+var key = []byte("伍c七Alz1θVx2ψLHNpfωv九nξ捌τD六053λwGμrMνRuegsη八γ陆jOBX8ρ三E9πFS零bδοmkχ7K6PβϵϕoZ五iυU一Jq柒ydYt四QhW4玖κCIαζTaι二σ")
 
 func Md5String(s string) string {
 	timeStr := string(time.Now().UnixNano())
@@ -59,7 +62,7 @@ func encrypt(text string, key []byte) (string, error) {
 }
 
 // Decrypt 解密参数
-func Decrypt(cryptoText string, key []byte) (string, error) {
+func Decrypt(cryptoText string) (string, error) {
 	ciphertext, _ := base64.URLEncoding.DecodeString(cryptoText)
 
 	block, err := aes.NewCipher(key)
@@ -88,7 +91,7 @@ func IsValidParam(decryptedParam string, maxAge time.Duration) bool {
 	}
 
 	timestampStr, randomString := parts[0], parts[1]
-	timestamp, err := time.ParseInt(timestampStr, 10, 64)
+	timestamp, err := strconv.ParseInt(timestampStr, 10, 64)
 	if err != nil {
 		return false
 	}
