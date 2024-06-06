@@ -24,7 +24,7 @@ func GetTencentCode(c *gin.Context) {
 	lang := c.MustGet("lang").(*i18n.Localizer)
 	email := c.PostForm("email")
 	if len(email) == 0 {
-		response.Fail(c, util.ApiCode.ParamErr, util.AMsg.ParamErr)
+		response.Fail(c, response.ApiCode.ParamErr, response.AMsg.ParamErr)
 		return
 	}
 
@@ -40,13 +40,13 @@ func GetTencentCode(c *gin.Context) {
 
 	err := sendEmail(recipient, subject, body, smptServer, smptPort, username, password)
 	if err != nil {
-		response.Fail(c, util.ApiCode.ServerErr, util.AMsg.ServerErr)
+		response.Fail(c, response.ApiCode.ServerErr, response.AMsg.ServerErr)
 		return
 	}
 	// 将code保存到redis，设置10分钟失效
 	saveErr := saveAccountCodeInRedis(c, email, code)
 	if saveErr != nil {
-		response.Fail(c, util.ApiCode.ServerErr, util.AMsg.ServerErr)
+		response.Fail(c, response.ApiCode.ServerErr, response.AMsg.ServerErr)
 		return
 	}
 
@@ -75,7 +75,7 @@ func UserRegister(c *gin.Context) {
 	var login models.LoginInfo
 
 	if err := c.ShouldBind(&login); err != nil {
-		response.Fail(c, util.ApiCode.ParamErr, util.AMsg.ParamErr)
+		response.Fail(c, response.ApiCode.ParamErr, response.AMsg.ParamErr)
 		return
 	}
 
@@ -87,11 +87,11 @@ func UserRegister(c *gin.Context) {
 		if util.IsValidEmail(login.Email) {
 			findResult = db.DB.Where("email = ?", login.Email).First(&findUser)
 		} else {
-			response.Fail(c, util.ApiCode.EmailErr, util.AMsg.EmailErr)
+			response.Fail(c, response.ApiCode.EmailErr, response.AMsg.EmailErr)
 			return
 		}
 	} else {
-		response.Fail(c, util.ApiCode.ParamLack, util.AMsg.ParamLack)
+		response.Fail(c, response.ApiCode.ParamLack, response.AMsg.ParamLack)
 		return
 	}
 
@@ -101,27 +101,27 @@ func UserRegister(c *gin.Context) {
 		if len(login.Email) > 0 {
 			code, err := getCodeFromRedis(c, login.Email)
 			if err != nil {
-				response.Fail(c, util.ApiCode.ServerErr, util.AMsg.ServerErr)
+				response.Fail(c, response.ApiCode.ServerErr, response.AMsg.ServerErr)
 				return
 			}
 
 			// 验证验证码是否正确
 			codeValue, _ := strconv.Atoi(code)
 			if codeValue != login.Code {
-				response.Fail(c, util.ApiCode.ParamErr, util.AMsg.ParamErr)
+				response.Fail(c, response.ApiCode.ParamErr, response.AMsg.ParamErr)
 				return
 			}
 		} else { // 验证手机验证码
 			code, err := getCodeFromRedis(c, login.Phone)
 			if err != nil {
-				response.Fail(c, util.ApiCode.ServerErr, util.AMsg.ServerErr)
+				response.Fail(c, response.ApiCode.ServerErr, response.AMsg.ServerErr)
 				return
 			}
 
 			// 验证验证码是否正确
 			codeValue, _ := strconv.Atoi(code)
 			if codeValue != login.Code {
-				response.Fail(c, util.ApiCode.ParamErr, util.AMsg.ParamErr)
+				response.Fail(c, response.ApiCode.ParamErr, response.AMsg.ParamErr)
 				return
 			}
 		}
@@ -133,13 +133,13 @@ func UserRegister(c *gin.Context) {
 		}
 		result := db.DB.Create(&user)
 		if result.Error != nil {
-			response.Fail(c, util.ApiCode.CreateErr, util.AMsg.CreateErr)
+			response.Fail(c, response.ApiCode.CreateErr, response.AMsg.CreateErr)
 			return
 		}
 		userId := user.ID
 		token, err := middleware.GenToken(userId)
 		if err != nil {
-			response.Fail(c, util.ApiCode.ServerErr, util.AMsg.ServerErr)
+			response.Fail(c, response.ApiCode.ServerErr, response.AMsg.ServerErr)
 			return
 		}
 		data := models.LoginUserInfo{
@@ -151,8 +151,8 @@ func UserRegister(c *gin.Context) {
 		}
 		response.Success(c, data)
 	} else {
-		msg := settings.LocalizeMsg(lang, util.AMsg.UserExistsErr)
-		response.Fail(c, util.ApiCode.UserExistsErr, msg)
+		msg := settings.LocalizeMsg(lang, response.AMsg.UserExistsErr)
+		response.Fail(c, response.ApiCode.UserExistsErr, msg)
 	}
 
 }
@@ -162,7 +162,7 @@ func UserPhoneLogin(c *gin.Context) {
 	lang := c.MustGet("lang").(*i18n.Localizer)
 	var login models.LoginInfo
 	if err := c.ShouldBind(&login); err != nil {
-		response.Fail(c, util.ApiCode.ParamErr, util.AMsg.ParamErr)
+		response.Fail(c, response.ApiCode.ParamErr, response.AMsg.ParamErr)
 		return
 	}
 	var findResult *gorm.DB
@@ -173,16 +173,16 @@ func UserPhoneLogin(c *gin.Context) {
 		if util.IsValidEmail(login.Email) {
 			findResult = db.DB.Where("email = ?", login.Email).First(&user)
 		} else {
-			response.Fail(c, util.ApiCode.EmailErr, util.AMsg.EmailErr)
+			response.Fail(c, response.ApiCode.EmailErr, response.AMsg.EmailErr)
 			return
 		}
 	} else {
-		response.Fail(c, util.ApiCode.ParamLack, util.AMsg.ParamLack)
+		response.Fail(c, response.ApiCode.ParamLack, response.AMsg.ParamLack)
 		return
 	}
 	if errors.Is(findResult.Error, gorm.ErrRecordNotFound) {
 		msg := settings.LocalizeMsg(lang, "AccountUnRegister")
-		response.Fail(c, util.ApiCode.QueryErr, msg)
+		response.Fail(c, response.ApiCode.QueryErr, msg)
 		return
 	}
 	if user.Password == login.Password {
@@ -190,7 +190,7 @@ func UserPhoneLogin(c *gin.Context) {
 		userId := user.ID
 		token, err := middleware.GenToken(userId)
 		if err != nil {
-			response.Fail(c, util.ApiCode.ServerErr, util.AMsg.ServerErr)
+			response.Fail(c, response.ApiCode.ServerErr, response.AMsg.ServerErr)
 			return
 		}
 		data := models.LoginUserInfo{

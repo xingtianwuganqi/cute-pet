@@ -1,4 +1,4 @@
-package util
+package response
 
 type Codes struct {
 	// #成功

@@ -6,7 +6,6 @@ import (
 	"pet-project/db"
 	"pet-project/models"
 	"pet-project/response"
-	"pet-project/util"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
@@ -56,7 +55,7 @@ func JWTTokenMiddleware() func(c *gin.Context) {
 		if len(token) == 0 {
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"code": http.StatusUnauthorized,
-				"msg":  util.AMsg.AuthErr,
+				"msg":  response.AMsg.AuthErr,
 				"data": map[string]interface{}{},
 			})
 			c.Abort()
@@ -66,7 +65,7 @@ func JWTTokenMiddleware() func(c *gin.Context) {
 		if err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"code": http.StatusUnauthorized,
-				"msg":  util.AMsg.AuthErr,
+				"msg":  response.AMsg.AuthErr,
 				"data": map[string]interface{}{},
 			})
 			c.Abort()
@@ -77,7 +76,7 @@ func JWTTokenMiddleware() func(c *gin.Context) {
 		var user models.UserInfo
 		userResult := db.DB.Where("ID = ?", mc.UserId).Find(&user)
 		if errors.Is(userResult.Error, gorm.ErrRecordNotFound) {
-			response.Fail(c, util.ApiCode.UserNotFont, util.AMsg.UserNotFound)
+			response.Fail(c, response.ApiCode.UserNotFont, response.AMsg.UserNotFound)
 			return
 		}
 
