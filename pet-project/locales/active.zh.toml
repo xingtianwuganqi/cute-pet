@@ -8,3 +8,5 @@ other = "您的验证码为 {{.Count}},请在10分钟内使用。"
 other = "账号未注册"
 [PasswordErr]
 other = "密码错误"
+[CheckCodeErr]
+other = "验证码有误"

@@ -27,3 +27,8 @@ type PetCustomTypeInfo struct {
 	CustomName string `json:"customName" form:"customName"`
 	CustomIcon string `json:"customIcon" form:"customIcon"`
 }
+
+type PageModel struct {
+	PageNum  int `json:"pageNum" form:"pageNum"`
+	PageSize int `json:"pageSize" form:"pageSize"`
+}

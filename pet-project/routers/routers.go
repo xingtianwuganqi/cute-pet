@@ -2,6 +2,7 @@ package routers
 
 import (
 	"pet-project/middleware"
+	"pet-project/service"
 	"pet-project/settings"
 
 	"github.com/gin-gonic/gin"
@@ -13,7 +14,7 @@ func RegisterRouter() *gin.Engine {
 	} else {
 		gin.SetMode(gin.DebugMode)
 	}
-	bundle := settings.ReloadLocalBundle()
+	bundle := service.ReloadLocalBundle()
 	r := gin.Default()
 	r.Use(middleware.LocaleMiddleware(bundle))
 	RegisterUserRouter(r)
