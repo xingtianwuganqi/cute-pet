@@ -7,14 +7,14 @@ database:
   charset: utf8mb4
 
 redis:
-  host: localhost
+  host: 172.17.0.1
   port: 6379
   password:
   DB: 0
 
 app:
-  port: 8082
-  debug: false
+  port: 8086
+  debug: true
   log_level: debug
   secret_key: testsecret
   env: dev
