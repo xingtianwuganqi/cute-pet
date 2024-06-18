@@ -170,7 +170,7 @@ type Messages struct {
 	UserNotFound string
 }
 
-var AMsg = &Messages{
+var ApiMsg = &Messages{
 	Success:       "成功",
 	Fail:          "失败",
 	AuthErr:       "token认证失败, 请重新登录",

@@ -10,7 +10,7 @@ import (
 func UserList(c *gin.Context) {
 	var pageModel models.PageModel
 	if err := c.ShouldBindQuery(&pageModel); err != nil {
-		response.Fail(c, response.ApiCode.ParamErr, response.AMsg.ParamErr)
+		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 		return
 	}
 	pageNum := pageModel.PageNum
@@ -24,7 +24,7 @@ func UserList(c *gin.Context) {
 	result := db.DB.Model(&models.UserInfo{}).Limit(pageNum).Offset(offset).
 		Omit("token").Order("created_at asc").Find(&userList)
 	if result.Error != nil {
-		response.Fail(c, response.ApiCode.QueryErr, response.AMsg.QueryErr)
+		response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
 		return
 	}
 	response.Success(c, userList)

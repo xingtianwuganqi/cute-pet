@@ -55,7 +55,7 @@ func JWTTokenMiddleware() func(c *gin.Context) {
 		if len(token) == 0 {
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"code": http.StatusUnauthorized,
-				"msg":  response.AMsg.AuthErr,
+				"msg":  response.ApiMsg.AuthErr,
 				"data": map[string]interface{}{},
 			})
 			c.Abort()
@@ -65,7 +65,7 @@ func JWTTokenMiddleware() func(c *gin.Context) {
 		if err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"code": http.StatusUnauthorized,
-				"msg":  response.AMsg.AuthErr,
+				"msg":  response.ApiMsg.AuthErr,
 				"data": map[string]interface{}{},
 			})
 			c.Abort()
@@ -76,7 +76,7 @@ func JWTTokenMiddleware() func(c *gin.Context) {
 		var user models.UserInfo
 		userResult := db.DB.Where("ID = ?", mc.UserId).Find(&user)
 		if errors.Is(userResult.Error, gorm.ErrRecordNotFound) {
-			response.Fail(c, response.ApiCode.UserNotFont, response.AMsg.UserNotFound)
+			response.Fail(c, response.ApiCode.UserNotFont, response.ApiMsg.UserNotFound)
 			return
 		}
 

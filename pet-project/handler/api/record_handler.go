@@ -17,7 +17,7 @@ func PetInfoCreate(c *gin.Context) {
 	var petInfo models.PetInfo
 	if err := c.ShouldBind(&petInfo); err != nil {
 		log.Println(err)
-		response.Fail(c, response.ApiCode.ParamErr, response.AMsg.ParamErr)
+		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 		return
 	}
 
@@ -26,14 +26,14 @@ func PetInfoCreate(c *gin.Context) {
 	log.Println("+++++++", reflect.TypeOf(petInfo.UserId), petInfo.UserId, petInfo.PetType)
 	log.Println("0000", c.PostForm("pet_type"))
 	if petInfo.UserId != userId {
-		response.Fail(c, response.ApiCode.QueryErr, response.AMsg.QueryErr)
+		response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
 		return
 	}
 
 	result := db.DB.Create(&petInfo)
 	if result.Error != nil {
 		log.Println(result.Error)
-		response.Fail(c, response.ApiCode.CreateErr, response.AMsg.CreateErr)
+		response.Fail(c, response.ApiCode.CreateErr, response.ApiMsg.CreateErr)
 		return
 	}
 	response.Success(c, nil)
@@ -43,13 +43,13 @@ func PetInfoCreate(c *gin.Context) {
 func CreatePetActionType(c *gin.Context) {
 	var actionModel models.PetActionType
 	if err := c.ShouldBind(&actionModel); err != nil {
-		response.Fail(c, response.ApiCode.ParamErr, response.AMsg.ParamErr)
+		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 		return
 	}
 
 	result := db.DB.Create(&actionModel)
 	if result.Error != nil {
-		response.Fail(c, response.ApiCode.CreateErr, response.AMsg.CreateErr)
+		response.Fail(c, response.ApiCode.CreateErr, response.ApiMsg.CreateErr)
 		return
 	}
 	response.Success(c, nil)
@@ -60,7 +60,7 @@ func GetPetActionList(c *gin.Context) {
 	var petActionList []models.PetActionType
 	result := db.DB.Model(&models.PetActionType{}).Find(&petActionList)
 	if result != nil {
-		response.Fail(c, response.ApiCode.QueryErr, response.AMsg.QueryErr)
+		response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
 		return
 	}
 	response.Success(c, petActionList)
@@ -70,13 +70,13 @@ func CreatePetCustomType(c *gin.Context) {
 	var userId = c.MustGet("userId").(uint)
 	var petCustomType models.PetCustomType
 	if err := c.ShouldBind(&petCustomType); err != nil {
-		response.Fail(c, response.ApiCode.ParamErr, response.AMsg.ParamErr)
+		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 	}
 	log.Println("userId is", userId)
 	petCustomType.UserId = userId
 	result := db.DB.Create(&petCustomType)
 	if result.Error != nil {
-		response.Fail(c, response.ApiCode.CreateErr, response.AMsg.CreateErr)
+		response.Fail(c, response.ApiCode.CreateErr, response.ApiMsg.CreateErr)
 		return
 	}
 	response.Success(c, nil)
@@ -95,7 +95,7 @@ func GetCustomActionList(c *gin.Context) {
 		Order("created_at DESC").
 		Find(&customActionList, "user_id = ?", userId)
 	if result.Error != nil {
-		response.Fail(c, response.ApiCode.QueryErr, response.AMsg.QueryErr)
+		response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
 		return
 	}
 	response.Success(c, customActionList)
@@ -108,19 +108,19 @@ func GetRecordList(c *gin.Context) {
 	var pageSize = c.Query("pageSize")
 	num, err := strconv.Atoi(pageNum)
 	if err != nil {
-		response.Fail(c, response.ApiCode.ParamErr, response.AMsg.ParamErr)
+		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 		return
 	}
 	size, err := strconv.Atoi(pageSize)
 	if err != nil {
-		response.Fail(c, response.ApiCode.ParamErr, response.AMsg.ParamErr)
+		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 		return
 	}
 	offset := (num - 1) * size
 	var recordList []models.RecordList
 	result := db.DB.Where("userId=?", userId).Offset(offset).Limit(size).Find(&recordList)
 	if result.Error != nil {
-		response.Fail(c, response.ApiCode.QueryErr, response.AMsg.QueryErr)
+		response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
 		return
 	}
 	response.Success(c, recordList)
