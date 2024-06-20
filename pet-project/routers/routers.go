@@ -16,6 +16,8 @@ func RegisterRouter() *gin.Engine {
 	}
 	bundle := service.ReloadLocalBundle()
 	r := gin.Default()
+	// 添加admin配置
+	service.AdminConfig(r)
 	r.Use(middleware.LocaleMiddleware(bundle))
 	RegisterUserRouter(r)
 	RegisterRecordRouter(r)
