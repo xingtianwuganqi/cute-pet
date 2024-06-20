@@ -24,3 +24,8 @@ func main() {
 		}
 	}
 }
+
+// windows启动redis命令
+/*
+redis-server.exe redis.windows.conf
+*/
