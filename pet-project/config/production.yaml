@@ -1,5 +1,5 @@
 database:
-  host: mysql
+  host: 172.17.0.1
   port: 3306
   username: petproject
   password: YhKiwmATtRJ2Jhme
@@ -7,7 +7,7 @@ database:
   charset: utf8mb4
 
 redis:
-  host: redis
+  host: 172.17.0.1
   port: 6379
   password:
   DB: 0
