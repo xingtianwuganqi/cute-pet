@@ -25,7 +25,7 @@ func AdminConfig(r *gin.Engine) {
 				Port:         strconv.Itoa(settings.Conf.Database.Port),
 				User:         settings.Conf.Database.Username,
 				Pwd:          settings.Conf.Database.Password,
-				Name:         "cutepet",
+				Name:         settings.Conf.Database.DataBase,
 				MaxIdleConns: 50,
 				MaxOpenConns: 150,
 				Driver:       config.DriverMysql,
