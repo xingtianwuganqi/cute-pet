@@ -21,7 +21,7 @@ func ReloadLocalBundle() *i18n.Bundle {
 }
 
 func loadMessageFiles(b *i18n.Bundle) {
-	files, err := os.ReadDir("locales")
+	files, err := os.ReadDir("/locales")
 	if err != nil {
 		log.Fatalf("failed to read locales directory: %v", err)
 	}
@@ -30,7 +30,7 @@ func loadMessageFiles(b *i18n.Bundle) {
 		if file.IsDir() {
 			continue
 		}
-		b.MustLoadMessageFile("locales/" + file.Name())
+		b.MustLoadMessageFile("/locales/" + file.Name())
 	}
 }
 
