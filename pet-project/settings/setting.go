@@ -58,13 +58,13 @@ func getEnvironment() string {
 
 // LoadConfig 加载配置文件
 func LoadConfig() error {
-	configFile := "config/local.yaml" // 默认使用开发环境配置
+	configFile := "" // 默认使用开发环境配置
 	if env == "production" {
-		configFile = "config/production.yaml"
+		configFile = "/config/production.yaml"
 	} else if env == "dev" {
-		configFile = "config/dev.yaml"
+		configFile = "/config/dev.yaml"
 	} else {
-		configFile = "config/local.yaml"
+		configFile = "/config/local.yaml"
 	}
 	// 读取配置文件
 	data, err := os.ReadFile(configFile)

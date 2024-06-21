@@ -25,6 +25,11 @@ COPY --from=builder /config /config
 ARG PORT
 # 暴露端口
 EXPOSE ${PORT}
+
+# Example command to print the values
+RUN echo "ENVIRONMENT is $ENVIRONMENT"
+RUN echo "PORT is $PORT"
+
 # 运行应用
 CMD ["/app/main"]
 
