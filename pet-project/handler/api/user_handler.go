@@ -37,13 +37,13 @@ func GetTencentCode(c *gin.Context) {
 
 	err := service.SendEmail(recipient, subject, body, smptServer, smptPort, username, password)
 	if err != nil {
-		response.Fail(c, response.ApiCode.ServerErr, response.ApiMsg.ServerErr)
+		response.Fail(c, response.ApiCode.ServerErr, err.Error())
 		return
 	}
 	// 将code保存到redis，设置10分钟失效
 	saveErr := service.SaveAccountCodeInRedis(c, email, code)
 	if saveErr != nil {
-		response.Fail(c, response.ApiCode.ServerErr, response.ApiMsg.ServerErr)
+		response.Fail(c, response.ApiCode.ServerErr, saveErr.Error())
 		return
 	}
 
