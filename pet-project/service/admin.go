@@ -12,56 +12,35 @@ import (
 	_ "github.com/GoAdminGroup/themes/adminlte" // 引入主题，必须引入，不然报错
 	"github.com/gin-gonic/gin"
 	"pet-project/generate"
+	"pet-project/settings"
+	"strconv"
 )
 
 func AdminConfig(r *gin.Engine) {
 	eng := engine.Default()
-	//cfg := config.Config{
-	//	Databases: config.DatabaseList{
-	//		"default": {
-	//			Host:         settings.Conf.Database.Host,
-	//			Port:         strconv.Itoa(settings.Conf.Database.Port),
-	//			User:         settings.Conf.Database.Username,
-	//			Pwd:          settings.Conf.Database.Password,
-	//			Name:         "cutepet",
-	//			MaxIdleConns: 50,
-	//			MaxOpenConns: 150,
-	//			Driver:       config.DriverMysql,
-	//		},
-	//	},
-	//	UrlPrefix: "admin",
-	//	Store: config.Store{
-	//		Path:   "./uploads",
-	//		Prefix: "uploads",
-	//	},
-	//	Theme:    "adminlte",
-	//	Debug:    true,
-	//	Language: language.CN,
-	//}
 	cfg := config.Config{
 		Databases: config.DatabaseList{
 			"default": {
-				Host:         "127.0.0.1",
-				Port:         "3306",
-				User:         "root",
-				Pwd:          "",
-				Name:         "cutepet",
+				Host:         settings.Conf.Database.Host,
+				Port:         strconv.Itoa(settings.Conf.Database.Port),
+				User:         settings.Conf.Database.Username,
+				Pwd:          settings.Conf.Database.Password,
+				Name:         settings.Conf.Database.DataBase,
 				MaxIdleConns: 50,
 				MaxOpenConns: 150,
 				Driver:       config.DriverMysql,
 			},
 		},
-		UrlPrefix: "admin", // 访问网站的前缀
-		IndexUrl:  "/",
-		// Store 必须设置且保证有写权限，否则增加不了新的管理员用户
+		UrlPrefix: "admin",
 		Store: config.Store{
 			Path:   "./uploads",
 			Prefix: "uploads",
 		},
+		Theme:    "adminlte",
+		Debug:    true,
 		Language: language.CN,
 	}
 	r.Static("/uploads", "./uploads")
-	//eng.HTML("GET", "/admin", datamodel.GetContent)
 	err := eng.AddConfig(&cfg).AddGenerators(generate.Generators).Use(r)
 	if err != nil {
 		panic(err)

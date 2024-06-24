@@ -12,8 +12,8 @@ COPY ./config /config
 #这将生成一个静态二进制文件，它不依赖于系统的C库（如glibc或musl libc），因此可以在任何Linux系统上运行。
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o main .
 # 设置环境变量
-ARG ENVIRONMENT
-ENV ENVIRONMENT ${ENVIRONMENT}
+#ARG ENVIRONMENT
+#ENV ENVIRONMENT ${ENVIRONMENT}
 
 # 第二阶段：运行Go应用
 FROM alpine:latest
@@ -21,10 +21,16 @@ WORKDIR /app
 # 从builder阶段复制编译好的应用到当前镜像
 COPY --from=builder /app/main /app
 COPY --from=builder /config /config
-# 设置环境变量
-ARG PORT
-# 暴露端口
-EXPOSE ${PORT}
+COPY --from=builder /app/locales /app/locales
+
+## 设置环境变量
+#ARG PORT
+## 暴露端口
+#EXPOSE ${PORT}
+# Example command to print the values
+#RUN echo "ENVIRONMENT is $ENVIRONMENT"
+#RUN echo "PORT is $PORT"
+
 # 运行应用
 CMD ["/app/main"]
 

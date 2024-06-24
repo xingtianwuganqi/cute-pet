@@ -1,7 +1,7 @@
 package routers
 
 import (
-	handler "pet-project/handler/api"
+	"pet-project/handler"
 	"pet-project/middleware"
 
 	"github.com/gin-gonic/gin"

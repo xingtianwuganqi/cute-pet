@@ -6,6 +6,7 @@ import (
 	"golang.org/x/text/language"
 	"log"
 	"os"
+	"path/filepath"
 )
 
 // ReloadLocalBundle ReloadThird 加载本地国际化文件
@@ -21,7 +22,8 @@ func ReloadLocalBundle() *i18n.Bundle {
 }
 
 func loadMessageFiles(b *i18n.Bundle) {
-	files, err := os.ReadDir("locales")
+	localesDir := "locales"
+	files, err := os.ReadDir(localesDir)
 	if err != nil {
 		log.Fatalf("failed to read locales directory: %v", err)
 	}
@@ -30,7 +32,8 @@ func loadMessageFiles(b *i18n.Bundle) {
 		if file.IsDir() {
 			continue
 		}
-		b.MustLoadMessageFile("locales/" + file.Name())
+		// 使用绝对路径
+		b.MustLoadMessageFile(filepath.Join(localesDir, file.Name()))
 	}
 }
 
