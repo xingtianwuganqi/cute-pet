@@ -5,7 +5,6 @@ import (
 	"pet-project/db"
 	"pet-project/models"
 	"pet-project/response"
-	"reflect"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -16,15 +15,10 @@ func PetInfoCreate(c *gin.Context) {
 	userId := c.MustGet("userId").(uint)
 	var petInfo models.PetInfo
 	if err := c.ShouldBind(&petInfo); err != nil {
-		log.Println(err)
 		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 		return
 	}
 
-	// 如果token的userId和参数的userId不一样，说明不是同一个人
-	log.Println("userId is", userId)
-	log.Println("+++++++", reflect.TypeOf(petInfo.UserId), petInfo.UserId, petInfo.PetType)
-	log.Println("0000", c.PostForm("pet_type"))
 	if petInfo.UserId != userId {
 		response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
 		return
@@ -105,14 +99,14 @@ func GetCustomActionList(c *gin.Context) {
 func GetRecordList(c *gin.Context) {
 	var userId = c.MustGet("userId").(uint)
 	var pageNum = c.PostForm("pageNum")
-	var pageSize = c.Query("pageSize")
+	var pageSize = c.PostForm("pageSize")
 	num, err := strconv.Atoi(pageNum)
 	if err != nil {
 		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 		return
 	}
-	size, err := strconv.Atoi(pageSize)
-	if err != nil {
+	size, sizeErr := strconv.Atoi(pageSize)
+	if sizeErr != nil {
 		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 		return
 	}
