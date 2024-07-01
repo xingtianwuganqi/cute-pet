@@ -2,7 +2,6 @@ package models
 
 import (
 	"gorm.io/gorm"
-	"time"
 )
 
 // RecordList Type 是日常还花销
@@ -64,22 +63,19 @@ type PetCustomConsumeType struct {
 // PetInfo
 /*
 pet_type : 0:默认值，1：猫咪，2：狗，3：其他
-SteriliTime：绝育时间
 */
 type PetInfo struct {
 	gorm.Model
-	User          UserInfo `json:"user" gorm:"foreignKey:UserId"`
-	UserId        uint     `json:"userId" form:"userId"`
-	PetType       uint     `json:"pet_type" form:"pet_type" gorm:"default:0"`
-	Avatar        string   `json:"avatar" form:"avatar" gorm:"size:64"`
-	Name          string   `json:"name" form:"name" gorm:"size:32"`
-	Age           uint     `json:"age" form:"age" gorm:"default:0"`
-	Gender        uint     `json:"gender" form:"gender" gorm:"default:0"`
-	BirthDay      string   `json:"birthDay" form:"birthDay" gorm:"size:32"`
-	HomeDay       time.Time
-	Sterilization uint      `json:"sterilization" form:"sterilization" gorm:"default:0"`
-	SteriliTime   time.Time `json:"steriliTime" form:"steriliTime" gorm:"default:0"`
-	Desc          string    `json:"Desc" form:"Desc" gorm:"size:255"`
-	Weight        float32   `json:"weight" form:"weight" gorm:"default:0"`
-	Unit          string    `json:"unit" form:"unit" gorm:"size:32"`
+	User     UserInfo `json:"user" gorm:"foreignKey:UserId"`
+	UserId   uint     `json:"userId" form:"userId"`
+	PetType  uint     `json:"pet_type" form:"pet_type" gorm:"default:0"`
+	Avatar   string   `json:"avatar" form:"avatar" gorm:"size:64"`
+	Name     string   `json:"name" form:"name" gorm:"size:32"`
+	Age      uint     `json:"age" form:"age" gorm:"default:0"`
+	Gender   uint     `json:"gender" form:"gender" gorm:"default:0"`
+	BirthDay string   `json:"birthDay" form:"birthDay" gorm:"size:32"`
+	HomeDay  string   `json:"homeDay" form:"homeDay" gorm:"size:32"`
+	Desc     string   `json:"Desc" form:"Desc" gorm:"size:255"`
+	Weight   float32  `json:"weight" form:"weight" gorm:"default:0"`
+	Unit     string   `json:"unit" form:"unit" gorm:"size:32"`
 }

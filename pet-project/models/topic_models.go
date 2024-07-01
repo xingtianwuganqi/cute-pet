@@ -11,15 +11,7 @@ type TopicModel struct {
 	Tags    []uint   `json:"tags"`
 }
 
-func (TopicModel) TableName() string {
-	return "topic_models"
-}
-
 type TagModel struct {
 	gorm.Model
 	TagName string `json:"tagName" form:"tagName"`
-}
-
-func (TagModel) TableName() string {
-	return "tag_models"
 }
