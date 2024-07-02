@@ -18,14 +18,22 @@ func RegisterRecordRouter(r *gin.Engine) {
 
 	actionRouter := r.Group("v1/action")
 	{
-		// 获取公共的列表
+		// 获取日常列表
 		actionRouter.GET("/list", handler.GetPetActionList)
 		// 用户获取自己的列表
 		actionRouter.GET("/custom/list", middleware.JWTTokenMiddleware(), handler.GetCustomActionList)
-		// 只有管理账号可以创建用户
-		actionRouter.POST("/create/action", handler.CreatePetActionType)
 		// 用户自己创建
 		actionRouter.POST("/create/custom", middleware.JWTTokenMiddleware(), handler.CreatePetCustomType)
 
+	}
+
+	consumerRouter := r.Group("v1/consumer")
+	{
+		// 用户获取花销列表
+		consumerRouter.GET("/list", handler.GetPetConsumeList)
+		// 用户获取自己创建的花销列表
+		consumerRouter.POST("/custom/list", middleware.JWTTokenMiddleware(), handler.GetPetCustomConsumeList)
+		// 创建或者更新花销
+		consumerRouter.POST("/create", middleware.JWTTokenMiddleware(), handler.CreateConsumeAction)
 	}
 }

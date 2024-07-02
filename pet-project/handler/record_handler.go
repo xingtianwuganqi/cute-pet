@@ -112,10 +112,56 @@ func GetRecordList(c *gin.Context) {
 	}
 	offset := (num - 1) * size
 	var recordList []models.RecordList
-	result := db.DB.Where("userId=?", userId).Offset(offset).Limit(size).Find(&recordList)
+	result := db.DB.Where("user_id=?", userId).Offset(offset).Limit(size).Find(&recordList)
 	if result.Error != nil {
 		response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
 		return
 	}
 	response.Success(c, recordList)
+}
+
+// GetPetConsumeList 获取花销列表
+func GetPetConsumeList(c *gin.Context) {
+	var consumeModel []models.PetConsumeType
+	result := db.DB.Model(&models.PetConsumeType{}).Find(&consumeModel)
+	if result.Error != nil {
+		response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
+		return
+	}
+	response.Success(c, consumeModel)
+}
+
+// GetPetCustomConsumeList 获取用户自己创建的花销列表
+func GetPetCustomConsumeList(c *gin.Context) {
+	var userid = c.MustGet("userId").(uint)
+	pageNum := c.PostForm("pageNum")
+	pageSize := c.PostForm("pageSize")
+	num, _ := strconv.Atoi(pageNum)
+	size, _ := strconv.Atoi(pageSize)
+	offset := (num - 1) * size
+	var customTypes []models.PetCustomConsumeType
+	findResult := db.DB.Model(&models.PetCustomConsumeType{}).Where("user_id = ?", userid).Offset(offset).Limit(size).Find(&customTypes)
+	if findResult.Error != nil {
+		response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
+		return
+	}
+	response.Success(c, customTypes)
+}
+
+func CreateConsumeAction(c *gin.Context) {
+	var userId = c.MustGet("userId").(uint)
+	var model models.PetCustomConsumeType
+	if err := c.ShouldBind(&model); err != nil {
+		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
+		return
+	}
+	model.UserId = userId
+	// 如果model包含主键，则更新（update）所有字段，如果不包含主键，则create
+	result := db.DB.Save(&model)
+	if result.Error != nil {
+		response.Fail(c, response.ApiCode.CreateErr, response.ApiMsg.CreateErr)
+		return
+	}
+	response.Success(c, models.EmptyModel{})
+
 }
