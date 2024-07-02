@@ -64,7 +64,7 @@ func LoadConfig() error {
 	} else if env == "dev" {
 		configFile = "/config/dev.yaml"
 	} else {
-		configFile = "/config/local.yaml"
+		configFile = "config/local.yaml"
 	}
 	// 读取配置文件
 	data, err := os.ReadFile(configFile)
