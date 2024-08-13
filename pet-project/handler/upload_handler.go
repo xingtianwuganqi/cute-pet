@@ -10,7 +10,7 @@ import (
 
 // GetQiNiuToken 获取七牛 tokan
 func GetQiNiuToken(c *gin.Context) {
-	bucket := ""
+	bucket := "petproject"
 	putPolicy := storage.PutPolicy{
 		Scope: bucket,
 	}
