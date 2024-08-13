@@ -38,8 +38,10 @@ type Config struct {
 	} `yaml:"email_service"`
 
 	ApiKeys struct {
-		Google   string `yaml:"google"`
-		Facebook string `yaml:"facebook"`
+		Google         string `yaml:"google"`
+		Facebook       string `yaml:"facebook"`
+		QiniuAccessKey string `yaml:"qiniuAccessKey"`
+		QiniuSecretKey string `yaml:"qiniuSecretKey"`
 	} `yaml:"api_keys"`
 }
 

@@ -28,3 +28,5 @@ email_service:
 api_keys:
   google: test-google-api-key
   facebook: test-facebook-api-key
+  qiniuAccessKey: 1vLUgTSJEyyElB_EFpsCzua84QJJqrtrPrueICw2
+  qiniuSecretKey: QvOlYbG0my-CGh7nfjnBnOxVP1j3ClqhR1Ocf0Ug

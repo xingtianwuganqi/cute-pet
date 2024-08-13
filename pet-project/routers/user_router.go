@@ -3,6 +3,7 @@ package routers
 import (
 	"github.com/gin-gonic/gin"
 	"pet-project/handler"
+	"pet-project/middleware"
 )
 
 func RegisterUserRouter(r *gin.Engine) {
@@ -12,6 +13,7 @@ func RegisterUserRouter(r *gin.Engine) {
 		userRouter.POST("/login", handler.UserPhoneLogin)
 		userRouter.POST("/tencent/code", handler.GetTencentCode)
 		userRouter.POST("/find/password", handler.UserFindPassword)
+		userRouter.POST("/upload", middleware.JWTTokenMiddleware(), handler.GetQiNiuToken)
 	}
 
 }
