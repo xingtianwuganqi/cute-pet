@@ -63,6 +63,8 @@ type PetCustomConsumeType struct {
 // PetInfo
 /*
 pet_type : 0:默认值，1：猫咪，2：狗，3：其他
+Unit: 1:kg 2:g 3:斤
+Gender：1:公 2:母
 */
 type PetInfo struct {
 	gorm.Model
