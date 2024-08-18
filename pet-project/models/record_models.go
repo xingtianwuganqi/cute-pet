@@ -68,9 +68,9 @@ Gender：1:公 2:母
 */
 type PetInfo struct {
 	gorm.Model
-	User     UserInfo `json:"user" gorm:"foreignKey:UserId"`
+	User     UserInfo `json:"user" gorm:"foreignKey:UserId;constraint:OnDelete:CASCADE;"`
 	UserId   uint     `json:"userId" form:"userId"`
-	PetType  uint     `json:"pet_type" form:"pet_type" gorm:"default:0"`
+	PetType  uint     `json:"petType" form:"petType" gorm:"default:0"`
 	Avatar   string   `json:"avatar" form:"avatar" gorm:"size:64"`
 	Name     string   `json:"name" form:"name" gorm:"size:32"`
 	Age      uint     `json:"age" form:"age" gorm:"default:0"`

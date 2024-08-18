@@ -19,8 +19,7 @@ type UserInfo struct {
 
 type SuggestionModel struct {
 	gorm.Model
-	UserId  uint `json:"userId"`
-	User    UserInfo
+	UserId  uint   `json:"userId" gorm:"size:32"`
 	Contact string `json:"contact" gorm:"size:32"`
 	Content string `json:"content" gorm:"size:256"`
 }

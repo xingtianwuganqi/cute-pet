@@ -71,6 +71,10 @@ type Codes struct {
 
 	CreateErr   uint
 	UserNotFont uint
+	// 数据不存在
+	DataNotExit uint
+	// 更新失败
+	UploadErr uint
 }
 
 var ApiCode = &Codes{
@@ -94,6 +98,8 @@ var ApiCode = &Codes{
 	PhoneUsed:     432,
 	CreateErr:     433,
 	UserNotFont:   434,
+	DataNotExit:   435,
+	UploadErr:     436,
 }
 
 type Messages struct {
@@ -168,6 +174,8 @@ type Messages struct {
 	CreateErr string
 	// MSG_CREATE_ERR = '创建失败'
 	UserNotFound string
+	DataNotExit  string
+	UploadErr    string
 }
 
 var ApiMsg = &Messages{
@@ -191,4 +199,6 @@ var ApiMsg = &Messages{
 	PhoneUsed:     "该手机号已被使用",
 	CreateErr:     "创建失败",
 	UserNotFound:  "用户不存在",
+	DataNotExit:   "数据不存在",
+	UploadErr:     "更新失败",
 }

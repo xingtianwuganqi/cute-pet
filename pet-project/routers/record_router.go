@@ -10,10 +10,17 @@ import (
 func RegisterRecordRouter(r *gin.Engine) {
 	recordRouter := r.Group("/v1/record")
 	{
-		recordRouter.GET("/pet/action/list", handler.GetPetActionList)
-		recordRouter.POST("/pet/create", middleware.JWTTokenMiddleware(), handler.PetInfoCreate)
-		recordRouter.POST("/pet/create/action", handler.CreatePetActionType)
 		recordRouter.GET("/list", middleware.JWTTokenMiddleware(), handler.GetRecordList)
+	}
+
+	petRouter := r.Group("/v1/pet")
+	{
+		petRouter.GET("/list", middleware.JWTTokenMiddleware(), handler.GetPetList)
+		petRouter.POST("/create", middleware.JWTTokenMiddleware(), handler.PetInfoCreate)
+		petRouter.PUT("/update", middleware.JWTTokenMiddleware(), handler.UpdatePetInfo)
+		petRouter.DELETE("/delete/:id", middleware.JWTTokenMiddleware(), handler.DeletePetInfo)
+		petRouter.GET("/action/list", middleware.JWTTokenMiddleware(), handler.GetPetActionList)
+		petRouter.POST("/create/action", middleware.JWTTokenMiddleware(), handler.CreatePetActionType)
 	}
 
 	actionRouter := r.Group("v1/action")

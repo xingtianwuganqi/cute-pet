@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"errors"
+	"gorm.io/gorm"
 	"log"
 	"pet-project/db"
 	"pet-project/models"
@@ -13,21 +15,97 @@ import (
 // PetInfoCreate 提交宠物详情
 func PetInfoCreate(c *gin.Context) {
 	userId := c.MustGet("userId").(uint)
-	var petInfo models.PetInfo
+	var petInfo = models.PetInfo{}
 	if err := c.ShouldBind(&petInfo); err != nil {
+		log.Println(err.Error())
 		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 		return
 	}
-
-	if petInfo.UserId != userId {
-		response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
-		return
-	}
-
-	result := db.DB.Create(&petInfo)
+	petInfo.UserId = userId
+	// 忽略User是因为ShouldBind会创建一个User默认值，导致插入一条新的用户数据
+	result := db.DB.Omit("User").Create(&petInfo)
 	if result.Error != nil {
 		log.Println(result.Error)
 		response.Fail(c, response.ApiCode.CreateErr, response.ApiMsg.CreateErr)
+		return
+	}
+	response.Success(c, nil)
+}
+
+// GetPetList 获取创建的宠物列表
+func GetPetList(c *gin.Context) {
+	var uerId = c.MustGet("userId").(uint)
+	var petList []models.PetInfo
+	var pageModel models.PageModel
+	if err := c.ShouldBind(&pageModel); err != nil {
+		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
+		return
+	}
+	offset := (pageModel.PageNum - 1) * pageModel.PageSize
+	result := db.DB.Model(&models.PetInfo{}).
+		Where("user_id = ?", uerId).
+		Offset(offset).Limit(pageModel.PageSize).
+		Order("created_at DESC").
+		Find(&petList)
+
+	if result.Error != nil {
+		response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
+		return
+	}
+	response.Success(c, petList)
+}
+
+// UpdatePetInfo 更新宠物信息
+func UpdatePetInfo(c *gin.Context) {
+	userId := c.MustGet("userId").(uint)
+	var petInfo models.PetInfo
+	if err := c.ShouldBind(&petInfo); err != nil {
+		log.Println(err.Error())
+		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
+		return
+	}
+	if petInfo.ID == 0 {
+		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
+		return
+	}
+	// 忽略User是因为ShouldBind会创建一个User默认值，导致插入一条新的用户数据
+	result := db.DB.Model(&models.PetInfo{}).Where("id = ? AND user_id = ?", petInfo.ID, userId).Updates(models.PetInfo{
+		UserId:   petInfo.UserId,
+		PetType:  petInfo.PetType,
+		Avatar:   petInfo.Avatar,
+		Name:     petInfo.Name,
+		Gender:   petInfo.Gender,
+		BirthDay: petInfo.BirthDay,
+		HomeDay:  petInfo.HomeDay,
+		Weight:   petInfo.Weight,
+		Unit:     petInfo.Unit,
+		Desc:     petInfo.Desc,
+	})
+	if result.Error != nil {
+		log.Println(result.Error)
+		response.Fail(c, response.ApiCode.UploadErr, response.ApiMsg.UploadErr)
+		return
+	}
+	if result.RowsAffected == 0 {
+		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
+		return
+	}
+	response.Success(c, nil)
+}
+
+// DeletePetInfo 删除创建的宠物详情
+func DeletePetInfo(c *gin.Context) {
+	userId := c.MustGet("userId").(uint)
+	petId := c.Param("id")
+	petInfo := models.PetInfo{}
+	findResult := db.DB.Model(&models.PetInfo{}).Where("id = ? AND user_id", petId, userId).First(&petInfo)
+	if errors.Is(findResult.Error, gorm.ErrRecordNotFound) {
+		response.Fail(c, response.ApiCode.NotFoundErr, response.ApiMsg.NotFoundErr)
+		return
+	}
+	result := db.DB.Delete(&petInfo, "id = ?", petId)
+	if result.Error != nil {
+		response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
 		return
 	}
 	response.Success(c, nil)
