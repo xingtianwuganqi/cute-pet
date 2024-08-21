@@ -16,7 +16,7 @@ import (
 func PetInfoCreate(c *gin.Context) {
 	userId := c.MustGet("userId").(uint)
 	var petInfo = models.PetInfo{}
-	if err := c.ShouldBind(&petInfo); err != nil {
+	if err := c.ShouldBindQuery(&petInfo); err != nil {
 		log.Println(err.Error())
 		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 		return
