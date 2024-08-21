@@ -35,6 +35,6 @@ type PetCustomTypeInfo struct {
 }
 
 type PageModel struct {
-	PageNum  int `json:"pageNum" form:"pageNum"`
-	PageSize int `json:"pageSize" form:"pageSize"`
+	PageNum  int `json:"pageNum" form:"pageNum" binding:"required"`
+	PageSize int `json:"pageSize" form:"pageSize" binding:"required"`
 }
