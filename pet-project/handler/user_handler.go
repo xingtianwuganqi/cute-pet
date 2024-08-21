@@ -129,7 +129,7 @@ func UserRegister(c *gin.Context) {
 			return
 		}
 		data := models.LoginUserInfo{
-			UserId: user.ID,
+			ID:     user.ID,
 			Phone:  user.Phone,
 			Avatar: user.Avatar,
 			Email:  user.Email,
@@ -180,7 +180,7 @@ func UserPhoneLogin(c *gin.Context) {
 			return
 		}
 		data := models.LoginUserInfo{
-			UserId: user.ID,
+			ID:     user.ID,
 			Phone:  user.Phone,
 			Avatar: user.Avatar,
 			Email:  user.Email,

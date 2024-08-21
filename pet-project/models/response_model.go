@@ -16,7 +16,7 @@ type LoginInfo struct {
 }
 
 type LoginUserInfo struct {
-	UserId uint   `json:"userId" form:"userId"`
+	ID     uint   `json:"ID" form:"ID"`
 	Phone  string `json:"phone" form:"phone"`
 	Email  string `json:"email" form:"email"`
 	Avatar string `json:"avatar" form:"avatar"`
