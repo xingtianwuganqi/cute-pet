@@ -16,6 +16,7 @@ require (
 	gopkg.in/yaml.v3 v3.0.1
 	gorm.io/driver/mysql v1.5.1
 	gorm.io/gorm v1.25.4
+	github.com/qiniu/go-sdk/v7 v7.21.1
 )
 
 require (
