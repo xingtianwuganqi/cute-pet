@@ -16,7 +16,7 @@ import (
 func PetInfoCreate(c *gin.Context) {
 	userId := c.MustGet("userId").(uint)
 	var petInfo = models.PetInfo{}
-	if err := c.ShouldBindQuery(&petInfo); err != nil {
+	if err := c.ShouldBind(&petInfo); err != nil {
 		log.Println(err.Error())
 		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 		return
@@ -37,7 +37,7 @@ func GetPetList(c *gin.Context) {
 	var uerId = c.MustGet("userId").(uint)
 	var petList []models.PetInfo
 	var pageModel models.PageModel
-	if err := c.ShouldBind(&pageModel); err != nil {
+	if err := c.ShouldBindQuery(&pageModel); err != nil {
 		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 		return
 	}

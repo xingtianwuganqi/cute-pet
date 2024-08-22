@@ -71,9 +71,8 @@ type PetInfo struct {
 	User     UserInfo `json:"user" gorm:"foreignKey:UserId;constraint:OnDelete:CASCADE;"`
 	UserId   uint     `json:"userId" form:"userId"`
 	PetType  uint     `json:"petType" form:"petType" gorm:"default:0"`
-	Avatar   string   `json:"avatar" form:"avatar" gorm:"size:64"`
-	Name     string   `json:"name" form:"name" gorm:"size:32"`
-	Age      uint     `json:"age" form:"age" gorm:"default:0"`
+	Avatar   string   `json:"avatar" form:"avatar" gorm:"size:64" binding:"required"`
+	Name     string   `json:"name" form:"name" gorm:"size:32" binding:"required"`
 	Gender   uint     `json:"gender" form:"gender" gorm:"default:0"`
 	BirthDay string   `json:"birthDay" form:"birthDay" gorm:"size:32"`
 	HomeDay  string   `json:"homeDay" form:"homeDay" gorm:"size:32"`
