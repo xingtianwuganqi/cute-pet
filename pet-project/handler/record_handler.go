@@ -17,7 +17,6 @@ func PetInfoCreate(c *gin.Context) {
 	userId := c.MustGet("userId").(uint)
 	var petInfo = models.PetInfo{}
 	if err := c.ShouldBind(&petInfo); err != nil {
-		log.Println(err.Error())
 		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 		return
 	}
@@ -25,7 +24,6 @@ func PetInfoCreate(c *gin.Context) {
 	// 忽略User是因为ShouldBind会创建一个User默认值，导致插入一条新的用户数据
 	result := db.DB.Omit("User").Create(&petInfo)
 	if result.Error != nil {
-		log.Println(result.Error)
 		response.Fail(c, response.ApiCode.CreateErr, response.ApiMsg.CreateErr)
 		return
 	}
@@ -98,9 +96,11 @@ func DeletePetInfo(c *gin.Context) {
 	userId := c.MustGet("userId").(uint)
 	petId := c.Param("id")
 	petInfo := models.PetInfo{}
-	findResult := db.DB.Model(&models.PetInfo{}).Where("id = ? AND user_id", petId, userId).First(&petInfo)
+	findResult := db.DB.Model(&models.PetInfo{}).
+		Where("id = ? AND user_id = ?", petId, userId).
+		First(&petInfo)
 	if errors.Is(findResult.Error, gorm.ErrRecordNotFound) {
-		response.Fail(c, response.ApiCode.NotFoundErr, response.ApiMsg.NotFoundErr)
+		response.Fail(c, response.ApiCode.DataNotExit, response.ApiMsg.DataNotExit)
 		return
 	}
 	result := db.DB.Delete(&petInfo, "id = ?", petId)
@@ -112,20 +112,21 @@ func DeletePetInfo(c *gin.Context) {
 }
 
 // CreatePetActionType 添加宠物行为
-func CreatePetActionType(c *gin.Context) {
-	var actionModel models.PetActionType
-	if err := c.ShouldBind(&actionModel); err != nil {
-		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
-		return
-	}
-
-	result := db.DB.Create(&actionModel)
-	if result.Error != nil {
-		response.Fail(c, response.ApiCode.CreateErr, response.ApiMsg.CreateErr)
-		return
-	}
-	response.Success(c, nil)
-}
+//func CreatePetActionType(c *gin.Context) {
+//	var actionModel models.PetActionType
+//	if err := c.ShouldBind(&actionModel); err != nil {
+//		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
+//		return
+//	}
+//
+//	result := db.DB.Create(&actionModel)
+//	if result.Error != nil {
+//		response.Fail(c, response.ApiCode.CreateErr, response.ApiMsg.CreateErr)
+//		return
+//	}
+//	response.Success(c, nil)
+//}
+//
 
 // GetPetActionList 获取宠物行为
 func GetPetActionList(c *gin.Context) {
@@ -138,15 +139,16 @@ func GetPetActionList(c *gin.Context) {
 	response.Success(c, petActionList)
 }
 
+// CreatePetCustomType 创建自定义日常
 func CreatePetCustomType(c *gin.Context) {
 	var userId = c.MustGet("userId").(uint)
 	var petCustomType models.PetCustomType
 	if err := c.ShouldBind(&petCustomType); err != nil {
 		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
+		return
 	}
-	log.Println("userId is", userId)
 	petCustomType.UserId = userId
-	result := db.DB.Create(&petCustomType)
+	result := db.DB.Omit("User").Create(&petCustomType)
 	if result.Error != nil {
 		response.Fail(c, response.ApiCode.CreateErr, response.ApiMsg.CreateErr)
 		return
@@ -163,7 +165,7 @@ func GetCustomActionList(c *gin.Context) {
 	// 定义为UserId的字段，GORM 自动将结构体字段名称转换为 user_id 作为数据库中的列名。
 	//result := db.DB.Preload("User").Where("user_id = ?", userId).Find(&customActionList)
 	// Select 或 Omit的字段，不会消失，会显示零值
-	result := db.DB.Model(&models.PetCustomType{}).Select("id, created_at, updated_at, deleted_at, custom_name, custom_icon").
+	result := db.DB.Model(&models.PetCustomType{}).
 		Order("created_at DESC").
 		Find(&customActionList, "user_id = ?", userId)
 	if result.Error != nil {
@@ -176,21 +178,14 @@ func GetCustomActionList(c *gin.Context) {
 // GetRecordList 查询记录列表
 func GetRecordList(c *gin.Context) {
 	var userId = c.MustGet("userId").(uint)
-	var pageNum = c.PostForm("pageNum")
-	var pageSize = c.PostForm("pageSize")
-	num, err := strconv.Atoi(pageNum)
-	if err != nil {
+	var pageModel models.PageModel
+	if err := c.ShouldBindQuery(&pageModel); err != nil {
 		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 		return
 	}
-	size, sizeErr := strconv.Atoi(pageSize)
-	if sizeErr != nil {
-		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
-		return
-	}
-	offset := (num - 1) * size
+	offset := (pageModel.PageNum - 1) * pageModel.PageSize
 	var recordList []models.RecordList
-	result := db.DB.Where("user_id=?", userId).Offset(offset).Limit(size).Find(&recordList)
+	result := db.DB.Where("user_id=?", userId).Offset(offset).Limit(pageModel.PageSize).Find(&recordList)
 	if result.Error != nil {
 		response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
 		return

@@ -20,7 +20,12 @@ func RegisterRecordRouter(r *gin.Engine) {
 		petRouter.PUT("/update", middleware.JWTTokenMiddleware(), handler.UpdatePetInfo)
 		petRouter.DELETE("/delete/:id", middleware.JWTTokenMiddleware(), handler.DeletePetInfo)
 		petRouter.GET("/action/list", middleware.JWTTokenMiddleware(), handler.GetPetActionList)
-		petRouter.POST("/create/action", middleware.JWTTokenMiddleware(), handler.CreatePetActionType)
+		petRouter.GET("/custom/list", middleware.JWTTokenMiddleware(), handler.GetCustomActionList)
+		petRouter.GET("/consume/list", middleware.JWTTokenMiddleware(), handler.GetPetConsumeList)
+		petRouter.POST("custom/create", middleware.JWTTokenMiddleware(), handler.CreatePetCustomType)
+		petRouter.GET("/custom/consume/list", middleware.JWTTokenMiddleware(), handler.GetPetCustomConsumeList)
+		petRouter.POST("/consume/create", middleware.JWTTokenMiddleware(), handler.CreateConsumeAction)
+		//petRouter.POST("/create/action", middleware.JWTTokenMiddleware(), handler.CreatePetActionType)
 	}
 
 	actionRouter := r.Group("v1/action")
