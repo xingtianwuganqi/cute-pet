@@ -69,15 +69,15 @@ type PetInfo struct {
 	gorm.Model
 	User     UserInfo `json:"user" gorm:"foreignKey:UserId;constraint:OnDelete:CASCADE;"`
 	UserId   uint     `json:"userId" form:"userId"`
-	PetType  uint     `json:"petType" form:"petType" gorm:"default:0"`
+	PetType  string   `json:"petType" form:"petType" gorm:"size:64"`
 	Avatar   string   `json:"avatar" form:"avatar" gorm:"size:64" binding:"required"`
 	Name     string   `json:"name" form:"name" gorm:"size:32" binding:"required"`
 	Gender   uint     `json:"gender" form:"gender" gorm:"default:0"`
 	BirthDay string   `json:"birthDay" form:"birthDay" gorm:"size:32"`
 	HomeDay  string   `json:"homeDay" form:"homeDay" gorm:"size:32"`
-	Desc     string   `json:"Desc" form:"Desc" gorm:"size:255"`
+	Desc     string   `json:"Desc" form:"Desc" gorm:"size:256"`
 	Weight   float32  `json:"weight" form:"weight" gorm:"default:0"`
-	Unit     string   `json:"unit" form:"unit" gorm:"size:32"`
+	Unit     uint     `json:"unit" form:"unit" gorm:"size:32"`
 }
 
 // AfterFind RecordList 查找其他字段
