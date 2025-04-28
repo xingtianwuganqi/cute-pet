@@ -67,18 +67,19 @@ func UpdatePetInfo(c *gin.Context) {
 		return
 	}
 	// 忽略User是因为ShouldBind会创建一个User默认值，导致插入一条新的用户数据
-	result := db.DB.Model(&models.PetInfo{}).Where("id = ? AND user_id = ?", petInfo.ID, userId).Updates(models.PetInfo{
-		UserId:   petInfo.UserId,
-		PetType:  petInfo.PetType,
-		Avatar:   petInfo.Avatar,
-		Name:     petInfo.Name,
-		Gender:   petInfo.Gender,
-		BirthDay: petInfo.BirthDay,
-		HomeDay:  petInfo.HomeDay,
-		Weight:   petInfo.Weight,
-		Unit:     petInfo.Unit,
-		Desc:     petInfo.Desc,
-	})
+	result := db.DB.Model(&models.PetInfo{}).Where("id = ? AND user_id = ?", petInfo.ID, userId).
+		Updates(models.PetInfo{
+			UserId:   petInfo.UserId,
+			PetType:  petInfo.PetType,
+			Avatar:   petInfo.Avatar,
+			Name:     petInfo.Name,
+			Gender:   petInfo.Gender,
+			BirthDay: petInfo.BirthDay,
+			HomeDay:  petInfo.HomeDay,
+			Weight:   petInfo.Weight,
+			Unit:     petInfo.Unit,
+			Desc:     petInfo.Desc,
+		})
 	if result.Error != nil {
 		log.Println(result.Error)
 		response.Fail(c, response.ApiCode.UploadErr, response.ApiMsg.UploadErr)

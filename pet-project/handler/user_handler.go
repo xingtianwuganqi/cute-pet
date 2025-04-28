@@ -212,6 +212,9 @@ func UserFindPassword(c *gin.Context) {
 			response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 			return
 		}
+	} else {
+		response.Fail(c, response.ApiCode.ParamLack, response.ApiMsg.ParamLack)
+		return
 	}
 	if errors.Is(findResult.Error, gorm.ErrRecordNotFound) {
 		response.Fail(c, response.ApiCode.UserNotFont, response.ApiMsg.UserNotFound)
@@ -264,4 +267,34 @@ func UserFindPassword(c *gin.Context) {
 			response.Success(c, map[string]interface{}{})
 		}
 	}
+}
+
+// UserUpdatePassword 用户更新密码
+func UserUpdatePassword(c *gin.Context) {
+	lang := c.MustGet("lang").(*i18n.Localizer)
+	originPassword := c.PostForm("originPassword")
+	newPassword := c.PostForm("newPassword")
+	confirmPassword := c.PostForm("confirmPassword")
+	if newPassword != confirmPassword {
+		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
+		return
+	}
+	var userId = c.MustGet("userId").(uint)
+	var user models.UserInfo
+	result := db.DB.Where("id = ?", userId).First(&user)
+	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+		response.Fail(c, response.ApiCode.UserNotFont, response.ApiMsg.UserNotFound)
+		return
+	}
+	if user.Password != originPassword {
+		msg := service.LocalizeMsg(lang, "PasswordErr")
+		response.Fail(c, response.ApiCode.ParamErr, msg)
+		return
+	}
+	result = db.DB.Model(&user).Where("id = ?", userId).Update("password", newPassword)
+	if result.Error != nil {
+		response.Fail(c, response.ApiCode.ServerErr, response.ApiMsg.ServerErr)
+		return
+	}
+	response.Success(c, map[string]interface{}{})
 }

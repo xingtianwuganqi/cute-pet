@@ -14,6 +14,7 @@ func RegisterUserRouter(r *gin.Engine) {
 		userRouter.POST("/tencent/code", handler.GetTencentCode)
 		userRouter.POST("/find/password", handler.UserFindPassword)
 		userRouter.POST("/upload", middleware.JWTTokenMiddleware(), handler.GetQiNiuToken)
+		userRouter.POST("/pwd/upload", middleware.JWTTokenMiddleware(), handler.UserUpdatePassword)
 	}
 
 }
