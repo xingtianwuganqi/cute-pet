@@ -15,7 +15,7 @@ import (
 	"time"
 )
 
-var key = []byte("伍c七Alz1θVx2ψLHNpfωv九nξ捌τD六053λwGμrMνRuegsη八γ陆jOBX8ρ三E9πFS零bδοmkχ7K6PβϵϕoZ五iυU一Jq柒ydYt四QhW4玖κCIαζTaι二σ")
+var key = []byte("thisis16bytekey!") // 刚好16字节
 
 func Md5String(s string) string {
 	timeStr := string(time.Now().UnixNano())
@@ -40,8 +40,8 @@ func GenerateDynamicParam() string {
 	return fmt.Sprintf("%d|%s", timestamp, randomString)
 }
 
-// 加密参数
-func encrypt(text string, key []byte) (string, error) {
+// Encrypt 加密参数
+func Encrypt(text string) (string, error) {
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		return "", err

@@ -1,2 +1,6 @@
+[Success]
+other = "Success"
+[Fail]
+other = "Fail"
 [UserExists]
 other = "User exists"

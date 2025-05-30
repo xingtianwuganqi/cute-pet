@@ -2,9 +2,8 @@ package handler
 
 import (
 	"errors"
-	"github.com/gin-gonic/gin"
-	"github.com/nicksnyder/go-i18n/v2/i18n"
-	"gorm.io/gorm"
+	"fmt"
+	"io"
 	"net/http"
 	"pet-project/db"
 	"pet-project/middleware"
@@ -14,30 +13,52 @@ import (
 	"pet-project/settings"
 	"pet-project/util"
 	"strconv"
+	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/nicksnyder/go-i18n/v2/i18n"
+	"gorm.io/gorm"
 )
 
-func GetTencentCode(c *gin.Context) {
+func GetEmailCode(c *gin.Context) {
 	// 验证码
 	lang := c.MustGet("lang").(*i18n.Localizer)
-	email := c.PostForm("email")
-	if len(email) == 0 {
+	var param models.SendCodeModel
+	paramErr := c.ShouldBind(&param)
+	if paramErr != nil {
+		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
+		return
+	}
+	// 需要加一个加密信息
+	encryptionStr, err := util.Decrypt(param.Code)
+	if err != nil {
+		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
+		return
+	}
+	// 判断encryptionStr是否今日日期
+	if len(encryptionStr) == 0 || encryptionStr != GetTodayDate() {
 		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 		return
 	}
 
+	if len(param.Email) == 0 {
+		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
+		return
+	}
+	email := param.Email
 	smptServer := settings.Conf.EmailService.Host
 	smptPort := settings.Conf.EmailService.Port
 	username := settings.Conf.EmailService.Username
 	password := settings.Conf.EmailService.Password
-	code := service.GenerateValidationCode(6)
+	code := service.GenerateValidationCode(4)
 	// 对方的邮箱
 	recipient := email
 	subject := service.LocalizeMsg(lang, "VerificationTitle")
 	body := service.LocalizeMsgCount(lang, "VerificationDesc", code)
 
-	err := service.SendEmail(recipient, subject, body, smptServer, smptPort, username, password)
-	if err != nil {
-		response.Fail(c, response.ApiCode.ServerErr, err.Error())
+	sendErr := service.SendEmail(recipient, subject, body, smptServer, smptPort, username, password)
+	if sendErr != nil {
+		response.Fail(c, response.ApiCode.ServerErr, sendErr.Error())
 		return
 	}
 	// 将code保存到redis，设置10分钟失效
@@ -51,6 +72,123 @@ func GetTencentCode(c *gin.Context) {
 		"code": http.StatusOK,
 		"data": gin.H{},
 	})
+}
+
+// GetPhoneCode 获取手机验证码
+func GetPhoneCode(c *gin.Context) {
+	// 手机验证码
+	var param models.SendCodeModel
+	if err := c.ShouldBind(&param); err != nil {
+		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
+		return
+	}
+	// 需要加一个加密信息
+	encryptionStr, err := util.Decrypt(param.Code)
+	if err != nil {
+		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
+		return
+	}
+	// 判断encryptionStr是否今日日期
+	if len(encryptionStr) == 0 || encryptionStr != GetTodayDate() {
+		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
+		return
+	}
+
+	phone := param.Phone
+	if len(phone) == 0 {
+		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
+		return
+	}
+
+	code := service.GenerateValidationCode(4)
+	url := fmt.Sprintf("https://push.spug.cc/send/gL1QGmWdKWjlRD65?key1=%s&key2=%s&key3=%s&targets=%s",
+		"[Pawpal]", code, "10", phone)
+	resp, err := http.Get(url)
+	if err != nil || resp.StatusCode != http.StatusOK {
+		response.Fail(c, response.ApiCode.Fail, response.ApiMsg.Fail)
+		return
+	}
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			response.Fail(c, response.ApiCode.ServerErr, response.ApiMsg.ServerErr)
+			return
+		}
+	}(resp.Body)
+
+	// 将code保存到redis，设置10分钟失效
+	saveErr := service.SaveAccountCodeInRedis(c, phone, code)
+	if saveErr != nil {
+		response.Fail(c, response.ApiCode.ServerErr, saveErr.Error())
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"code": http.StatusOK,
+		"data": gin.H{},
+	})
+}
+
+func GetTodayDate() string {
+	now := time.Now()
+	date := now.Format("2006-01-02")
+	return date
+}
+
+// GetEncryptionCode 获取今天的加密密钥
+// 该函数没有输入参数，但会使用当前请求的上下文 *gin.Context
+// 它首先调用 GetTodayDate() 获取今天的日期，然后使用 util.Encrypt() 对日期进行加密
+// 如果加密过程中发生错误，它会发送一个失败的 HTTP 响应并返回
+// 如果成功，它将返回一个包含加密密钥的 JSON 响应
+func GetEncryptionCode(c *gin.Context) {
+	// 调用 Encrypt 函数对今天的日期进行加密
+	encryptionCode, err := util.Encrypt(GetTodayDate())
+	if err != nil {
+		// 如果加密过程中出现错误，发送失败的 HTTP 响应
+		response.Fail(c, response.ApiCode.ServerErr, response.ApiMsg.ServerErr)
+		return
+	}
+	// 发送包含加密密钥的 JSON 响应
+	c.JSON(200, gin.H{
+		"code": http.StatusOK,
+		"data": encryptionCode,
+	})
+}
+
+// CheckRdbCode 校验验证码
+func CheckRdbCode(c *gin.Context) {
+	var param models.SendCodeModel
+	if err := c.ShouldBind(&param); err != nil {
+		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
+		return
+	}
+	if len(param.Phone) != 0 {
+		code, err := service.GetCodeFromRedis(c, param.Phone)
+		if err != nil {
+			// Redis 查询确实出错了，非 redis.Nil
+			response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
+			return
+		}
+		if code == param.Code {
+			response.Success(c, gin.H{})
+		} else {
+			response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
+		}
+
+	} else {
+		code, err := service.GetCodeFromRedis(c, param.Email)
+		if err != nil {
+			// Redis 查询确实出错了，非 redis.Nil
+			response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
+			return
+		}
+
+		if code == param.Code {
+			response.Success(c, gin.H{})
+		} else {
+			response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
+		}
+	}
 }
 
 // UserRegister 注册
@@ -217,7 +355,7 @@ func UserFindPassword(c *gin.Context) {
 		return
 	}
 	if errors.Is(findResult.Error, gorm.ErrRecordNotFound) {
-		response.Fail(c, response.ApiCode.UserNotFont, response.ApiMsg.UserNotFound)
+		response.Fail(c, response.ApiCode.UserNotFound, response.ApiMsg.UserNotFound)
 		return
 	} else {
 		// 验证验证码
@@ -272,10 +410,12 @@ func UserFindPassword(c *gin.Context) {
 // UserUpdatePassword 用户更新密码
 func UserUpdatePassword(c *gin.Context) {
 	lang := c.MustGet("lang").(*i18n.Localizer)
-	originPassword := c.PostForm("originPassword")
-	newPassword := c.PostForm("newPassword")
-	confirmPassword := c.PostForm("confirmPassword")
-	if newPassword != confirmPassword {
+	var updatePasswordInfo models.UploadPasswordModel
+	if err := c.ShouldBind(&updatePasswordInfo); err != nil {
+		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
+		return
+	}
+	if updatePasswordInfo.NewPassword != updatePasswordInfo.ConfirmPassword {
 		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 		return
 	}
@@ -283,15 +423,15 @@ func UserUpdatePassword(c *gin.Context) {
 	var user models.UserInfo
 	result := db.DB.Where("id = ?", userId).First(&user)
 	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-		response.Fail(c, response.ApiCode.UserNotFont, response.ApiMsg.UserNotFound)
+		response.Fail(c, response.ApiCode.UserNotFound, response.ApiMsg.UserNotFound)
 		return
 	}
-	if user.Password != originPassword {
+	if user.Password != updatePasswordInfo.Password {
 		msg := service.LocalizeMsg(lang, "PasswordErr")
 		response.Fail(c, response.ApiCode.ParamErr, msg)
 		return
 	}
-	result = db.DB.Model(&user).Where("id = ?", userId).Update("password", newPassword)
+	result = db.DB.Model(&user).Where("id = ?", userId).Update("password", updatePasswordInfo.Password)
 	if result.Error != nil {
 		response.Fail(c, response.ApiCode.ServerErr, response.ApiMsg.ServerErr)
 		return

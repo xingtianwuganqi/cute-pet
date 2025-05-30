@@ -76,7 +76,7 @@ func JWTTokenMiddleware() func(c *gin.Context) {
 		var user models.UserInfo
 		userResult := db.DB.Where("ID = ?", mc.UserId).Find(&user)
 		if errors.Is(userResult.Error, gorm.ErrRecordNotFound) {
-			response.Fail(c, response.ApiCode.UserNotFont, response.ApiMsg.UserNotFound)
+			response.Fail(c, response.ApiCode.UserNotFound, response.ApiMsg.UserNotFound)
 			return
 		}
 

@@ -8,8 +8,9 @@ import (
 
 // 还有一个问题，ShouldBind是动态获取userInfo的类型，并找到这个结构体里的值，要想被找到值，u结构内的值必须大写
 type user struct {
-	NickName string `json:"nickName" form:"nickName" binding:"required"`
-	Password string `json:"password" form:"password" binding:"required"`
+	NickName string `json:"nickName" form:"nickName"`
+	Password string `json:"password" form:"password" `
+	Code     int    `json:"code" form:"code"`
 }
 
 // QueryTestNetworking
@@ -28,13 +29,18 @@ func QueryTestNetworking(c *gin.Context) {
 }
 
 func FormTestNetworking(c *gin.Context) {
-	name := c.PostForm("nickName")
-	password := c.DefaultPostForm("password", "123")
-	code, _ := c.GetPostForm("code")
+	var param user
+	if err := c.ShouldBind(&param); err != nil {
+		c.JSON(200, gin.H{
+			"code":    400,
+			"message": "error",
+		})
+		return
+	}
 	data := map[string]interface{}{
-		"nickName": name,
-		"password": password,
-		"code":     code,
+		"nickName": param.NickName,
+		"password": param.Password,
+		"code":     param.Code,
 	}
 	c.JSON(http.StatusOK, data)
 }
@@ -51,9 +57,6 @@ func BindingNetworking(c *gin.Context) {
 	headerV := c.GetHeader("User-Agent")
 	log.Println("header is ", header)
 	log.Println("headerV is ", headerV)
-	nickName := c.PostForm("nickName")
-	password := c.DefaultPostForm("password", "123")
-	log.Println("nickName is ", nickName, password)
 	// 这里需要传的是值，所以加&，因为要改变的是userInfo根的值。而不是像拷贝过来一样，更改现值，原值不变
 	// 还有一个问题，ShouldBind是动态获取userInfo的类型，并找到这个结构体里的值，要想被找到值，u结构内的值必须大写
 	var userInfo user

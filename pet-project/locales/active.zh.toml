@@ -1,3 +1,7 @@
+[Success]
+other = "成功"
+[Fail]
+other = "失败"
 [UserExists]
 other = "用户已存在"
 [VerificationTitle]

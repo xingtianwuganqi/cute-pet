@@ -1,8 +1,10 @@
 package service
 
 import (
+	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/go-redis/redis/v8"
 	"gopkg.in/gomail.v2"
 	"math/rand"
 	"pet-project/db"
@@ -39,16 +41,27 @@ func SendEmail(recipient string,
 }
 
 // SaveAccountCodeInRedis 保存到redis
-func SaveAccountCodeInRedis(c *gin.Context, email string, code string) error {
+func SaveAccountCodeInRedis(c *gin.Context, email, code string) error {
+	key := fmt.Sprintf("verify_code:%s", email)
 	expiration := 10 * time.Minute
-	err := db.Rdb.Set(c, email, code, expiration).Err()
-	return err
+
+	if err := db.Rdb.Set(c, key, code, expiration).Err(); err != nil {
+		return err
+	}
+	return nil
 }
 
-// GetCodeFromRedis redis中取出code值
 func GetCodeFromRedis(c *gin.Context, email string) (string, error) {
-	value, err := db.Rdb.Get(c, email).Result()
-	return value, err
+	key := fmt.Sprintf("verify_code:%s", email)
+
+	value, err := db.Rdb.Get(c, key).Result()
+	if err != nil {
+		if errors.Is(err, redis.Nil) {
+			return "", nil
+		}
+		return "", err
+	}
+	return value, nil
 }
 
 // DeleteCodeFromRedis redis删除数据

@@ -38,3 +38,15 @@ type PageModel struct {
 	PageNum  int `json:"pageNum" form:"pageNum" binding:"required"`
 	PageSize int `json:"pageSize" form:"pageSize" binding:"required"`
 }
+
+type UploadPasswordModel struct {
+	Password        string `json:"password" form:"password"`
+	NewPassword     string `json:"newPassword" form:"newPassword"`
+	ConfirmPassword string `json:"confirmPassword" form:"confirmPassword"`
+}
+
+type SendCodeModel struct {
+	Phone string `json:"phone" form:"phone"`
+	Email string `json:"email" form:"email"`
+	Code  string `json:"code" form:"code" binding:"required"`
+}
