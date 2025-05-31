@@ -33,11 +33,8 @@ func Success(c *gin.Context, data interface{}) {
 
 // Fail 出错
 func Fail(c *gin.Context, code uint, msg string) {
-	Response(c, code, gin.H{}, msg)
-}
-
-func FailMsg(c *gin.Context, code uint, msg string) {
-	lang := c.MustGet("lang").(*i18n.Localizer)
-	message := service.LocalizeMsg(lang, msg)
+	lang, _ := c.Get("lang")
+	langObj := lang.(*i18n.Localizer)
+	message := service.LocalizeMsg(langObj, msg)
 	Response(c, code, gin.H{}, message)
 }

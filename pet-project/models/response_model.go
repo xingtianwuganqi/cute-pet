@@ -5,7 +5,7 @@ import "gorm.io/gorm"
 type RegisterInfo struct {
 	Phone    string `form:"phone" json:"phone"`
 	Password string `form:"password" json:"password"  binding:"required"`
-	Code     int    `form:"code" json:"code"  binding:"required"`
+	Code     string `form:"code" json:"code"  binding:"required"`
 	Email    string `form:"email" json:"email"`
 }
 

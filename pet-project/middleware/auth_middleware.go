@@ -2,10 +2,12 @@ package middleware
 
 import (
 	"errors"
+	"github.com/nicksnyder/go-i18n/v2/i18n"
 	"net/http"
 	"pet-project/db"
 	"pet-project/models"
 	"pet-project/response"
+	"pet-project/service"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
@@ -55,7 +57,7 @@ func JWTTokenMiddleware() func(c *gin.Context) {
 		if len(token) == 0 {
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"code": http.StatusUnauthorized,
-				"msg":  response.ApiMsg.AuthErr,
+				"msg":  service.LocalizeMsg(c.MustGet("lang").(*i18n.Localizer), response.ApiMsg.AuthErr),
 				"data": map[string]interface{}{},
 			})
 			c.Abort()
@@ -65,7 +67,7 @@ func JWTTokenMiddleware() func(c *gin.Context) {
 		if err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"code": http.StatusUnauthorized,
-				"msg":  response.ApiMsg.AuthErr,
+				"msg":  service.LocalizeMsg(c.MustGet("lang").(*i18n.Localizer), response.ApiMsg.AuthErr),
 				"data": map[string]interface{}{},
 			})
 			c.Abort()

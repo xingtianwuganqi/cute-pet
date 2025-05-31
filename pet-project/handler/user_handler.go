@@ -12,7 +12,6 @@ import (
 	"pet-project/service"
 	"pet-project/settings"
 	"pet-project/util"
-	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -45,21 +44,26 @@ func GetEmailCode(c *gin.Context) {
 		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 		return
 	}
-	email := param.Email
-	smptServer := settings.Conf.EmailService.Host
-	smptPort := settings.Conf.EmailService.Port
-	username := settings.Conf.EmailService.Username
-	password := settings.Conf.EmailService.Password
-	code := service.GenerateValidationCode(4)
-	// 对方的邮箱
-	recipient := email
-	subject := service.LocalizeMsg(lang, "VerificationTitle")
-	body := service.LocalizeMsgCount(lang, "VerificationDesc", code)
 
-	sendErr := service.SendEmail(recipient, subject, body, smptServer, smptPort, username, password)
-	if sendErr != nil {
-		response.Fail(c, response.ApiCode.ServerErr, sendErr.Error())
-		return
+	email := param.Email
+	code := service.GenerateValidationCode(4)
+
+	// 正式环境发验证码
+	if settings.Conf.App.Env == "production" {
+		smptServer := settings.Conf.EmailService.Host
+		smptPort := settings.Conf.EmailService.Port
+		username := settings.Conf.EmailService.Username
+		password := settings.Conf.EmailService.Password
+		// 对方的邮箱
+		recipient := email
+		subject := service.LocalizeMsg(lang, "VerificationTitle")
+		body := service.LocalizeMsgCount(lang, "VerificationDesc", code)
+
+		sendErr := service.SendEmail(recipient, subject, body, smptServer, smptPort, username, password)
+		if sendErr != nil {
+			response.Fail(c, response.ApiCode.ServerErr, sendErr.Error())
+			return
+		}
 	}
 	// 将code保存到redis，设置10分钟失效
 	saveErr := service.SaveAccountCodeInRedis(c, email, code)
@@ -68,10 +72,18 @@ func GetEmailCode(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"code": http.StatusOK,
-		"data": gin.H{},
-	})
+	if settings.Conf.App.Env == "production" {
+		c.JSON(http.StatusOK, gin.H{
+			"code": http.StatusOK,
+			"data": gin.H{},
+		})
+	} else {
+		c.JSON(http.StatusOK, gin.H{
+			"code": http.StatusOK,
+			"data": code,
+		})
+	}
+
 }
 
 // GetPhoneCode 获取手机验证码
@@ -101,20 +113,23 @@ func GetPhoneCode(c *gin.Context) {
 	}
 
 	code := service.GenerateValidationCode(4)
-	url := fmt.Sprintf("https://push.spug.cc/send/gL1QGmWdKWjlRD65?key1=%s&key2=%s&key3=%s&targets=%s",
-		"[Pawpal]", code, "10", phone)
-	resp, err := http.Get(url)
-	if err != nil || resp.StatusCode != http.StatusOK {
-		response.Fail(c, response.ApiCode.Fail, response.ApiMsg.Fail)
-		return
-	}
-	defer func(Body io.ReadCloser) {
-		err := Body.Close()
-		if err != nil {
-			response.Fail(c, response.ApiCode.ServerErr, response.ApiMsg.ServerErr)
+
+	if settings.Conf.App.Env == "production" {
+		url := fmt.Sprintf("https://push.spug.cc/send/gL1QGmWdKWjlRD65?key1=%s&key2=%s&key3=%s&targets=%s",
+			"[Pawpal]", code, "10", phone)
+		resp, err := http.Get(url)
+		if err != nil || resp.StatusCode != http.StatusOK {
+			response.Fail(c, response.ApiCode.Fail, response.ApiMsg.Fail)
 			return
 		}
-	}(resp.Body)
+		defer func(Body io.ReadCloser) {
+			err := Body.Close()
+			if err != nil {
+				response.Fail(c, response.ApiCode.ServerErr, response.ApiMsg.ServerErr)
+				return
+			}
+		}(resp.Body)
+	}
 
 	// 将code保存到redis，设置10分钟失效
 	saveErr := service.SaveAccountCodeInRedis(c, phone, code)
@@ -122,11 +137,17 @@ func GetPhoneCode(c *gin.Context) {
 		response.Fail(c, response.ApiCode.ServerErr, saveErr.Error())
 		return
 	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"code": http.StatusOK,
-		"data": gin.H{},
-	})
+	if settings.Conf.App.Env == "production" {
+		c.JSON(http.StatusOK, gin.H{
+			"code": http.StatusOK,
+			"data": gin.H{},
+		})
+	} else {
+		c.JSON(http.StatusOK, gin.H{
+			"code": http.StatusOK,
+			"data": code,
+		})
+	}
 }
 
 func GetTodayDate() string {
@@ -172,7 +193,7 @@ func CheckRdbCode(c *gin.Context) {
 		if code == param.Code {
 			response.Success(c, gin.H{})
 		} else {
-			response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
+			response.Fail(c, response.ApiCode.CheckCodeErr, response.ApiMsg.CheckCodeErr)
 		}
 
 	} else {
@@ -186,16 +207,14 @@ func CheckRdbCode(c *gin.Context) {
 		if code == param.Code {
 			response.Success(c, gin.H{})
 		} else {
-			response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
+			response.Fail(c, response.ApiCode.CheckCodeErr, response.ApiMsg.CheckCodeErr)
 		}
 	}
 }
 
 // UserRegister 注册
 func UserRegister(c *gin.Context) {
-	lang := c.MustGet("lang").(*i18n.Localizer)
 	var login models.RegisterInfo
-
 	if err := c.ShouldBind(&login); err != nil {
 		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 		return
@@ -226,10 +245,7 @@ func UserRegister(c *gin.Context) {
 				response.Fail(c, response.ApiCode.ServerErr, response.ApiMsg.ServerErr)
 				return
 			}
-
-			// 验证验证码是否正确
-			codeValue, _ := strconv.Atoi(code)
-			if codeValue != login.Code {
+			if code != login.Code {
 				response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 				return
 			}
@@ -242,8 +258,7 @@ func UserRegister(c *gin.Context) {
 			}
 
 			// 验证验证码是否正确
-			codeValue, _ := strconv.Atoi(code)
-			if codeValue != login.Code {
+			if code != login.Code {
 				response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 				return
 			}
@@ -275,15 +290,13 @@ func UserRegister(c *gin.Context) {
 		}
 		response.Success(c, data)
 	} else {
-		msg := service.LocalizeMsg(lang, response.ApiMsg.UserExistsErr)
-		response.Fail(c, response.ApiCode.UserExistsErr, msg)
+		response.Fail(c, response.ApiCode.UserExistsErr, response.ApiMsg.UserExistsErr)
 	}
 
 }
 
 // UserPhoneLogin 用户登录
 func UserPhoneLogin(c *gin.Context) {
-	lang := c.MustGet("lang").(*i18n.Localizer)
 	var login models.LoginInfo
 	if err := c.ShouldBind(&login); err != nil {
 		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
@@ -305,8 +318,7 @@ func UserPhoneLogin(c *gin.Context) {
 		return
 	}
 	if errors.Is(findResult.Error, gorm.ErrRecordNotFound) {
-		msg := service.LocalizeMsg(lang, "AccountUnRegister")
-		response.Fail(c, response.ApiCode.QueryErr, msg)
+		response.Fail(c, response.ApiCode.UserNotFound, response.ApiMsg.UserNotFound)
 		return
 	}
 	if user.Password == login.Password {
@@ -326,14 +338,12 @@ func UserPhoneLogin(c *gin.Context) {
 		}
 		response.Success(c, data)
 	} else {
-		msg := service.LocalizeMsg(lang, "PasswordErr")
-		response.Fail(c, 300, msg)
+		response.Fail(c, response.ApiCode.PasswordErr, response.ApiMsg.PasswordErr)
 	}
 }
 
 // UserFindPassword MARK: 找回密码
 func UserFindPassword(c *gin.Context) {
-	lang := c.MustGet("lang").(*i18n.Localizer)
 	var loginInfo models.RegisterInfo
 	if err := c.ShouldBind(&loginInfo); err != nil {
 		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
@@ -360,15 +370,14 @@ func UserFindPassword(c *gin.Context) {
 	} else {
 		// 验证验证码
 		if len(loginInfo.Phone) > 0 {
-			code, err := service.GetCodeFromRedis(c, loginInfo.Email)
-			codeErr := service.LocalizeMsg(lang, "CheckCodeErr")
+			code, err := service.GetCodeFromRedis(c, loginInfo.Phone)
 			if err != nil {
-				response.Fail(c, response.ApiCode.ParamErr, codeErr)
+				response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 				return
 			}
-			codeValue, _ := strconv.Atoi(code)
-			if codeValue != loginInfo.Code {
-				response.Fail(c, response.ApiCode.ParamErr, codeErr)
+			if code != loginInfo.Code {
+				fmt.Println("code error", code)
+				response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 				return
 			}
 			// 更新密码
@@ -383,14 +392,15 @@ func UserFindPassword(c *gin.Context) {
 			response.Success(c, map[string]interface{}{})
 		} else {
 			code, err := service.GetCodeFromRedis(c, loginInfo.Email)
-			codeErr := service.LocalizeMsg(lang, "CheckCodeErr")
 			if err != nil {
-				response.Fail(c, response.ApiCode.ParamErr, codeErr)
+				fmt.Println("err is", err)
+				response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 				return
 			}
-			codeValue, _ := strconv.Atoi(code)
-			if codeValue != loginInfo.Code {
-				response.Fail(c, response.ApiCode.ParamErr, codeErr)
+
+			if code != loginInfo.Code {
+				fmt.Println("code err is", err)
+				response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 				return
 			}
 			result := db.DB.Model(&user).Where("email = ?", loginInfo.Email).Update("password", loginInfo.Password)
@@ -409,7 +419,7 @@ func UserFindPassword(c *gin.Context) {
 
 // UserUpdatePassword 用户更新密码
 func UserUpdatePassword(c *gin.Context) {
-	lang := c.MustGet("lang").(*i18n.Localizer)
+	var userId = c.MustGet("userId").(uint)
 	var updatePasswordInfo models.UploadPasswordModel
 	if err := c.ShouldBind(&updatePasswordInfo); err != nil {
 		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
@@ -419,7 +429,6 @@ func UserUpdatePassword(c *gin.Context) {
 		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 		return
 	}
-	var userId = c.MustGet("userId").(uint)
 	var user models.UserInfo
 	result := db.DB.Where("id = ?", userId).First(&user)
 	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
@@ -427,8 +436,7 @@ func UserUpdatePassword(c *gin.Context) {
 		return
 	}
 	if user.Password != updatePasswordInfo.Password {
-		msg := service.LocalizeMsg(lang, "PasswordErr")
-		response.Fail(c, response.ApiCode.ParamErr, msg)
+		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 		return
 	}
 	result = db.DB.Model(&user).Where("id = ?", userId).Update("password", updatePasswordInfo.Password)

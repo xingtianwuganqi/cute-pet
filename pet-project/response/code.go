@@ -89,6 +89,12 @@ type Codes struct {
 
 	// #更新失败
 	UploadErr uint // 500 // RFC 9110, 15.6.1
+
+	// #密码错误
+	PasswordErr uint
+
+	// #验证码错误
+	CheckCodeErr uint
 }
 
 var ApiCode = &Codes{
@@ -114,6 +120,8 @@ var ApiCode = &Codes{
 	UserNotFound:  404,
 	DataNotExit:   404,
 	UploadErr:     500,
+	PasswordErr:   400,
+	CheckCodeErr:  400,
 }
 
 type Messages struct {
@@ -182,29 +190,37 @@ type Messages struct {
 
 	// #更新失败
 	UploadErr string // 500 // RFC 9110, 15.6.1
+
+	// #密码错误
+	PasswordErr string
+
+	// #验证码错误
+	CheckCodeErr string
 }
 
 var ApiMsg = &Messages{
-	Success:       "成功",
-	Fail:          "失败",
-	AuthErr:       "token认证失败, 请重新登录",
-	ServerErr:     "网络操作失败，请稍后重试",
-	NotFoundErr:   "服务器没有此接口",
-	UnknownErr:    "未知错误",
-	ParamErr:      "参数错误",
-	RejectErr:     "拒绝访问",
-	MethodErr:     "请求方法错误",
-	ParamLack:     "缺少参数",
-	UserExistsErr: "UserExists",
-	QueryErr:      "查询失败",
-	EmptyErr:      "查询为空",
-	CleanUp:       "整顿期间",
-	PhoneUnbind:   "未绑定手机号",
-	PhoneUncheck:  "未验证手机号",
-	EmailErr:      "暂不支持邮箱登录",
-	PhoneUsed:     "该手机号已被使用",
-	CreateErr:     "创建失败",
-	UserNotFound:  "用户不存在",
-	DataNotExit:   "数据不存在",
-	UploadErr:     "更新失败",
+	Success:       "Success",
+	Fail:          "Fail",
+	AuthErr:       "AuthErr",
+	ServerErr:     "ServerErr",
+	NotFoundErr:   "NotFoundErr",
+	UnknownErr:    "UnknownErr",
+	ParamErr:      "ParamErr",
+	RejectErr:     "RejectErr",
+	MethodErr:     "MethodErr",
+	ParamLack:     "ParamLack",
+	UserExistsErr: "UserExistsErr",
+	QueryErr:      "QueryErr",
+	EmptyErr:      "EmptyErr",
+	CleanUp:       "CleanUp",
+	PhoneUnbind:   "PhoneUnbind",
+	PhoneUncheck:  "PhoneUncheck",
+	EmailErr:      "EmailErr",
+	PhoneUsed:     "PhoneUsed",
+	CreateErr:     "CreateErr",
+	UserNotFound:  "UserNotFound",
+	DataNotExit:   "DataNotExit",
+	UploadErr:     "UploadErr",
+	PasswordErr:   "PasswordErr",
+	CheckCodeErr:  "CheckCodeErr",
 }
