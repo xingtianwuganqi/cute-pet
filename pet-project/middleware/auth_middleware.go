@@ -2,12 +2,14 @@ package middleware
 
 import (
 	"errors"
+	"fmt"
 	"github.com/nicksnyder/go-i18n/v2/i18n"
 	"net/http"
 	"pet-project/db"
 	"pet-project/models"
 	"pet-project/response"
 	"pet-project/service"
+	"pet-project/settings"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
@@ -54,6 +56,9 @@ func ParseToken(tokenString string) (*MyClaims, error) {
 func JWTTokenMiddleware() func(c *gin.Context) {
 	return func(c *gin.Context) {
 		token := c.GetHeader("token")
+		if settings.Conf.App.Env != "production" {
+			fmt.Printf("token: %s\n", token)
+		}
 		if len(token) == 0 {
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"code": http.StatusUnauthorized,
