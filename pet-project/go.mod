@@ -1,6 +1,6 @@
 module pet-project
 
-go 1.21.5
+go 1.23
 
 toolchain go1.23.3
 
