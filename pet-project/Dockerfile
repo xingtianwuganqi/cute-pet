@@ -1,5 +1,5 @@
 # 第一阶段：编译Go应用
-FROM golang:1.20 AS builder
+FROM golang:1.24 AS builder
 ENV GOPROXY=https://goproxy.cn,direct
 WORKDIR /app
 # 复制源代码到容器中
