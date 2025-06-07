@@ -1,13 +1,11 @@
 package models
 
-import "gorm.io/gorm"
-
 /*
 location: 位置，默认0国内
 */
 
 type UserInfo struct {
-	gorm.Model
+	BaseModel
 	Phone    string `json:"phone" form:"phone" gorm:"size:32"`
 	Email    string `json:"email" form:"email" gorm:"size:32"`
 	Username string `json:"username" form:"username" gorm:"size:32"`
@@ -18,7 +16,7 @@ type UserInfo struct {
 }
 
 type SuggestionModel struct {
-	gorm.Model
+	BaseModel
 	UserId  uint   `json:"userId" gorm:"size:32"`
 	Contact string `json:"contact" gorm:"size:32"`
 	Content string `json:"content" gorm:"size:256"`

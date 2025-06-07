@@ -2,12 +2,20 @@ package models
 
 import (
 	"gorm.io/gorm"
+	"time"
 )
+
+type BaseModel struct {
+	ID        uint           `gorm:"primarykey" json:"id" form:"id"`
+	CreatedAt time.Time      `json:"createdAt" form:"createdAt"`
+	UpdatedAt time.Time      `json:"updatedAt" form:"updatedAt"`
+	DeletedAt gorm.DeletedAt `gorm:"index" json:"deletedAt" form:"deletedAt" `
+}
 
 // RecordList Type 是日常还花销 1：共同日常，2：自定义日常，3：共同花销，4：自定花销
 // 是哪个宠物
 type RecordList struct {
-	gorm.Model
+	BaseModel
 	User               UserInfo             `json:"user" gorm:"-"`
 	UserId             uint                 `json:"userId" form:"userId"`
 	Type               uint                 `json:"type" form:"type" gorm:"default:0"`
@@ -27,14 +35,14 @@ type RecordList struct {
 
 // PetActionType 宠物日常/*
 type PetActionType struct {
-	gorm.Model
+	BaseModel
 	ActionName string `json:"action_name" form:"action_name" gorm:"size:64" binding:"required"`
 	Icon       string `json:"icon" form:"icon" gorm:"size:64" binding:"required"`
 }
 
 // PetCustomType 宠物日常自定义/*
 type PetCustomType struct {
-	gorm.Model
+	BaseModel
 	User       UserInfo `json:"user" form:"user" gorm:"foreignKey:UserId;constraint:OnDelete:CASCADE;"`
 	UserId     uint     `json:"userId" form:"userId"`
 	CustomName string   `json:"customName" form:"customName" gorm:"size:32" binding:"required"`
@@ -44,14 +52,14 @@ type PetCustomType struct {
 
 // PetConsumeType 宠物消费
 type PetConsumeType struct {
-	gorm.Model
+	BaseModel
 	ConsumeName string  `json:"consume_name" form:"consume_name" gorm:"size:32" binding:"required"`
 	ConsumeIcon float32 `json:"consume_icon" form:"consume_icon" gorm:"default:0" binding:"required"`
 }
 
 // PetCustomConsumeType 用户自定义消费
 type PetCustomConsumeType struct {
-	gorm.Model
+	BaseModel
 	User        UserInfo `json:"user" form:"user" gorm:"foreignKey:UserId;constraint:OnDelete:CASCADE;"`
 	UserId      uint     `json:"userId" form:"userId"`
 	ConsumeName string   `json:"consume_name" form:"consume_name" gorm:"size:32" binding:"required"`
@@ -66,8 +74,8 @@ Unit: 1:kg 2:g 3:斤
 Gender：1:公 2:母
 */
 type PetInfo struct {
-	gorm.Model
-	User     UserInfo `json:"user" gorm:"foreignKey:UserId;constraint:OnDelete:CASCADE;"`
+	BaseModel
+	User     UserInfo `json:"user" gorm:"-"`
 	UserId   uint     `json:"userId" form:"userId"`
 	PetType  string   `json:"petType" form:"petType" gorm:"size:64"`
 	Avatar   string   `json:"avatar" form:"avatar" gorm:"size:64" binding:"required"`

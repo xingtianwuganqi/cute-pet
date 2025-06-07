@@ -1,7 +1,5 @@
 package models
 
-import "gorm.io/gorm"
-
 // MessageModel 消息
 /*
 msg_type: # 1.点赞 2.收藏 3.评论 4.回复
@@ -10,7 +8,7 @@ reply_type: 1.评论 2.回复，3.关联的获取用户信息那张表的id
 reply_id：评论的id
 */
 type MessageModel struct {
-	gorm.Model
+	BaseModel
 	MessageType uint   `json:"message_type" form:"message_type" gorm:"not null,default:0"`
 	MessageId   uint   `json:"message_id" form:"message_id" gorm:"not null default 0"`
 	FromUid     uint   `json:"from_uid" form:"from_uid" gorm:"not null default 0"`
@@ -21,7 +19,7 @@ type MessageModel struct {
 }
 
 type LikeMessageModel struct {
-	gorm.Model
+	BaseModel
 	LikeType   uint `json:"like_type" form:"like_type" form:"like_type" gorm:"not null,default:0"`
 	LikeId     uint `json:"like_id" form:"like_id" gorm:"not null,default:0"`
 	LikeStatus uint `json:"like_status" form:"like_status" gorm:"not null,default:0"`
@@ -30,7 +28,7 @@ type LikeMessageModel struct {
 }
 
 type CollectionMessageModel struct {
-	gorm.Model
+	BaseModel
 	CollectionType   uint `json:"collection_type" form:"collection_type" gorm:"not null default 0"`
 	CollectionId     uint `json:"collection_id" form:"collection_id" gorm:"not null default 0"`
 	CollectionStatus uint `json:"collection_status" form:"collection_status" gorm:"not null default 0"`
@@ -39,7 +37,7 @@ type CollectionMessageModel struct {
 }
 
 type CommentModel struct {
-	gorm.Model
+	BaseModel
 	TopicId   uint   `json:"topic_id" form:"topic_id" gorm:"not null default 0"`
 	TopicType uint   `json:"topic_type" form:"topic_type" gorm:"not null default 0"`
 	Content   string `json:"content" form:"content" gorm:"not null default '' size:256"`
@@ -48,7 +46,7 @@ type CommentModel struct {
 }
 
 type ReplayModel struct {
-	gorm.Model
+	BaseModel
 	CommentId uint   `json:"comment_id" form:"comment_id" gorm:"not null default 0"`
 	ReplyId   uint   `json:"reply_id" form:"reply_id" gorm:"not null default 0"`
 	Content   string `json:"content" form:"content" gorm:"not null default '' size:256"`
