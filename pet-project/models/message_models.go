@@ -9,47 +9,47 @@ reply_id：评论的id
 */
 type MessageModel struct {
 	BaseModel
-	MessageType uint   `json:"message_type" form:"message_type" gorm:"not null,default:0"`
-	MessageId   uint   `json:"message_id" form:"message_id" gorm:"not null default 0"`
-	FromUid     uint   `json:"from_uid" form:"from_uid" gorm:"not null default 0"`
-	ToUid       uint   `json:"to_uid" form:"to_uid" gorm:"not null default 0"`
-	IsRead      bool   `json:"is_read" form:"is_read"`
-	ReplyType   uint   `json:"reply_type" form:"reply_type" gorm:"not null default 0"`
-	ReplyId     string `json:"reply_id" form:"reply_id" gorm:"not null default 0"`
+	MessageType uint   `json:"messageType" form:"messageType" gorm:"not null,default:0"`
+	MessageId   uint   `json:"messageId" form:"messageId" gorm:"not null default 0"`
+	FromUid     uint   `json:"fromUid" form:"fromUid" gorm:"not null default 0"`
+	ToUid       uint   `json:"toUid" form:"toUid" gorm:"not null default 0"`
+	IsRead      bool   `json:"isRead" form:"isRead"`
+	ReplyType   uint   `json:"replyType" form:"replyType" gorm:"not null default 0"`
+	ReplyId     string `json:"replyId" form:"replyId" gorm:"not null default 0"`
 }
 
 type LikeMessageModel struct {
 	BaseModel
-	LikeType   uint `json:"like_type" form:"like_type" form:"like_type" gorm:"not null,default:0"`
-	LikeId     uint `json:"like_id" form:"like_id" gorm:"not null,default:0"`
-	LikeStatus uint `json:"like_status" form:"like_status" gorm:"not null,default:0"`
-	FromUid    uint `json:"from_uid" form:"from_uid" gorm:"not null,default:0"`
-	ToUid      uint `json:"to_uid" form:"to_uid" gorm:"not null default 0"`
+	LikeType   uint `json:"likeType" form:"likeType" form:"like_type" gorm:"not null,default:0"`
+	LikeId     uint `json:"likeId" form:"likeId" gorm:"not null,default:0"`
+	LikeStatus uint `json:"likeStatus" form:"likeStatus" gorm:"not null,default:0"`
+	FromUid    uint `json:"fromUid" form:"fromUid" gorm:"not null,default:0"`
+	ToUid      uint `json:"toUid" form:"toUid" gorm:"not null default 0"`
 }
 
 type CollectionMessageModel struct {
 	BaseModel
-	CollectionType   uint `json:"collection_type" form:"collection_type" gorm:"not null default 0"`
-	CollectionId     uint `json:"collection_id" form:"collection_id" gorm:"not null default 0"`
-	CollectionStatus uint `json:"collection_status" form:"collection_status" gorm:"not null default 0"`
-	FromUid          uint `json:"from_uid" form:"from_uid" gorm:"not null default 0"`
-	ToUid            uint `json:"to_uid" form:"to_uid" gorm:"not null default 0"`
+	CollectionType   uint `json:"collectionType" form:"collectionType" gorm:"not null default 0"`
+	CollectionId     uint `json:"collectionId" form:"collectionId" gorm:"not null default 0"`
+	CollectionStatus uint `json:"collectionStatus" form:"collectionStatus" gorm:"not null default 0"`
+	FromUid          uint `json:"fromUid" form:"fromUid" gorm:"not null default 0"`
+	ToUid            uint `json:"toUid" form:"toUid" gorm:"not null default 0"`
 }
 
 type CommentModel struct {
 	BaseModel
-	TopicId   uint   `json:"topic_id" form:"topic_id" gorm:"not null default 0"`
-	TopicType uint   `json:"topic_type" form:"topic_type" gorm:"not null default 0"`
+	TopicId   uint   `json:"topicId" form:"topicId" gorm:"not null default 0"`
+	TopicType uint   `json:"topicType" form:"topicType" gorm:"not null default 0"`
 	Content   string `json:"content" form:"content" gorm:"not null default '' size:256"`
-	FromUid   uint   `json:"from_uid" form:"from_uid" gorm:"not null default 0"`
-	ToUid     uint   `json:"to_uid" form:"to_uid" gorm:"not null default 0"`
+	FromUid   uint   `json:"fromUid" form:"fromUid" gorm:"not null default 0"`
+	ToUid     uint   `json:"toUid" form:"toUid" gorm:"not null default 0"`
 }
 
 type ReplayModel struct {
 	BaseModel
-	CommentId uint   `json:"comment_id" form:"comment_id" gorm:"not null default 0"`
-	ReplyId   uint   `json:"reply_id" form:"reply_id" gorm:"not null default 0"`
+	CommentId uint   `json:"commentId" form:"commentId" gorm:"not null default 0"`
+	ReplyId   uint   `json:"replyId" form:"replyId" gorm:"not null default 0"`
 	Content   string `json:"content" form:"content" gorm:"not null default '' size:256"`
-	FromUid   uint   `json:"from_uid" form:"FromUid" gorm:"not null default 0"`
-	ToUid     uint   `json:"to_uid" form:"ToUid" gorm:"not null default 0"`
+	FromUid   uint   `json:"fromUid" form:"fromUid" gorm:"not null default 0"`
+	ToUid     uint   `json:"toUid" form:"toUid" gorm:"not null default 0"`
 }

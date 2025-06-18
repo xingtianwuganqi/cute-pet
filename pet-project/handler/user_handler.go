@@ -28,6 +28,22 @@ func GetEmailCode(c *gin.Context) {
 		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 		return
 	}
+
+	// 查询code是否在redis中（是否已经使用过了）
+	codeKey := fmt.Sprintf("email_code:%s", param.Email)
+	value, err := service.GetCodeFromRedis(c, codeKey)
+	fmt.Println("value is ", value)
+	fmt.Println("err is ", err)
+	if err != nil {
+		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
+		return
+	}
+	if len(value) != 0 && value == param.Code {
+		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
+		return
+	}
+	fmt.Println("value is ", value)
+	fmt.Println("err is ", err)
 	// 需要加一个加密信息
 	encryptionStr, err := util.Decrypt(param.Code)
 	if err != nil {
@@ -66,11 +82,14 @@ func GetEmailCode(c *gin.Context) {
 		}
 	}
 	// 将code保存到redis，设置10分钟失效
-	saveErr := service.SaveAccountCodeInRedis(c, email, code)
+	saveErr := service.SaveAccountCodeInRedis(c, email, code, 10*time.Minute)
 	if saveErr != nil {
 		response.Fail(c, response.ApiCode.ServerErr, saveErr.Error())
 		return
 	}
+
+	// 保存param.code
+	_ = service.SaveAccountCodeInRedis(c, codeKey, param.Code, 24*time.Hour)
 
 	if settings.Conf.App.Env == "production" {
 		c.JSON(http.StatusOK, gin.H{
@@ -91,6 +110,17 @@ func GetPhoneCode(c *gin.Context) {
 	// 手机验证码
 	var param models.SendCodeModel
 	if err := c.ShouldBind(&param); err != nil {
+		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
+		return
+	}
+	// 查询code是否在redis中（是否已经使用过了）
+	codeKey := fmt.Sprintf("phone_code:%s", param.Phone)
+	value, err := service.GetCodeFromRedis(c, codeKey)
+	if err != nil {
+		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
+		return
+	}
+	if len(value) != 0 && value == param.Code {
 		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 		return
 	}
@@ -132,11 +162,14 @@ func GetPhoneCode(c *gin.Context) {
 	}
 
 	// 将code保存到redis，设置10分钟失效
-	saveErr := service.SaveAccountCodeInRedis(c, phone, code)
+	saveErr := service.SaveAccountCodeInRedis(c, phone, code, 10*time.Minute)
 	if saveErr != nil {
 		response.Fail(c, response.ApiCode.ServerErr, saveErr.Error())
 		return
 	}
+
+	_ = service.SaveAccountCodeInRedis(c, codeKey, param.Code, 24*time.Hour)
+
 	if settings.Conf.App.Env == "production" {
 		c.JSON(http.StatusOK, gin.H{
 			"code": http.StatusOK,
@@ -445,4 +478,18 @@ func UserUpdatePassword(c *gin.Context) {
 		return
 	}
 	response.Success(c, map[string]interface{}{})
+}
+
+func CreateSuggestion(c *gin.Context) {
+	var suggestion models.SuggestionModel
+	if err := c.ShouldBind(&suggestion); err != nil {
+		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
+		return
+	}
+	result := db.DB.Omit("User").Create(&suggestion)
+	if result.Error != nil {
+		response.Fail(c, response.ApiCode.CreateErr, response.ApiMsg.CreateErr)
+		return
+	}
+	response.Success(c, nil)
 }

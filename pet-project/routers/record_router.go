@@ -22,7 +22,7 @@ func RegisterRecordRouter(r *gin.Engine) {
 		petRouter.GET("/action/list", middleware.JWTTokenMiddleware(), handler.GetPetActionList)
 		petRouter.GET("/custom/list", middleware.JWTTokenMiddleware(), handler.GetCustomActionList)
 		petRouter.GET("/consume/list", middleware.JWTTokenMiddleware(), handler.GetPetConsumeList)
-		petRouter.POST("custom/create", middleware.JWTTokenMiddleware(), handler.CreatePetCustomType)
+		petRouter.POST("custom/create", middleware.JWTTokenMiddleware(), handler.CreatePetCustomAction)
 		petRouter.GET("/custom/consume/list", middleware.JWTTokenMiddleware(), handler.GetPetCustomConsumeList)
 		petRouter.POST("/consume/create", middleware.JWTTokenMiddleware(), handler.CreateConsumeAction)
 		//petRouter.POST("/create/action", middleware.JWTTokenMiddleware(), handler.CreatePetActionType)
@@ -35,7 +35,7 @@ func RegisterRecordRouter(r *gin.Engine) {
 		// 用户获取自己的列表
 		actionRouter.GET("/custom/list", middleware.JWTTokenMiddleware(), handler.GetCustomActionList)
 		// 用户自己创建
-		actionRouter.POST("/create/custom", middleware.JWTTokenMiddleware(), handler.CreatePetCustomType)
+		actionRouter.POST("/create/custom", middleware.JWTTokenMiddleware(), handler.CreateConsumeAction)
 
 	}
 

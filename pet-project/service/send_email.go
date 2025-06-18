@@ -41,10 +41,8 @@ func SendEmail(recipient string,
 }
 
 // SaveAccountCodeInRedis 保存到redis
-func SaveAccountCodeInRedis(c *gin.Context, email, code string) error {
+func SaveAccountCodeInRedis(c *gin.Context, email, code string, expiration time.Duration) error {
 	key := fmt.Sprintf("verify_code:%s", email)
-	expiration := 10 * time.Minute
-
 	if err := db.Rdb.Set(c, key, code, expiration).Err(); err != nil {
 		return err
 	}

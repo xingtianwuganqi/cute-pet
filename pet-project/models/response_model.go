@@ -1,5 +1,7 @@
 package models
 
+// 登录注册信息
+
 type RegisterInfo struct {
 	Phone    string `form:"phone" json:"phone"`
 	Password string `form:"password" json:"password"  binding:"required"`
@@ -24,8 +26,9 @@ type LoginUserInfo struct {
 type EmptyModel struct {
 }
 
-// PetCustomTypeInfo 自定义行为
-type PetCustomTypeInfo struct {
+// 宠物
+
+type PetCustomActionCreateModel struct {
 	BaseModel
 	UserId     uint   `json:"userId" form:"userId"`
 	CustomName string `json:"customName" form:"customName"`

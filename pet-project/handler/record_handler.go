@@ -2,6 +2,7 @@ package handler
 
 import (
 	"errors"
+	"fmt"
 	"gorm.io/gorm"
 	"log"
 	"pet-project/db"
@@ -14,15 +15,17 @@ import (
 
 // PetInfoCreate 提交宠物详情
 func PetInfoCreate(c *gin.Context) {
-	userId := c.MustGet("userId").(uint)
+	//userId := c.MustGet("userId").(uint)
 	var petInfo = models.PetInfo{}
 	if err := c.ShouldBind(&petInfo); err != nil {
 		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 		return
 	}
-	petInfo.UserId = userId
+	fmt.Println(petInfo.User)
 	// 忽略User是因为ShouldBind会创建一个User默认值，导致插入一条新的用户数据
 	result := db.DB.Omit("User").Create(&petInfo)
+	// 现在不会创建关联对象了
+	//result := db.DB.Create(&petInfo)
 	if result.Error != nil {
 		response.Fail(c, response.ApiCode.CreateErr, response.ApiMsg.CreateErr)
 		return
@@ -40,7 +43,9 @@ func GetPetList(c *gin.Context) {
 		return
 	}
 	offset := (pageModel.PageNum - 1) * pageModel.PageSize
-	result := db.DB.Model(&models.PetInfo{}).
+	result := db.DB.
+		Preload("User").
+		Model(&models.PetInfo{}).
 		Where("user_id = ?", uerId).
 		Offset(offset).Limit(pageModel.PageSize).
 		Order("created_at DESC").
@@ -55,7 +60,7 @@ func GetPetList(c *gin.Context) {
 
 // UpdatePetInfo 更新宠物信息
 func UpdatePetInfo(c *gin.Context) {
-	userId := c.MustGet("userId").(uint)
+	//userId := c.MustGet("userId").(uint)
 	var petInfo models.PetInfo
 	if err := c.ShouldBind(&petInfo); err != nil {
 		log.Println(err.Error())
@@ -67,7 +72,7 @@ func UpdatePetInfo(c *gin.Context) {
 		return
 	}
 	// 忽略User是因为ShouldBind会创建一个User默认值，导致插入一条新的用户数据
-	result := db.DB.Model(&models.PetInfo{}).Where("id = ? AND user_id = ?", petInfo.ID, userId).
+	result := db.DB.Model(&models.PetInfo{}).Where("id = ? AND user_id = ?", petInfo.ID, petInfo.UserId).
 		Updates(models.PetInfo{
 			UserId:   petInfo.UserId,
 			PetType:  petInfo.PetType,
@@ -140,16 +145,15 @@ func GetPetActionList(c *gin.Context) {
 	response.Success(c, petActionList)
 }
 
-// CreatePetCustomType 创建自定义日常
-func CreatePetCustomType(c *gin.Context) {
-	var userId = c.MustGet("userId").(uint)
-	var petCustomType models.PetCustomType
-	if err := c.ShouldBind(&petCustomType); err != nil {
+// CreatePetCustomAction 创建自定义日常
+func CreatePetCustomAction(c *gin.Context) {
+	_ = c.MustGet("userId").(uint)
+	var petCustomAction models.PetCustomAction
+	if err := c.ShouldBind(&petCustomAction); err != nil {
 		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 		return
 	}
-	petCustomType.UserId = userId
-	result := db.DB.Omit("User").Create(&petCustomType)
+	result := db.DB.Omit("User").Create(&petCustomAction)
 	if result.Error != nil {
 		response.Fail(c, response.ApiCode.CreateErr, response.ApiMsg.CreateErr)
 		return
@@ -159,14 +163,14 @@ func CreatePetCustomType(c *gin.Context) {
 
 func GetCustomActionList(c *gin.Context) {
 	userId := c.MustGet("userId").(uint)
-	var customActionList []models.PetCustomTypeInfo
+	var customActionList []models.PetCustomAction
 	// 如果只返回特定字段，
 	//var customActionList []models.PetCustomTypeInfo ,
 	//查询db.DB.Model(&models.PetCustomType{}).Where("user_id = ?", userId).Find(&customActionList)
 	// 定义为UserId的字段，GORM 自动将结构体字段名称转换为 user_id 作为数据库中的列名。
 	//result := db.DB.Preload("User").Where("user_id = ?", userId).Find(&customActionList)
 	// Select 或 Omit的字段，不会消失，会显示零值
-	result := db.DB.Model(&models.PetCustomType{}).
+	result := db.DB.Preload("User").Model(&models.PetCustomAction{}).
 		Order("created_at DESC").
 		Find(&customActionList, "user_id = ?", userId)
 	if result.Error != nil {
@@ -213,8 +217,8 @@ func GetPetCustomConsumeList(c *gin.Context) {
 	num, _ := strconv.Atoi(pageNum)
 	size, _ := strconv.Atoi(pageSize)
 	offset := (num - 1) * size
-	var customTypes []models.PetCustomConsumeType
-	findResult := db.DB.Model(&models.PetCustomConsumeType{}).Where("user_id = ?", userid).Offset(offset).Limit(size).Find(&customTypes)
+	var customTypes []models.PetCustomConsume
+	findResult := db.DB.Model(&models.PetCustomConsume{}).Where("user_id = ?", userid).Offset(offset).Limit(size).Find(&customTypes)
 	if findResult.Error != nil {
 		response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
 		return
@@ -224,7 +228,7 @@ func GetPetCustomConsumeList(c *gin.Context) {
 
 func CreateConsumeAction(c *gin.Context) {
 	var userId = c.MustGet("userId").(uint)
-	var model models.PetCustomConsumeType
+	var model models.PetCustomConsume
 	if err := c.ShouldBind(&model); err != nil {
 		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 		return

@@ -9,6 +9,7 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"fmt"
+	"github.com/google/uuid"
 	"io"
 	"regexp"
 	"strconv"
@@ -17,6 +18,13 @@ import (
 )
 
 var key = []byte("thisis16bytekey!") // 刚好16字节
+
+// UuidString 生成uuid
+func UuidString() string {
+	uuidWithHyphen := uuid.New().String()
+	uuidWithoutHyphen := strings.ReplaceAll(uuidWithHyphen, "-", "")
+	return uuidWithoutHyphen
+}
 
 func Md5String(s string) string {
 	timeStr := string(time.Now().UnixNano())

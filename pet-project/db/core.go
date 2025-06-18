@@ -43,13 +43,13 @@ func linkInit() {
 func autoMigrateTable() {
 	err := DB.AutoMigrate(
 		&models.UserInfo{},
-		//&models.SuggestionModel{},
+		&models.SuggestionModel{},
 
 		&models.PetInfo{},
 		&models.PetActionType{},
-		&models.PetCustomType{},
+		&models.PetCustomAction{},
 		&models.PetConsumeType{},
-		&models.PetCustomConsumeType{},
+		&models.PetCustomConsume{},
 		&models.RecordList{},
 
 		//&models.MessageModel{},
