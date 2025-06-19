@@ -16,16 +16,17 @@ import (
 // PetInfoCreate 提交宠物详情
 func PetInfoCreate(c *gin.Context) {
 	//userId := c.MustGet("userId").(uint)
-	var petInfo = models.PetInfo{}
+	var petInfo models.PetInfo
 	if err := c.ShouldBind(&petInfo); err != nil {
 		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 		return
 	}
 	fmt.Println(petInfo.User)
 	// 忽略User是因为ShouldBind会创建一个User默认值，导致插入一条新的用户数据
-	result := db.DB.Omit("User").Create(&petInfo)
+	//result := db.DB.Omit("User").Create(&petInfo)
+	//result := db.DB.Omit(clause.Associations).Create(&petInfo)
 	// 现在不会创建关联对象了
-	//result := db.DB.Create(&petInfo)
+	result := db.DB.Create(&petInfo)
 	if result.Error != nil {
 		response.Fail(c, response.ApiCode.CreateErr, response.ApiMsg.CreateErr)
 		return
@@ -118,21 +119,20 @@ func DeletePetInfo(c *gin.Context) {
 }
 
 // CreatePetActionType 添加宠物行为
-//func CreatePetActionType(c *gin.Context) {
-//	var actionModel models.PetActionType
-//	if err := c.ShouldBind(&actionModel); err != nil {
-//		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
-//		return
-//	}
-//
-//	result := db.DB.Create(&actionModel)
-//	if result.Error != nil {
-//		response.Fail(c, response.ApiCode.CreateErr, response.ApiMsg.CreateErr)
-//		return
-//	}
-//	response.Success(c, nil)
-//}
-//
+func CreatePetActionType(c *gin.Context) {
+	var actionModel models.PetActionType
+	if err := c.ShouldBind(&actionModel); err != nil {
+		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
+		return
+	}
+
+	result := db.DB.Create(&actionModel)
+	if result.Error != nil {
+		response.Fail(c, response.ApiCode.CreateErr, response.ApiMsg.CreateErr)
+		return
+	}
+	response.Success(c, nil)
+}
 
 // GetPetActionList 获取宠物行为
 func GetPetActionList(c *gin.Context) {
@@ -198,22 +198,43 @@ func GetRecordList(c *gin.Context) {
 	response.Success(c, recordList)
 }
 
-// GetPetConsumeList 获取花销列表
-func GetPetConsumeList(c *gin.Context) {
-	var consumeModel []models.PetConsumeType
-	result := db.DB.Model(&models.PetConsumeType{}).Find(&consumeModel)
+// CreateConsumeAction 创建公共花销
+func CreateConsumeAction(c *gin.Context) {
+	var consumeModel models.PetConsumeType
+	if err := c.ShouldBind(&consumeModel); err != nil {
+		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
+		return
+	}
+	result := db.DB.Create(&consumeModel)
 	if result.Error != nil {
-		response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
+		response.Fail(c, response.ApiCode.CreateErr, response.ApiMsg.CreateErr)
 		return
 	}
 	response.Success(c, consumeModel)
 }
 
+// GetPetConsumeList 获取花销列表
+func GetPetConsumeList(c *gin.Context) {
+	var param models.PageModel
+	if err := c.ShouldBindQuery(&param); err != nil {
+		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
+		return
+	}
+	var consumeModels []models.PetConsumeType
+	offset := (param.PageNum - 1) * param.PageSize
+	findResult := db.DB.Model(&models.PetConsumeType{}).Offset(offset).Limit(param.PageSize).Find(&consumeModels)
+	if findResult.Error != nil {
+		response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
+		return
+	}
+	response.Success(c, consumeModels)
+}
+
 // GetPetCustomConsumeList 获取用户自己创建的花销列表
 func GetPetCustomConsumeList(c *gin.Context) {
 	var userid = c.MustGet("userId").(uint)
-	pageNum := c.PostForm("pageNum")
-	pageSize := c.PostForm("pageSize")
+	pageNum := c.Query("pageNum")
+	pageSize := c.Query("pageSize")
 	num, _ := strconv.Atoi(pageNum)
 	size, _ := strconv.Atoi(pageSize)
 	offset := (num - 1) * size
@@ -226,16 +247,15 @@ func GetPetCustomConsumeList(c *gin.Context) {
 	response.Success(c, customTypes)
 }
 
-func CreateConsumeAction(c *gin.Context) {
-	var userId = c.MustGet("userId").(uint)
+func CreateCustomConsumeAction(c *gin.Context) {
+	//var userId = c.MustGet("userId").(uint)
 	var model models.PetCustomConsume
 	if err := c.ShouldBind(&model); err != nil {
 		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 		return
 	}
-	model.UserId = userId
 	// 如果model包含主键，则更新（update）所有字段，如果不包含主键，则create
-	result := db.DB.Save(&model)
+	result := db.DB.Create(&model)
 	if result.Error != nil {
 		response.Fail(c, response.ApiCode.CreateErr, response.ApiMsg.CreateErr)
 		return

@@ -19,13 +19,16 @@ func RegisterRecordRouter(r *gin.Engine) {
 		petRouter.POST("/create", middleware.JWTTokenMiddleware(), handler.PetInfoCreate)
 		petRouter.PUT("/update", middleware.JWTTokenMiddleware(), handler.UpdatePetInfo)
 		petRouter.DELETE("/delete/:id", middleware.JWTTokenMiddleware(), handler.DeletePetInfo)
-		petRouter.GET("/action/list", middleware.JWTTokenMiddleware(), handler.GetPetActionList)
-		petRouter.GET("/custom/list", middleware.JWTTokenMiddleware(), handler.GetCustomActionList)
-		petRouter.GET("/consume/list", middleware.JWTTokenMiddleware(), handler.GetPetConsumeList)
-		petRouter.POST("custom/create", middleware.JWTTokenMiddleware(), handler.CreatePetCustomAction)
+
+		petRouter.POST("/create/action", handler.CreatePetActionType)
+		petRouter.GET("/action/list", handler.GetPetActionList)
+		petRouter.POST("/custom/action/create", middleware.JWTTokenMiddleware(), handler.CreatePetCustomAction)
+		petRouter.GET("/custom/action/list", middleware.JWTTokenMiddleware(), handler.GetCustomActionList)
+
+		petRouter.POST("/consume/create", handler.CreateConsumeAction)
+		petRouter.GET("/consume/list", handler.GetPetConsumeList)
+		petRouter.POST("/custom/consume/create", middleware.JWTTokenMiddleware(), handler.CreateCustomConsumeAction)
 		petRouter.GET("/custom/consume/list", middleware.JWTTokenMiddleware(), handler.GetPetCustomConsumeList)
-		petRouter.POST("/consume/create", middleware.JWTTokenMiddleware(), handler.CreateConsumeAction)
-		//petRouter.POST("/create/action", middleware.JWTTokenMiddleware(), handler.CreatePetActionType)
 	}
 
 	actionRouter := r.Group("v1/action")
