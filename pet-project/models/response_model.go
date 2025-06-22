@@ -51,3 +51,8 @@ type SendCodeModel struct {
 	Email string `json:"email" form:"email"`
 	Code  string `json:"code" form:"code" binding:"required"`
 }
+
+type UploadUserInfoModel struct {
+	Avatar   string `json:"avatar" form:"avatar"`
+	Username string `json:"username" form:"username"`
+}

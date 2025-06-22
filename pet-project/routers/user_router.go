@@ -18,6 +18,7 @@ func RegisterUserRouter(r *gin.Engine) {
 		userRouter.POST("/find/password", handler.UserFindPassword)
 		userRouter.POST("/qiniu/upload", middleware.JWTTokenMiddleware(), handler.GetQiNiuToken)
 		userRouter.POST("/pwd/upload", middleware.JWTTokenMiddleware(), handler.UserUpdatePassword)
+		userRouter.POST("/upload/user/info", middleware.JWTTokenMiddleware(), handler.UploadUserInfo)
 		userRouter.GET("/encryption/code", handler.GetEncryptionCode)
 	}
 

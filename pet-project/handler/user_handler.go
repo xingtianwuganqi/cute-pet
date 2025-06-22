@@ -493,3 +493,20 @@ func CreateSuggestion(c *gin.Context) {
 	}
 	response.Success(c, nil)
 }
+
+func UploadUserInfo(c *gin.Context) {
+	userId := c.MustGet("userId").(uint)
+	var userInfo models.UploadUserInfoModel
+	if err := c.ShouldBind(&userInfo); err != nil {
+		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
+		return
+	}
+	result := db.DB.Model(&models.UserInfo{}).Where("id = ?", userId).
+		Update("username", userInfo.Username).
+		Update("avatar", userInfo.Avatar)
+	if result.Error != nil {
+		response.Fail(c, response.ApiCode.UploadErr, response.ApiMsg.UploadErr)
+		return
+	}
+	response.Success(c, nil)
+}
