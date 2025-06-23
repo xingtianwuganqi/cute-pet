@@ -62,7 +62,7 @@ type PetInfo struct {
 	Gender   uint     `json:"gender" form:"gender" gorm:"default:0"`
 	BirthDay string   `json:"birthDay" form:"birthDay" gorm:"size:32"`
 	HomeDay  string   `json:"homeDay" form:"homeDay" gorm:"size:32"`
-	Desc     string   `json:"Desc" form:"Desc" gorm:"size:256"`
+	Desc     string   `json:"desc" form:"desc" gorm:"size:256"`
 	Weight   float32  `json:"weight" form:"weight" gorm:"default:0"`
 	Unit     uint     `json:"unit" form:"unit" gorm:"size:32"`
 }
