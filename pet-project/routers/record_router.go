@@ -22,18 +22,11 @@ func RegisterRecordRouter(r *gin.Engine) {
 		petRouter.PUT("/update", middleware.JWTTokenMiddleware(), handler.UpdatePetInfo)
 		petRouter.DELETE("/delete/:id", middleware.JWTTokenMiddleware(), handler.DeletePetInfo)
 
-		petRouter.POST("/create/action", handler.CreatePetActionType)
-		petRouter.GET("/action/list", handler.GetPetActionList)
-		petRouter.DELETE("/action/delete/:id", handler.DeletePetAction)
-		petRouter.POST("/custom/action/create", middleware.JWTTokenMiddleware(), handler.CreatePetCustomAction)
-		petRouter.GET("/custom/action/list", middleware.JWTTokenMiddleware(), handler.GetCustomActionList)
-		petRouter.DELETE("/custom/action/delete/:id", middleware.JWTTokenMiddleware(), handler.DeletePetCustomAction)
-
-		petRouter.POST("/consume/create", handler.CreateConsumeAction)
-		petRouter.GET("/consume/list", handler.GetPetConsumeList)
-		petRouter.DELETE("/consume/delete/:id", handler.DeletePetConsumeAction)
-		petRouter.POST("/custom/consume/create", middleware.JWTTokenMiddleware(), handler.CreateCustomConsumeAction)
-		petRouter.GET("/custom/consume/list", middleware.JWTTokenMiddleware(), handler.GetPetCustomConsumeList)
-		petRouter.DELETE("/custom/consume/delete/:id", middleware.JWTTokenMiddleware(), handler.DeleteCustomConsumeAction)
+		petRouter.POST("/create/category", handler.CreateRecordCategory)
+		petRouter.GET("/category/list", handler.GetRecordCategoryList)
+		petRouter.DELETE("/category/delete/:id", handler.DeleteRecordCategory)
+		petRouter.POST("/custom/category/create", middleware.JWTTokenMiddleware(), handler.CreateCustomCategory)
+		petRouter.GET("/custom/category/list", middleware.JWTTokenMiddleware(), handler.GetCustomCategoryList)
+		petRouter.DELETE("/custom/category/delete/:id", middleware.JWTTokenMiddleware(), handler.DeleteCustomCategory)
 	}
 }

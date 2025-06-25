@@ -12,38 +12,33 @@ type BaseModel struct {
 	DeletedAt gorm.DeletedAt `gorm:"index" json:"deletedAt" form:"deletedAt" `
 }
 
-// PetActionType 宠物日常/*
-type PetActionType struct {
+/*
+RecordCategory
+final String id;
+  final String name;
+  final String icon; // Emoji 或图标名
+  final Color color;
+  final String description;
+*/
+
+type RecordCategory struct {
 	BaseModel
-	ActionName string `json:"actionName" form:"actionName" gorm:"size:64" binding:"required"`
-	Icon       string `json:"icon" form:"icon" gorm:"size:64" binding:"required"`
+	Name     string `json:"name" form:"name" gorm:"size:32"`
+	Icon     string `json:"icon" form:"icon" gorm:"size:64"`
+	Color    string `json:"color" form:"color" gorm:"size:32"`
+	ImageUrl string `json:"imageUrl" form:"imageUrl" gorm:"size:64"`
+	Desc     string `json:"desc" form:"desc" gorm:"size:512"`
 }
 
-// PetCustomAction  宠物日常自定义/*
-type PetCustomAction struct {
+type CustomCategory struct {
 	BaseModel
-	User       UserInfo `json:"user" form:"user"`
-	UserId     uint     `json:"userId" form:"userId"`
-	CustomName string   `json:"customName" form:"customName" gorm:"size:32" binding:"required"`
-	CustomIcon string   `json:"customIcon" form:"customIcon" gorm:"size:256" binding:"required"`
-	Desc       string   `json:"desc" form:"desc" gorm:"size:256"`
-}
-
-// PetConsumeType 宠物消费
-type PetConsumeType struct {
-	BaseModel
-	ConsumeName string `json:"consumeName" form:"consumeName" gorm:"size:32" binding:"required"`
-	ConsumeIcon string `json:"consumeIcon" form:"consumeIcon" gorm:"default:0" binding:"required"`
-}
-
-// PetCustomConsume 用户自定义消费
-type PetCustomConsume struct {
-	BaseModel
-	User        UserInfo `json:"user" form:"user"`
-	UserId      uint     `json:"userId" form:"userId"`
-	ConsumeName string   `json:"consumeName" form:"consumeName" gorm:"size:32" binding:"required"`
-	ConsumeIcon string   `json:"consumeIcon" form:"consumeIcon" gorm:"default:0" binding:"required"`
-	Desc        string   `json:"desc" form:"desc" gorm:"size:256"`
+	User     *UserInfo `json:"user" form:"user"`
+	UserId   uint      `json:"userId" form:"userId"`
+	Name     string    `json:"name" form:"name" gorm:"size:32"`
+	Icon     string    `json:"icon" form:"icon" gorm:"size:64"`
+	Color    string    `json:"color" form:"color" gorm:"size:32"`
+	ImageUrl string    `json:"imageUrl" form:"imageUrl" gorm:"size:64"`
+	Desc     string    `json:"desc" form:"desc" gorm:"size:512"`
 }
 
 // PetInfo
@@ -54,38 +49,34 @@ Gender：1:公 2:母
 */
 type PetInfo struct {
 	BaseModel
-	User     UserInfo `json:"user" form:"user"`
-	UserId   uint     `json:"userId" form:"userId"`
-	PetType  string   `json:"petType" form:"petType" gorm:"size:64"`
-	Avatar   string   `json:"avatar" form:"avatar" gorm:"size:64" binding:"required"`
-	Name     string   `json:"name" form:"name" gorm:"size:32" binding:"required"`
-	Gender   uint     `json:"gender" form:"gender" gorm:"default:0"`
-	BirthDay string   `json:"birthDay" form:"birthDay" gorm:"size:32"`
-	HomeDay  string   `json:"homeDay" form:"homeDay" gorm:"size:32"`
-	Desc     string   `json:"desc" form:"desc" gorm:"size:256"`
-	Weight   float32  `json:"weight" form:"weight" gorm:"default:0"`
-	Unit     uint     `json:"unit" form:"unit" gorm:"size:32"`
+	User     *UserInfo `json:"user" form:"user"`
+	UserId   uint      `json:"userId" form:"userId"`
+	PetType  string    `json:"petType" form:"petType" gorm:"size:64"`
+	Avatar   string    `json:"avatar" form:"avatar" gorm:"size:64" binding:"required"`
+	Name     string    `json:"name" form:"name" gorm:"size:32" binding:"required"`
+	Gender   uint      `json:"gender" form:"gender" gorm:"default:0"`
+	BirthDay string    `json:"birthDay" form:"birthDay" gorm:"size:32"`
+	HomeDay  string    `json:"homeDay" form:"homeDay" gorm:"size:32"`
+	Desc     string    `json:"desc" form:"desc" gorm:"size:256"`
+	Weight   float32   `json:"weight" form:"weight" gorm:"default:0"`
+	Unit     uint      `json:"unit" form:"unit" gorm:"size:32"`
 }
 
 // RecordList Type 是日常还花销 1：共同日常，2：自定义日常，3：共同花销，4：自定花销
 // 是哪个宠物
 type RecordList struct {
 	BaseModel
-	User            UserInfo          `json:"user"`
-	UserId          uint              `json:"userId" form:"userId"`
-	Type            uint              `json:"type" form:"type" gorm:"default:0"`
-	PetInfo         PetInfo           `json:"petInfo" gorm:"-" binding:"-"`
-	PetInfoId       uint              `json:"petInfoId" form:"petInfoId"  binding:"required"`
-	ActionType      *PetActionType    `json:"actionType" gorm:"-"`
-	ActionTypeId    *uint             `json:"actionTypeId" form:"actionTypeId"`
-	CustomAction    *PetCustomAction  `json:"customAction" gorm:"-"`
-	CustomActionId  *uint             `json:"customActionId" form:"customActionId"`
-	ConsumeType     *PetConsumeType   `json:"consumeType" gorm:"-"`
-	ConsumeTypeId   *uint             `json:"consumeTypeId" form:"consumeTypeId"`
-	CustomConsume   *PetCustomConsume `json:"customConsume" gorm:"-"`
-	CustomConsumeId *uint             `json:"customConsumeId" form:"customConsumeId"`
-	Spend           float32           `json:"spend" form:"spend" gorm:"default:0"`
-	Desc            string            `json:"desc" form:"desc" gorm:"default:''"`
+	User             *UserInfo       `json:"user"`
+	UserId           uint            `json:"userId" form:"userId"`
+	PetInfo          *PetInfo        `json:"petInfo" gorm:"-" binding:"-"`
+	PetInfoId        uint            `json:"petInfoId" form:"petInfoId"  binding:"required"`
+	RecordCategory   *RecordCategory `json:"recordCategory" gorm:"-"`
+	RecordCategoryId *uint           `json:"recordCategoryId" form:"recordCategoryId"`
+	CustomCategory   *CustomCategory `json:"customCategory" gorm:"-"`
+	CustomCategoryId *uint           `json:"customCategoryId" form:"customCategoryId"`
+	Spend            float32         `json:"spend" form:"spend" gorm:"default:0"`
+	Desc             string          `json:"desc" form:"desc" gorm:"size:512"`
+	Images           []string        `json:"images" form:"images" gorm:"type:json"`
 }
 
 // AfterFind RecordList 查找其他字段
@@ -93,63 +84,38 @@ func (record *RecordList) AfterFind(tx *gorm.DB) (err error) {
 	if record.PetInfoId != 0 && record.UserId != 0 {
 		var petInfo PetInfo
 		result := tx.Model(&PetInfo{}).
-			Preload("User").
+			Omit("User").
 			Where("id = ? AND user_id = ?", record.PetInfoId, record.UserId).
 			First(&petInfo)
 		if result.Error != nil {
-			record.PetInfo = PetInfo{}
+			record.PetInfo = &PetInfo{}
 		} else {
-			record.PetInfo = petInfo
+			record.PetInfo = &petInfo
 		}
 	}
 
-	if record.ActionTypeId != nil {
-		var actionModel PetActionType
-		result := tx.Model(&PetActionType{}).
-			Where("id = ?", record.ActionTypeId).
+	if record.RecordCategoryId != nil {
+		var actionModel RecordCategory
+		result := tx.Model(&RecordCategory{}).
+			Where("id = ?", record.RecordCategoryId).
 			First(&actionModel)
 		if result.Error != nil {
-			record.ActionType = nil
+			record.RecordCategory = nil
 		} else {
-			record.ActionType = &actionModel
+			record.RecordCategory = &actionModel
 		}
 	}
 
-	if record.CustomActionId != nil && record.UserId != 0 {
-		var customModel PetCustomAction
-		result := tx.Model(&PetCustomAction{}).
-			Preload("User").
-			Where("id = ? AND user_id = ?", record.CustomActionId, record.UserId).
+	if record.CustomCategoryId != nil && record.UserId != 0 {
+		var customModel CustomCategory
+		result := tx.Model(&CustomCategory{}).
+			Omit("User").
+			Where("id = ? AND user_id = ?", record.CustomCategoryId, record.UserId).
 			First(&customModel)
 		if result.Error != nil {
-			record.CustomAction = nil
+			record.CustomCategory = nil
 		} else {
-			record.CustomAction = &customModel
-		}
-	}
-
-	if record.ConsumeTypeId != nil {
-		var consumeModel PetConsumeType
-		result := tx.Model(&PetConsumeType{}).
-			Where("id = ?", record.ConsumeTypeId).
-			First(&consumeModel)
-		if result.Error != nil {
-			record.ConsumeType = nil
-		} else {
-			record.ConsumeType = &consumeModel
-		}
-	}
-
-	if record.CustomConsumeId != nil && record.UserId != 0 {
-		var customConsumeModel PetCustomConsume
-		result := tx.Model(&PetCustomConsume{}).
-			Preload("User").
-			Where("id = ? AND user_id = ?", record.CustomConsumeId, record.UserId).
-			First(&customConsumeModel)
-		if result.Error != nil {
-			record.CustomConsume = nil
-		} else {
-			record.CustomConsume = &customConsumeModel
+			record.CustomCategory = &customModel
 		}
 	}
 

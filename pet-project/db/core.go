@@ -46,10 +46,8 @@ func autoMigrateTable() {
 		&models.SuggestionModel{},
 
 		&models.PetInfo{},
-		&models.PetActionType{},
-		&models.PetCustomAction{},
-		&models.PetConsumeType{},
-		&models.PetCustomConsume{},
+		&models.RecordCategory{},
+		&models.CustomCategory{},
 		&models.RecordList{},
 
 		//&models.MessageModel{},

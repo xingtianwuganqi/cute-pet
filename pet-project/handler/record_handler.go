@@ -3,14 +3,12 @@ package handler
 import (
 	"errors"
 	"fmt"
+	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 	"log"
 	"pet-project/db"
 	"pet-project/models"
 	"pet-project/response"
-	"strconv"
-
-	"github.com/gin-gonic/gin"
 )
 
 // PetInfoCreate 提交宠物详情
@@ -120,15 +118,15 @@ func DeletePetInfo(c *gin.Context) {
 	response.Success(c, nil)
 }
 
-// CreatePetActionType 添加宠物行为
-func CreatePetActionType(c *gin.Context) {
-	var actionModel models.PetActionType
-	if err := c.ShouldBind(&actionModel); err != nil {
+// CreateRecordCategory 添加宠物行为
+func CreateRecordCategory(c *gin.Context) {
+	var recordCategory models.RecordCategory
+	if err := c.ShouldBind(&recordCategory); err != nil {
 		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 		return
 	}
 
-	result := db.DB.Create(&actionModel)
+	result := db.DB.Create(&recordCategory)
 	if result.Error != nil {
 		response.Fail(c, response.ApiCode.CreateErr, response.ApiMsg.CreateErr)
 		return
@@ -136,10 +134,10 @@ func CreatePetActionType(c *gin.Context) {
 	response.Success(c, nil)
 }
 
-// GetPetActionList 获取宠物行为
-func GetPetActionList(c *gin.Context) {
-	var petActionList []models.PetActionType
-	result := db.DB.Model(&models.PetActionType{}).Find(&petActionList)
+// GetRecordCategoryList 获取宠物行为
+func GetRecordCategoryList(c *gin.Context) {
+	var petActionList []models.RecordCategory
+	result := db.DB.Model(&models.RecordCategory{}).Find(&petActionList)
 	if result.Error != nil {
 		response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
 		return
@@ -147,9 +145,9 @@ func GetPetActionList(c *gin.Context) {
 	response.Success(c, petActionList)
 }
 
-func DeletePetAction(c *gin.Context) {
+func DeleteRecordCategory(c *gin.Context) {
 	id := c.Param("id")
-	result := db.DB.Delete(&models.PetActionType{}, "id = ?", id)
+	result := db.DB.Delete(&models.RecordCategory{}, "id = ?", id)
 	if result.Error != nil {
 		response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
 		return
@@ -157,16 +155,16 @@ func DeletePetAction(c *gin.Context) {
 	response.Success(c, nil)
 }
 
-// CreatePetCustomAction 创建自定义日常
-func CreatePetCustomAction(c *gin.Context) {
+// CreateCustomCategory 创建自定义分类
+func CreateCustomCategory(c *gin.Context) {
 	userId := c.MustGet("userId").(uint)
-	var petCustomAction models.PetCustomAction
-	if err := c.ShouldBind(&petCustomAction); err != nil {
+	var customCategory models.CustomCategory
+	if err := c.ShouldBind(&customCategory); err != nil {
 		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 		return
 	}
-	petCustomAction.UserId = userId
-	result := db.DB.Omit("User").Create(&petCustomAction)
+	customCategory.UserId = userId
+	result := db.DB.Omit("User").Create(&customCategory)
 	if result.Error != nil {
 		response.Fail(c, response.ApiCode.CreateErr, response.ApiMsg.CreateErr)
 		return
@@ -174,7 +172,7 @@ func CreatePetCustomAction(c *gin.Context) {
 	response.Success(c, nil)
 }
 
-func GetCustomActionList(c *gin.Context) {
+func GetCustomCategoryList(c *gin.Context) {
 	userId := c.MustGet("userId").(uint)
 	param := models.PageModel{}
 	if err := c.ShouldBindQuery(&param); err != nil {
@@ -183,14 +181,14 @@ func GetCustomActionList(c *gin.Context) {
 	}
 	offset := (param.PageNum - 1) * param.PageSize
 
-	var customActionList []models.PetCustomAction
+	var customActionList []models.CustomCategory
 	// 如果只返回特定字段，
 	//var customActionList []models.PetCustomTypeInfo ,
 	//查询db.DB.Model(&models.PetCustomType{}).Where("user_id = ?", userId).Find(&customActionList)
 	// 定义为UserId的字段，GORM 自动将结构体字段名称转换为 user_id 作为数据库中的列名。
 	//result := db.DB.Preload("User").Where("user_id = ?", userId).Find(&customActionList)
 	// Select 或 Omit的字段，不会消失，会显示零值
-	result := db.DB.Preload("User").Model(&models.PetCustomAction{}).
+	result := db.DB.Preload("User").Model(&models.CustomCategory{}).
 		Offset(offset).Limit(param.PageSize).
 		Order("created_at DESC").
 		Find(&customActionList, "user_id = ?", userId)
@@ -201,94 +199,10 @@ func GetCustomActionList(c *gin.Context) {
 	response.Success(c, customActionList)
 }
 
-func DeletePetCustomAction(c *gin.Context) {
+func DeleteCustomCategory(c *gin.Context) {
 	userId := c.MustGet("userId").(uint)
 	petCustomActionId := c.Param("id")
-	result := db.DB.Delete(&models.PetCustomAction{}, "id = ? AND user_id = ?", petCustomActionId, userId)
-	if result.Error != nil {
-		response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
-		return
-	}
-	response.Success(c, nil)
-}
-
-// CreateConsumeAction 创建公共花销
-func CreateConsumeAction(c *gin.Context) {
-	var consumeModel models.PetConsumeType
-	if err := c.ShouldBind(&consumeModel); err != nil {
-		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
-		return
-	}
-	result := db.DB.Create(&consumeModel)
-	if result.Error != nil {
-		response.Fail(c, response.ApiCode.CreateErr, response.ApiMsg.CreateErr)
-		return
-	}
-	response.Success(c, consumeModel)
-}
-
-// GetPetConsumeList 获取花销列表
-func GetPetConsumeList(c *gin.Context) {
-	var consumeModels []models.PetConsumeType
-	findResult := db.DB.Model(&models.PetConsumeType{}).Find(&consumeModels)
-	if findResult.Error != nil {
-		response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
-		return
-	}
-	response.Success(c, consumeModels)
-}
-
-func DeletePetConsumeAction(c *gin.Context) {
-	id := c.Param("id")
-	result := db.DB.Delete(&models.PetConsumeType{}, "id = ?", id)
-	if result.Error != nil {
-		response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
-		return
-	}
-	response.Success(c, nil)
-}
-
-// CreateCustomConsumeAction 创建用户自定义花销
-func CreateCustomConsumeAction(c *gin.Context) {
-	var userId = c.MustGet("userId").(uint)
-	var model models.PetCustomConsume
-	if err := c.ShouldBind(&model); err != nil {
-		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
-		return
-	}
-	model.UserId = userId
-	// 如果model包含主键，则更新（update）所有字段，如果不包含主键，则create
-	result := db.DB.Create(&model)
-	if result.Error != nil {
-		response.Fail(c, response.ApiCode.CreateErr, response.ApiMsg.CreateErr)
-		return
-	}
-	response.Success(c, models.EmptyModel{})
-
-}
-
-// GetPetCustomConsumeList 获取用户自己创建的花销列表
-func GetPetCustomConsumeList(c *gin.Context) {
-	var userid = c.MustGet("userId").(uint)
-	pageNum := c.Query("pageNum")
-	pageSize := c.Query("pageSize")
-	num, _ := strconv.Atoi(pageNum)
-	size, _ := strconv.Atoi(pageSize)
-	offset := (num - 1) * size
-	var customTypes []models.PetCustomConsume
-	findResult := db.DB.Model(&models.PetCustomConsume{}).Where("user_id = ?", userid).Offset(offset).Limit(size).Find(&customTypes)
-	if findResult.Error != nil {
-		response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
-		return
-	}
-	response.Success(c, customTypes)
-}
-
-// DeleteCustomConsumeAction 删除用户自己创建的花销
-func DeleteCustomConsumeAction(c *gin.Context) {
-	userId := c.MustGet("userId").(uint)
-	id := c.Param("id")
-	result := db.DB.Delete(&models.PetCustomConsume{}, "id = ? AND user_id = ?", id, userId)
+	result := db.DB.Delete(&models.CustomCategory{}, "id = ? AND user_id = ?", petCustomActionId, userId)
 	if result.Error != nil {
 		response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
 		return
