@@ -51,7 +51,6 @@ type PetInfo struct {
 	BaseModel
 	User     *UserInfo `json:"user" form:"user"`
 	UserId   uint      `json:"userId" form:"userId" binding:"required"`
-	PetType  string    `json:"petType" form:"petType" gorm:"size:64"`
 	Avatar   string    `json:"avatar" form:"avatar" gorm:"size:64" binding:"required"`
 	Name     string    `json:"name" form:"name" gorm:"size:32" binding:"required"`
 	Gender   uint      `json:"gender" form:"gender" gorm:"default:0"`
