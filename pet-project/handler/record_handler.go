@@ -219,6 +219,13 @@ func CreateRecord(c *gin.Context) {
 		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 		return
 	}
+	// 查一下宠物是否存在
+	var petInfo models.PetInfo
+	petResult := db.DB.Model(&models.PetInfo{}).Where("id = ?", model.PetInfoId).First(&petInfo)
+	if errors.Is(petResult.Error, gorm.ErrRecordNotFound) {
+		response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
+		return
+	}
 	model.UserId = userId
 	result := db.DB.Create(&model)
 	if result.Error != nil {
