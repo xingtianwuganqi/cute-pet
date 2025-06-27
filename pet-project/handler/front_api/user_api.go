@@ -23,3 +23,19 @@ func UserList(c *gin.Context) {
 	}
 	response.Success(c, users)
 }
+
+func UserSuggestionList(c *gin.Context) {
+	var page models.PageModel
+	if err := c.ShouldBindQuery(&page); err != nil {
+		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
+		return
+	}
+	offset := (page.PageNum - 1) * page.PageSize
+	var suggestions []models.SuggestionModel
+	result := db.DB.Model(models.SuggestionModel{}).Offset(offset).Limit(page.PageSize).Find(&suggestions)
+	if result.Error != nil {
+		response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
+		return
+	}
+	response.Success(c, suggestions)
+}

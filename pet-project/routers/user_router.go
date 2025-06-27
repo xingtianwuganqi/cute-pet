@@ -22,9 +22,10 @@ func RegisterUserRouter(r *gin.Engine) {
 		userRouter.GET("/encryption/code", handler.GetEncryptionCode)
 	}
 
-	userFrontRouter := r.Group("/front/user")
+	userFrontRouter := r.Group("/front")
 	{
-		userFrontRouter.GET("/list", front_api.UserList)
+		userFrontRouter.GET("/user/list", front_api.UserList)
+		userFrontRouter.GET("/user/suggestions", front_api.UserSuggestionList)
 	}
 
 }
