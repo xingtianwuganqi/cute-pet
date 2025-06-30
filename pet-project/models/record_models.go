@@ -53,6 +53,7 @@ type PetInfo struct {
 	UserId   uint      `json:"userId" form:"userId" binding:"required"`
 	Avatar   string    `json:"avatar" form:"avatar" gorm:"size:64" binding:"required"`
 	Name     string    `json:"name" form:"name" gorm:"size:32" binding:"required"`
+	PetType  *string   `json:"petType" form:"petType" gorm:"size:32"`
 	Gender   uint      `json:"gender" form:"gender" gorm:"default:0"`
 	BirthDay string    `json:"birthDay" form:"birthDay" gorm:"size:32"`
 	HomeDay  string    `json:"homeDay" form:"homeDay" gorm:"size:32"`
