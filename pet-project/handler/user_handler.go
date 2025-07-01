@@ -3,6 +3,7 @@ package handler
 import (
 	"errors"
 	"fmt"
+	"gorm.io/gorm/clause"
 	"io"
 	"net/http"
 	"pet-project/db"
@@ -486,7 +487,7 @@ func CreateSuggestion(c *gin.Context) {
 		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 		return
 	}
-	result := db.DB.Omit("User").Create(&suggestion)
+	result := db.DB.Omit(clause.Associations).Create(&suggestion)
 	if result.Error != nil {
 		response.Fail(c, response.ApiCode.CreateErr, response.ApiMsg.CreateErr)
 		return

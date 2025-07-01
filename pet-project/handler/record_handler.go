@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 	"log"
 	"pet-project/db"
 	"pet-project/models"
@@ -25,7 +26,7 @@ func PetInfoCreate(c *gin.Context) {
 	//result := db.DB.Omit(clause.Associations).Create(&petInfo)
 	// 现在不会创建关联对象了
 	petInfo.UserId = userId
-	result := db.DB.Create(&petInfo)
+	result := db.DB.Omit(clause.Associations).Create(&petInfo)
 	if result.Error != nil {
 		response.Fail(c, response.ApiCode.CreateErr, response.ApiMsg.CreateErr)
 		return
@@ -164,7 +165,7 @@ func CreateCustomCategory(c *gin.Context) {
 		return
 	}
 	customCategory.UserId = userId
-	result := db.DB.Omit("User").Create(&customCategory)
+	result := db.DB.Omit(clause.Associations).Create(&customCategory)
 	if result.Error != nil {
 		response.Fail(c, response.ApiCode.CreateErr, response.ApiMsg.CreateErr)
 		return
@@ -227,7 +228,7 @@ func CreateRecord(c *gin.Context) {
 		return
 	}
 	model.UserId = userId
-	result := db.DB.Create(&model)
+	result := db.DB.Omit(clause.Associations).Create(&model)
 	if result.Error != nil {
 		response.Fail(c, response.ApiCode.CreateErr, response.ApiMsg.CreateErr)
 		return
