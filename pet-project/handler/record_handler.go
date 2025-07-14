@@ -10,6 +10,7 @@ import (
 	"pet-project/db"
 	"pet-project/models"
 	"pet-project/response"
+	"slices"
 )
 
 // PetInfoCreate 提交宠物详情
@@ -151,6 +152,29 @@ func DeleteRecordCategory(c *gin.Context) {
 	result := db.DB.Delete(&models.RecordCategory{}, "id = ?", id)
 	if result.Error != nil {
 		response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
+		return
+	}
+	response.Success(c, nil)
+}
+
+// CreateCategoryList 批量添加宠物行为
+func CreateCategoryList(c *gin.Context) {
+	var recordList []models.RecordCategory
+	if err := c.ShouldBind(&recordList); err != nil {
+		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
+		return
+	}
+	var values []bool
+	for i := range recordList {
+		result := db.DB.Omit(clause.Associations).Create(&recordList[i])
+		if result.Error != nil {
+			values = append(values, false)
+		} else {
+			values = append(values, true)
+		}
+	}
+	if slices.Contains(values, false) {
+		response.Fail(c, response.ApiCode.CreateErr, response.ApiMsg.CreateErr)
 		return
 	}
 	response.Success(c, nil)
