@@ -1,55 +1,39 @@
-[Success]
-other = "成功"
-[Fail]
-other = "失败"
-[UserExistsErr]
-other = "用户已存在"
-[AuthErr]
-other = "token认证失败, 请重新登录"
-[ServerErr]
-other = "网络操作失败，请稍后重试"
-[NotFoundErr]
-other = "服务器没有此接口"
-[UnknownErr]
-other = "未知错误"
-[ParamErr]
-other = "参数错误"
-[RejectErr]
-other = "拒绝访问"
-[MethodErr]
-other = "请求方法错误"
-[ParamLack]
-other = "缺少参数"
-[QueryErr]
-other = "查询失败"
-[EmptyErr]
-other = "查询为空"
-[CleanUp]
-other = "整顿期间"
-[PhoneUnbind]
-other = "未绑定手机号"
-[PhoneUncheck]
-other = "未验证手机号"
-[EmailErr]
-other = "暂不支持邮箱登录"
-[PhoneUsed]
-other = "该手机号已被使用"
-[CreateErr]
-other = "创建失败"
-[UserNotFound]
-other = "用户不存在"
-[DataNotExit]
-other = "数据不存在"
-[UploadErr]
-other = "更新失败"
-[PasswordErr]
-other = "密码错误"
-[CheckCodeErr]
-other = "验证码有误"
-[VerificationTitle]
-other = "您的验证码"
-[VerificationDesc]
-other = "您的验证码为 {{.Count}},请在10分钟内使用。"
-[AccountUnRegister]
-other = "账号未注册"
+Success = "成功"
+Fail = "失败"
+UserExistsErr = "用户已存在"
+AuthErr = "token认证失败, 请重新登录"
+ServerErr = "网络操作失败，请稍后重试"
+NotFoundErr = "服务器没有此接口"
+UnknownErr = "未知错误"
+ParamErr = "参数错误"
+RejectErr = "拒绝访问"
+MethodErr = "请求方法错误"
+ParamLack = "缺少参数"
+QueryErr = "查询失败"
+EmptyErr = "查询为空"
+CleanUp = "整顿期间"
+PhoneUnbind = "未绑定手机号"
+PhoneUncheck = "未验证手机号"
+EmailErr = "暂不支持邮箱登录"
+PhoneUsed = "该手机号已被使用"
+CreateErr = "创建失败"
+UserNotFound = "用户不存在"
+DataNotExit = "数据不存在"
+UploadErr = "更新失败"
+PasswordErr = "密码错误"
+CheckCodeErr = "验证码有误"
+VerificationTitle = "您的验证码"
+VerificationDesc = "您的验证码为 {{.Count}},请在10分钟内使用。"
+AccountUnRegister = "账号未注册"
+
+
+
+
+
+
+
+
+
+
+
 

@@ -23,11 +23,11 @@ final String id;
 
 type RecordCategory struct {
 	BaseModel
-	Name     string `json:"name" form:"name" gorm:"size:32"`
-	Icon     string `json:"icon" form:"icon" gorm:"size:64"`
-	Color    string `json:"color" form:"color" gorm:"size:32"`
-	ImageUrl string `json:"imageUrl" form:"imageUrl" gorm:"size:64"`
-	Desc     string `json:"desc" form:"desc" gorm:"size:512"`
+	Name        string `json:"name" form:"name" gorm:"size:32"`
+	Icon        string `json:"icon" form:"icon" gorm:"size:64"`
+	Color       string `json:"color" form:"color" gorm:"size:32"`
+	ImageUrl    string `json:"imageUrl" form:"imageUrl" gorm:"size:64"`
+	Desc        string `json:"desc" form:"desc" gorm:"size:512"`
 }
 
 type CustomCategory struct {
