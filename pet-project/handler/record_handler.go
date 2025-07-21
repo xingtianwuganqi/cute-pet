@@ -252,6 +252,7 @@ func CreateRecord(c *gin.Context) {
 		return
 	}
 	model.UserId = userId
+	fmt.Println(model)
 	result := db.DB.Omit(clause.Associations).Create(&model)
 	if result.Error != nil {
 		response.Fail(c, response.ApiCode.CreateErr, response.ApiMsg.CreateErr)

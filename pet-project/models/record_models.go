@@ -23,11 +23,11 @@ final String id;
 
 type RecordCategory struct {
 	BaseModel
-	Name        string `json:"name" form:"name" gorm:"size:32"`
-	Icon        string `json:"icon" form:"icon" gorm:"size:64"`
-	Color       string `json:"color" form:"color" gorm:"size:32"`
-	ImageUrl    string `json:"imageUrl" form:"imageUrl" gorm:"size:64"`
-	Desc        string `json:"desc" form:"desc" gorm:"size:512"`
+	Name     string `json:"name" form:"name" gorm:"size:32"`
+	Icon     string `json:"icon" form:"icon" gorm:"size:64"`
+	Color    string `json:"color" form:"color" gorm:"size:32"`
+	ImageUrl string `json:"imageUrl" form:"imageUrl" gorm:"size:64"`
+	Desc     string `json:"desc" form:"desc" gorm:"size:512"`
 }
 
 type CustomCategory struct {
@@ -74,9 +74,9 @@ type RecordList struct {
 	RecordCategoryId *uint           `json:"recordCategoryId" form:"recordCategoryId"`
 	CustomCategory   *CustomCategory `json:"customCategory" gorm:"-"`
 	CustomCategoryId *uint           `json:"customCategoryId" form:"customCategoryId"`
-	Spend            float32         `json:"spend" form:"spend" gorm:"default:0"`
+	Spend            *float32        `json:"spend" form:"spend" gorm:"default:0"`
 	Desc             string          `json:"desc" form:"desc" gorm:"size:512"`
-	Images           []string        `json:"images" form:"images" gorm:"type:json"`
+	Images           StringArray     `json:"images" form:"images" gorm:"type:json"`
 }
 
 // AfterFind RecordList 查找其他字段
