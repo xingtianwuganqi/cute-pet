@@ -76,7 +76,7 @@ type RecordList struct {
 	CustomCategoryId *uint           `json:"customCategoryId" form:"customCategoryId"`
 	Spend            *float32        `json:"spend" form:"spend" gorm:"default:0"`
 	Desc             string          `json:"desc" form:"desc" gorm:"size:512"`
-	Images           StringArray     `json:"images" form:"images" gorm:"type:json"`
+	Images           *StringArray    `json:"images" form:"images" gorm:"type:json"`
 }
 
 // AfterFind RecordList 查找其他字段
