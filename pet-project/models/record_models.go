@@ -77,6 +77,7 @@ type RecordList struct {
 	Spend            *float32        `json:"spend" form:"spend" gorm:"default:0"`
 	Desc             string          `json:"desc" form:"desc" gorm:"size:512"`
 	Images           *StringArray    `json:"images" form:"images" gorm:"type:json"`
+	RecordTime       time.Time       `json:"recordTime" form:"recordTime"`
 }
 
 // AfterFind RecordList 查找其他字段
