@@ -50,9 +50,11 @@ func autoMigrateTable() {
 		&models.CustomCategory{},
 		&models.RecordList{},
 
-		//&models.MessageModel{},
-		//&models.LikeMessageModel{},
-		//&models.CollectionMessageModel{},
+		&models.TopicModel{},
+		&models.PostModel{},
+		&models.LikeMessageModel{},
+		&models.CollectionMessageModel{},
+		&models.MessageModel{},
 		//&models.CommentModel{},
 		//&models.ReplayModel{},
 	)

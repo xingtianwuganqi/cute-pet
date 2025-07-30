@@ -39,6 +39,8 @@ type CustomCategory struct {
 	Color    string    `json:"color" form:"color" gorm:"size:32"`
 	ImageUrl string    `json:"imageUrl" form:"imageUrl" gorm:"size:64"`
 	Desc     string    `json:"desc" form:"desc" gorm:"size:512"`
+	//Language string    `json:"language" form:"language" gorm:"size:32"`
+	//Region   string    `json:"region" form:"region" gorm:"size:32"`
 }
 
 // PetInfo
@@ -60,6 +62,8 @@ type PetInfo struct {
 	Desc     string    `json:"desc" form:"desc" gorm:"size:256"`
 	Weight   float32   `json:"weight" form:"weight" gorm:"default:0"`
 	Unit     uint      `json:"unit" form:"unit" gorm:"size:32"`
+	//Language string    `json:"language" form:"language" gorm:"size:32"`
+	//Region   string    `json:"region" form:"region" gorm:"size:32"`
 }
 
 // RecordList Type 是日常还花销 1：共同日常，2：自定义日常，3：共同花销，4：自定花销
@@ -78,6 +82,8 @@ type RecordList struct {
 	Desc             string          `json:"desc" form:"desc" gorm:"size:512"`
 	Images           *StringArray    `json:"images" form:"images" gorm:"type:json"`
 	RecordTime       time.Time       `json:"recordTime" form:"recordTime"`
+	//Language         string          `json:"language" form:"language" gorm:"size:32"`
+	//Region           string          `json:"region" form:"region" gorm:"size:32"`
 }
 
 // AfterFind RecordList 查找其他字段

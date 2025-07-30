@@ -20,7 +20,16 @@ func main() {
 	}
 }
 
-// windows启动redis命令
 /*
+windows启动redis命令
+
 redis-server.exe redis.windows.conf
+
+
+mac 启动redis
+
+cd /usr/local/bin
+redis-server
+// 终止
+redis-cli shutdown
 */

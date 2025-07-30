@@ -56,3 +56,20 @@ type UploadUserInfoModel struct {
 	Avatar   string `json:"avatar" form:"avatar"`
 	Username string `json:"username" form:"username"`
 }
+
+// 帖子相关
+
+type TopicStatusModel struct {
+	TopicId uint `json:"topicId" form:"topicId"`
+	Status  uint `json:"status" form:"status"`
+}
+
+type PostStatusModel struct {
+	PostId uint `json:"postId" form:"postId"`
+	Status uint `json:"status" form:"status"`
+}
+
+type MessageListType struct {
+	PageModel
+	MessageType uint `json:"messageType" form:"messageType"`
+}

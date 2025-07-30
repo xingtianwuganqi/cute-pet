@@ -9,8 +9,9 @@ import (
 func RegisterMessageRouters(r *gin.Engine) {
 	router := r.Group("/v1/msg")
 	{
-		router.POST("/like/action", middleware.JWTTokenMiddleware(), handler.LikeMessageHandler)
-		router.POST("/collection/action", middleware.JWTTokenMiddleware(), handler.CollectionMessageHandler)
+		router.POST("/like", middleware.JWTTokenMiddleware(), handler.LikeMessageHandler)
+		router.POST("/collection", middleware.JWTTokenMiddleware(), handler.CollectionMessageHandler)
 		router.POST("/list", middleware.JWTTokenMiddleware(), handler.MessageListHandler)
+		router.GET("/unread", middleware.JWTTokenMiddleware(), handler.UnreadNumberHandler)
 	}
 }

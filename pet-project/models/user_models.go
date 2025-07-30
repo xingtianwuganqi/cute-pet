@@ -13,6 +13,8 @@ type UserInfo struct {
 	Avatar   string `json:"avatar" form:"avatar" gorm:"size:126"`
 	Wx       string `json:"wx" form:"wx" gorm:"size:126"`
 	Location uint   `json:"location" form:"location" gorm:"default:0"`
+	Language string `json:"language" form:"language" gorm:"size:32"`
+	Region   string `json:"region" form:"region" gorm:"size:32"`
 }
 
 type SuggestionModel struct {

@@ -275,7 +275,7 @@ func GetRecordList(c *gin.Context) {
 		Model(&models.RecordList{}).Where("user_id = ?", userId).
 		Offset(offset).
 		Limit(pageModel.PageSize).
-		Order("created_at DESC").
+		Order("record_time DESC").
 		Find(&recordList)
 	if result.Error != nil {
 		fmt.Println(result.Error)
