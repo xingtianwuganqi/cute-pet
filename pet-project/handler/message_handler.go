@@ -129,6 +129,7 @@ func CollectionMessageHandler(c *gin.Context) {
 	response.Success(c, collectionStatus)
 }
 
+// MessageListHandler 消息列表
 func MessageListHandler(c *gin.Context) {
 	var userId = c.MustGet("userId").(uint)
 	var typeModel models.MessageListType
@@ -145,16 +146,19 @@ func MessageListHandler(c *gin.Context) {
 		result = db.DB.Model(models.MessageModel{}).
 			Where("to_uid = ?", userId).
 			Offset(offer).Limit(typeModel.PageSize).
+			Order("created_at DESC").
 			Find(&msgList)
 	case 1, 2:
 		result = db.DB.Model(models.MessageModel{}).
 			Where("to_uid = ? AND message_type = ?", userId, typeModel.MessageType).
 			Offset(offer).Limit(typeModel.PageSize).
+			Order("created_at DESC").
 			Find(&msgList)
 	default:
 		result = db.DB.Model(models.MessageModel{}).
 			Where("to_uid = ? AND message_type IN ?", userId, []int{3, 4}).
 			Offset(offer).Limit(typeModel.PageSize).
+			Order("created_at DESC").
 			Find(&msgList)
 	}
 
@@ -184,10 +188,10 @@ func MessageListHandler(c *gin.Context) {
 			}
 		}
 	}
-
 	response.Success(c, msgList)
 }
 
+// UnreadNumberHandler 未读消息数量
 func UnreadNumberHandler(c *gin.Context) {
 	var userId = c.MustGet("userId").(uint)
 
@@ -210,4 +214,98 @@ func UnreadNumberHandler(c *gin.Context) {
 		"collectionNum": collectionNum,
 		"commentNum":    commentNum,
 	})
+}
+
+// CommentHandler 评论
+func CommentHandler(c *gin.Context) {
+	var commentModel models.CommentModel
+	if err := c.ShouldBind(&commentModel); err != nil {
+		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
+		return
+	}
+	result := db.DB.Model(models.CommentModel{}).Create(&commentModel)
+	if result.Error != nil {
+		response.Fail(c, response.ApiCode.CreateErr, response.ApiMsg.CreateErr)
+		return
+	}
+	response.Success(c, commentModel)
+}
+
+func DeleteCommentHandler(c *gin.Context) {
+	var commentId = c.Param("commentId")
+	result := db.DB.Model(models.CommentModel{}).Delete(&models.CommentModel{}, commentId)
+	if result.Error != nil {
+		response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
+		return
+	}
+	response.Success(c, nil)
+}
+
+// ReplyHandler 回复
+func ReplyHandler(c *gin.Context) {
+	var replyModel models.ReplyModel
+	if err := c.ShouldBind(&replyModel); err != nil {
+		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
+		return
+	}
+	result := db.DB.Model(models.ReplyModel{}).Create(&replyModel)
+	if result.Error != nil {
+		response.Fail(c, response.ApiCode.CreateErr, response.ApiMsg.CreateErr)
+		return
+	}
+	response.Success(c, replyModel)
+}
+
+func DeleteReplyHandler(c *gin.Context) {
+	var replyId = c.Param("replyId")
+	result := db.DB.Model(models.ReplyModel{}).Delete(&models.ReplyModel{}, replyId)
+	if result.Error != nil {
+		response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
+		return
+	}
+	response.Success(c, nil)
+}
+
+func GetCommentListHandler(c *gin.Context) {
+	param := models.CommentListModel{}
+	if err := c.ShouldBind(&param); err != nil {
+		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
+		return
+	}
+	offset := (param.PageNum - 1) * param.PageSize
+	var commentList []models.CommentModel
+	result := db.DB.
+		Preload("ReplyList", func(db *gorm.DB) *gorm.DB {
+			return db.Order("created_at ASC").Limit(5)
+		}).
+		Where("topic_id = ?", param.TopicId).
+		Offset(offset).
+		Limit(param.PageSize).
+		Order("created_at DESC").
+		Find(&commentList)
+	if result.Error != nil {
+		response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
+		return
+	}
+	response.Success(c, commentList)
+}
+
+func GetReplyListHandler(c *gin.Context) {
+	param := models.ReplyListModel{}
+	if err := c.ShouldBind(&param); err != nil {
+		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
+		return
+	}
+	offset := (param.PageNum - 1) * param.PageSize
+	var replyList []models.ReplyModel
+	result := db.DB.Model(&models.ReplyModel{}).Where("comment_id = ?", param.CommentId).
+		Offset(offset).
+		Limit(param.PageSize).
+		Order("created_at DESC").
+		Find(&replyList)
+	if result.Error != nil {
+		response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
+		return
+	}
+	response.Success(c, replyList)
 }

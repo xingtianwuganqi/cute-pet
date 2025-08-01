@@ -55,8 +55,8 @@ func autoMigrateTable() {
 		&models.LikeMessageModel{},
 		&models.CollectionMessageModel{},
 		&models.MessageModel{},
-		//&models.CommentModel{},
-		//&models.ReplayModel{},
+		&models.CommentModel{},
+		&models.ReplyModel{},
 	)
 	if err != nil {
 		return

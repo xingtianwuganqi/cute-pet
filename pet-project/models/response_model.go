@@ -73,3 +73,13 @@ type MessageListType struct {
 	PageModel
 	MessageType uint `json:"messageType" form:"messageType"`
 }
+
+type CommentListModel struct {
+	PageModel
+	TopicId uint `json:"topicId" form:"topicId"`
+}
+
+type ReplyListModel struct {
+	PageModel
+	CommentId uint `json:"commentId" form:"commentId"`
+}

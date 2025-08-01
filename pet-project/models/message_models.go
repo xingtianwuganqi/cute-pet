@@ -45,6 +45,11 @@ type CollectionMessageModel struct {
 	ToUid            uint `json:"toUid" form:"toUid" gorm:"default:0"`
 }
 
+/*
+topic_type:  领养1， 秀宠2，找宠3
+*/
+// CommentModel
+
 type CommentModel struct {
 	BaseModel
 	TopicId   uint   `json:"topicId" form:"topicId" gorm:"default:0"`
@@ -52,14 +57,22 @@ type CommentModel struct {
 	Content   string `json:"content" form:"content" gorm:"size:256"`
 	FromUid   uint   `json:"fromUid" form:"fromUid" gorm:"default:0"`
 	ToUid     uint   `json:"toUid" form:"toUid" gorm:"default:0"`
+	// GORM 关联
+	ReplyList []ReplyModel `json:"replyList" gorm:"foreignKey:CommentId;references:ID"` // 不加 form 标签，避免表单绑定
 }
 
+/*
+	comment_id:表示在这条回复下
+    reply_id: #表示回复目标的 id，如果 reply_type 是 comment 的话，那么 reply_id ＝ commit_id，如果 reply_type 是 reply 的话，这表示这条回复的父回复。
+    reply_type: #表示回复的类型，因为回复可以是针对评论的回复（comment）值为1，也可以是针对回复的回复（reply），值为2， 通过这个字段来区分两种情景。
+*/
 // ReplayModel
 // 通过commentId和replyId判断是回复的评论还是回复的回复
-type ReplayModel struct {
+type ReplyModel struct {
 	BaseModel
-	CommentId uint   `json:"commentId" form:"commentId" gorm:"default:0"`
+	CommentId uint   `json:"commentId" form:"commentId" gorm:"index"` // 建议加 index
 	ReplyId   uint   `json:"replyId" form:"replyId" gorm:"default:0"`
+	ReplyType uint   `json:"replyType" form:"replyType" gorm:"default:0"`
 	Content   string `json:"content" form:"content" gorm:"size:256"`
 	FromUid   uint   `json:"fromUid" form:"fromUid" gorm:"default:0"`
 	ToUid     uint   `json:"toUid" form:"toUid" gorm:"default:0"`
