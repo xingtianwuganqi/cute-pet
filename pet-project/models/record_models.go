@@ -13,34 +13,21 @@ type BaseModel struct {
 }
 
 /*
-RecordCategory
-final String id;
-  final String name;
-  final String icon; // Emoji 或图标名
-  final Color color;
-  final String description;
+	CategoryType 1.公共的，2，个人的
 */
 
 type RecordCategory struct {
 	BaseModel
-	Name     string `json:"name" form:"name" gorm:"size:32"`
-	Icon     string `json:"icon" form:"icon" gorm:"size:64"`
-	Color    string `json:"color" form:"color" gorm:"size:32"`
-	ImageUrl string `json:"imageUrl" form:"imageUrl" gorm:"size:64"`
-	Desc     string `json:"desc" form:"desc" gorm:"size:512"`
-}
-
-type CustomCategory struct {
-	BaseModel
-	User     *UserInfo `json:"user" form:"user"`
-	UserId   uint      `json:"userId" form:"userId"`
-	Name     string    `json:"name" form:"name" gorm:"size:32"`
-	Icon     string    `json:"icon" form:"icon" gorm:"size:64"`
-	Color    string    `json:"color" form:"color" gorm:"size:32"`
-	ImageUrl string    `json:"imageUrl" form:"imageUrl" gorm:"size:64"`
-	Desc     string    `json:"desc" form:"desc" gorm:"size:512"`
-	//Language string    `json:"language" form:"language" gorm:"size:32"`
-	//Region   string    `json:"region" form:"region" gorm:"size:32"`
+	User         *UserInfo `json:"user" form:"user"`
+	UserId       uint      `json:"userId" form:"userId"`
+	CategoryType uint      `json:"categoryType" form:"categoryType" gorm:"default:0"`
+	Name         string    `json:"name" form:"name" binding:"required" gorm:"size:32" binding:"required"`
+	Icon         string    `json:"icon" form:"icon" gorm:"size:64"`
+	Color        string    `json:"color" form:"color" gorm:"size:32"`
+	ImageUrl     string    `json:"imageUrl" form:"imageUrl" gorm:"size:64"`
+	Desc         string    `json:"desc" form:"desc" gorm:"size:512"`
+	Language     string    `json:"language" form:"language" gorm:"size:32"`
+	Region       string    `json:"region" form:"region" gorm:"size:32"`
 }
 
 // PetInfo
@@ -73,17 +60,15 @@ type RecordList struct {
 	User             *UserInfo       `json:"user"`
 	UserId           uint            `json:"userId" form:"userId"`
 	PetInfo          *PetInfo        `json:"petInfo" gorm:"-" binding:"-"`
-	PetInfoId        uint            `json:"petInfoId" form:"petInfoId"  binding:"required"`
+	PetInfoId        uint            `json:"petInfoId" form:"petInfoId"`
 	RecordCategory   *RecordCategory `json:"recordCategory" gorm:"-"`
 	RecordCategoryId *uint           `json:"recordCategoryId" form:"recordCategoryId"`
-	CustomCategory   *CustomCategory `json:"customCategory" gorm:"-"`
-	CustomCategoryId *uint           `json:"customCategoryId" form:"customCategoryId"`
 	Spend            *float32        `json:"spend" form:"spend" gorm:"default:0"`
-	Desc             string          `json:"desc" form:"desc" gorm:"size:512"`
+	Desc             string          `json:"desc" form:"desc" gorm:"size:512"  binding:"required"`
 	Images           *StringArray    `json:"images" form:"images" gorm:"type:json"`
 	RecordTime       time.Time       `json:"recordTime" form:"recordTime"`
-	//Language         string          `json:"language" form:"language" gorm:"size:32"`
-	//Region           string          `json:"region" form:"region" gorm:"size:32"`
+	Language         string          `json:"language" form:"language" gorm:"size:32"`
+	Region           string          `json:"region" form:"region" gorm:"size:32"`
 }
 
 // AfterFind RecordList 查找其他字段
@@ -110,19 +95,6 @@ func (record *RecordList) AfterFind(tx *gorm.DB) (err error) {
 			record.RecordCategory = nil
 		} else {
 			record.RecordCategory = &actionModel
-		}
-	}
-
-	if record.CustomCategoryId != nil && record.UserId != 0 {
-		var customModel CustomCategory
-		result := tx.Model(&CustomCategory{}).
-			Omit("User").
-			Where("id = ? AND user_id = ?", record.CustomCategoryId, record.UserId).
-			First(&customModel)
-		if result.Error != nil {
-			record.CustomCategory = nil
-		} else {
-			record.CustomCategory = &customModel
 		}
 	}
 

@@ -47,7 +47,6 @@ func autoMigrateTable() {
 
 		&models.PetInfo{},
 		&models.RecordCategory{},
-		&models.CustomCategory{},
 		&models.RecordList{},
 
 		&models.TopicModel{},

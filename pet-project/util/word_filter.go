@@ -3,6 +3,8 @@ package util
 import (
 	"bufio"
 	"os"
+	"path/filepath"
+	"runtime"
 	"strings"
 	"unicode"
 )
@@ -18,15 +20,20 @@ type WordFilter struct {
 	root *TrieNode
 }
 
-// 构造函数
+// NewWordFilter 构造函数
 func NewWordFilter() *WordFilter {
-	var value = &WordFilter{root: &TrieNode{children: make(map[rune]*TrieNode)}}
-	_ = value.LoadWordsFromFile("keywords.txt")
-	return value
+	var wf = &WordFilter{root: &TrieNode{children: make(map[rune]*TrieNode)}}
 
+	// 获取当前文件所在目录
+	_, currentFile, _, _ := runtime.Caller(0)
+	basePath := filepath.Dir(currentFile)
+	wordPath := filepath.Join(basePath, "keywords")
+
+	_ = wf.LoadWordsFromFile(wordPath)
+	return wf
 }
 
-// 添加敏感词，统一转为小写
+// AddWord 添加敏感词，统一转为小写
 func (wf *WordFilter) AddWord(word string) {
 	word = strings.ToLower(word)
 	node := wf.root
@@ -40,7 +47,7 @@ func (wf *WordFilter) AddWord(word string) {
 	node.isEnd = true
 }
 
-// 从文件加载敏感词
+// LoadWordsFromFile 从文件加载敏感词
 func (wf *WordFilter) LoadWordsFromFile(filePath string) error {
 	file, err := os.Open(filePath)
 	if err != nil {
@@ -63,7 +70,7 @@ func (wf *WordFilter) LoadWordsFromFile(filePath string) error {
 	return scanner.Err()
 }
 
-// 替换敏感词
+// Replace 替换敏感词
 func (wf *WordFilter) Replace(text string) string {
 	runes := []rune(text)
 	length := len(runes)

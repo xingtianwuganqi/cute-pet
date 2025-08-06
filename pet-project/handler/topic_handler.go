@@ -13,18 +13,6 @@ import (
 
 // Front api
 
-func CreateCurrentTopic(c *gin.Context) {
-	var topicModel models.TopicModel
-	if err := c.ShouldBind(&topicModel); err != nil {
-	}
-	result := db.DB.Omit(clause.Associations).Create(&topicModel)
-	if result.Error != nil {
-		response.Fail(c, response.ApiCode.CreateErr, response.ApiMsg.CreateErr)
-		return
-	}
-	response.Success(c, nil)
-}
-
 // GetStatusTopicList 获取待审核话题列表
 func GetStatusTopicList(c *gin.Context) {
 	status := c.Param("status")
@@ -36,7 +24,11 @@ func GetStatusTopicList(c *gin.Context) {
 	var topicModel []models.TopicModel
 	offset := (page.PageNum - 1) * page.PageSize
 	result := db.DB.Model(models.TopicModel{}).Preload("User").
-		Where("topic_status=?", status).Offset(offset).Limit(page.PageSize).Find(&topicModel)
+		Where("topic_status=?", status).
+		Offset(offset).
+		Limit(page.PageSize).
+		Order("created_at DESC").
+		Find(&topicModel)
 	if result.Error != nil {
 		response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
 		return
@@ -75,7 +67,9 @@ func GetTopicList(c *gin.Context) {
 	result := db.DB.Model(models.TopicModel{}).
 		Where("topic_status=?", 1).
 		Preload("User").
-		Offset(offset).Limit(page.PageSize).Find(&topicModel)
+		Offset(offset).Limit(page.PageSize).
+		Order("created_at DESC").
+		Find(&topicModel)
 	if result.Error != nil {
 		response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
 		return
@@ -85,14 +79,13 @@ func GetTopicList(c *gin.Context) {
 }
 
 func UserCreateTopic(c *gin.Context) {
-	userId, _ := c.Get("userId")
+	userId := c.MustGet("userId").(uint)
 	var topicModel models.TopicModel
 	if err := c.ShouldBind(&topicModel); err != nil {
 		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 		return
 	}
-	value, _ := userId.(int)
-	topicModel.UserId = uint(value)
+	topicModel.UserId = userId
 	// 过滤敏感词
 	filter := util.NewWordFilter()
 	newTitle := filter.Replace(topicModel.Title)
@@ -116,7 +109,7 @@ func DeleteUserTopic(c *gin.Context) {
 		response.Fail(c, response.ApiCode.DataNotExit, response.ApiMsg.DataNotExit)
 		return
 	}
-	result = db.DB.Delete(&topicModel, "id = ?", topicId)
+	result = db.DB.Delete(&topicModel)
 	if result.Error != nil {
 		response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
 		return

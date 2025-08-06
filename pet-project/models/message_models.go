@@ -52,11 +52,11 @@ topic_type:  领养1， 秀宠2，找宠3
 
 type CommentModel struct {
 	BaseModel
-	TopicId   uint   `json:"topicId" form:"topicId" gorm:"default:0"`
-	TopicType uint   `json:"topicType" form:"topicType" gorm:"default:0"`
-	Content   string `json:"content" form:"content" gorm:"size:256"`
-	FromUid   uint   `json:"fromUid" form:"fromUid" gorm:"default:0"`
-	ToUid     uint   `json:"toUid" form:"toUid" gorm:"default:0"`
+	TopicId   uint   `json:"topicId" form:"topicId" binding:"required" gorm:"default:0"`
+	TopicType uint   `json:"topicType" form:"topicType" binding:"required" gorm:"default:0"`
+	Content   string `json:"content" form:"content" binding:"required" gorm:"size:256"`
+	FromUid   uint   `json:"fromUid" form:"fromUid" binding:"required" gorm:"default:0"`
+	ToUid     uint   `json:"toUid" form:"toUid" binding:"required" gorm:"default:0"`
 	// GORM 关联
 	ReplyList []ReplyModel `json:"replyList" gorm:"foreignKey:CommentId;references:ID"` // 不加 form 标签，避免表单绑定
 }
@@ -70,10 +70,10 @@ type CommentModel struct {
 // 通过commentId和replyId判断是回复的评论还是回复的回复
 type ReplyModel struct {
 	BaseModel
-	CommentId uint   `json:"commentId" form:"commentId" gorm:"index"` // 建议加 index
-	ReplyId   uint   `json:"replyId" form:"replyId" gorm:"default:0"`
-	ReplyType uint   `json:"replyType" form:"replyType" gorm:"default:0"`
-	Content   string `json:"content" form:"content" gorm:"size:256"`
-	FromUid   uint   `json:"fromUid" form:"fromUid" gorm:"default:0"`
-	ToUid     uint   `json:"toUid" form:"toUid" gorm:"default:0"`
+	CommentId uint   `json:"commentId" form:"commentId" binding:"required" gorm:"index"` // 建议加 index
+	ReplyId   uint   `json:"replyId" form:"replyId" binding:"required" gorm:"default:0"`
+	ReplyType uint   `json:"replyType" form:"replyType" binding:"required" gorm:"default:0"`
+	Content   string `json:"content" form:"content" binding:"required" gorm:"size:256"`
+	FromUid   uint   `json:"fromUid" form:"fromUid" binding:"required" gorm:"default:0"`
+	ToUid     uint   `json:"toUid" form:"toUid" binding:"required" gorm:"default:0"`
 }

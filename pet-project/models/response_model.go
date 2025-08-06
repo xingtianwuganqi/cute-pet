@@ -57,6 +57,11 @@ type UploadUserInfoModel struct {
 	Username string `json:"username" form:"username"`
 }
 
+type RecordListModel struct {
+	PageModel
+	PetInfoId uint `json:"petInfoId" form:"petInfoId"`
+}
+
 // 帖子相关
 
 type TopicStatusModel struct {
