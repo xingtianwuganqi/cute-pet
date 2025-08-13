@@ -59,7 +59,8 @@ type UploadUserInfoModel struct {
 
 type RecordListModel struct {
 	PageModel
-	PetInfoId uint `json:"petInfoId" form:"petInfoId"`
+	PetInfoId  uint  `json:"petInfoId" form:"petInfoId"`
+	CategoryId *uint `json:"categoryId" form:"categoryId"`
 }
 
 // 帖子相关

@@ -216,30 +216,29 @@ func GetRecordList(c *gin.Context) {
 	}
 	offset := (pageModel.PageNum - 1) * pageModel.PageSize
 	var recordList []models.RecordList
-	if pageModel.PetInfoId != 0 {
-		result := db.DB.Preload("User").
-			Model(&models.RecordList{}).
-			Where("user_id = ? AND pet_info_id = ?", userId, pageModel.PetInfoId).
-			Offset(offset).
-			Limit(pageModel.PageSize).
-			Order("record_time DESC").
-			Find(&recordList)
-		if result.Error != nil {
-			response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
-			return
-		}
-	} else {
-		result := db.DB.Preload("User").
-			Model(&models.RecordList{}).Where("user_id = ?", userId).
-			Offset(offset).
-			Limit(pageModel.PageSize).
-			Order("record_time DESC").
-			Find(&recordList)
-		if result.Error != nil {
-			response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
-			return
-		}
+
+	// 查询的参数
+	queryParam := models.RecordList{}
+	if pageModel.CategoryId != nil {
+		queryParam.RecordCategoryId = pageModel.CategoryId
 	}
+	if pageModel.PetInfoId != 0 {
+		queryParam.PetInfoId = pageModel.PetInfoId
+	}
+	queryParam.UserId = userId
+
+	result := db.DB.Preload("User").
+		Model(&models.RecordList{}).
+		Where(&queryParam).
+		Offset(offset).
+		Limit(pageModel.PageSize).
+		Order("record_time DESC").
+		Find(&recordList)
+	if result.Error != nil {
+		response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
+		return
+	}
+
 	response.Success(c, recordList)
 }
 
