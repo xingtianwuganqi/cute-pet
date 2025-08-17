@@ -49,7 +49,8 @@ func GetPetList(c *gin.Context) {
 		Preload("User").
 		Model(&models.PetInfo{}).
 		Where("user_id = ?", uerId).
-		Offset(offset).Limit(pageModel.PageSize).
+		Offset(offset).
+		Limit(pageModel.PageSize).
 		Order("created_at DESC").
 		Find(&petList)
 
@@ -120,8 +121,18 @@ func DeletePetInfo(c *gin.Context) {
 	response.Success(c, nil)
 }
 
-// CreateRecordCategory 添加宠物行为
-func CreateRecordCategory(c *gin.Context) {
+// GetCommonCategories 获取宠物分类
+func GetCommonCategories(c *gin.Context) {
+	var petActionList []models.RecordCategory
+	result := db.DB.Model(&models.RecordCategory{}).Find(&petActionList)
+	if result.Error != nil {
+		response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
+		return
+	}
+	response.Success(c, petActionList)
+}
+
+func CreateCommonCategory(c *gin.Context) {
 	var recordCategory models.RecordCategory
 	if err := c.ShouldBind(&recordCategory); err != nil {
 		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
@@ -136,15 +147,45 @@ func CreateRecordCategory(c *gin.Context) {
 	response.Success(c, nil)
 }
 
-// GetRecordCategoryList 获取宠物行为
+// DeleteCommonCategory 删除宠物行为
+func DeleteCommonCategory(c *gin.Context) {
+	id := c.Param("id")
+	result := db.DB.Delete(&models.RecordCategory{}, "id = ?", id)
+	if result.Error != nil {
+		response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
+		return
+	}
+	response.Success(c, nil)
+}
+
+// GetRecordCategoryList 获取宠物行为列表
 func GetRecordCategoryList(c *gin.Context) {
+	var uerId = c.MustGet("userId").(uint)
 	var petActionList []models.RecordCategory
-	result := db.DB.Model(&models.RecordCategory{}).Find(&petActionList)
+	result := db.DB.Model(&models.RecordCategory{}).
+		Where("user_id = ?", uerId).
+		Find(&petActionList)
 	if result.Error != nil {
 		response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
 		return
 	}
 	response.Success(c, petActionList)
+}
+
+// CreateRecordCategory 添加宠物行为
+func CreateRecordCategory(c *gin.Context) {
+	var recordCategory models.RecordCategory
+	if err := c.ShouldBind(&recordCategory); err != nil {
+		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
+		return
+	}
+
+	result := db.DB.Create(&recordCategory)
+	if result.Error != nil {
+		response.Fail(c, response.ApiCode.CreateErr, response.ApiMsg.CreateErr)
+		return
+	}
+	response.Success(c, nil)
 }
 
 func DeleteRecordCategory(c *gin.Context) {

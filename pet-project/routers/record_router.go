@@ -8,23 +8,31 @@ import (
 )
 
 func RegisterRecordRouter(r *gin.Engine) {
-	recordRouter := r.Group("/v1/record")
+	recordRouter := r.Group("/v1/records")
 	{
-		recordRouter.POST("/create", middleware.JWTTokenMiddleware(), handler.CreateRecord)
+		recordRouter.POST("", middleware.JWTTokenMiddleware(), handler.CreateRecord)
 		recordRouter.POST("/list", middleware.JWTTokenMiddleware(), handler.GetRecordList)
-		recordRouter.DELETE("/delete/:id", middleware.JWTTokenMiddleware(), handler.DeleteRecordInfo)
+		recordRouter.DELETE("/:id", middleware.JWTTokenMiddleware(), handler.DeleteRecordInfo)
 	}
 
-	petRouter := r.Group("/v1/pet")
+	petRouter := r.Group("/v1/pets")
 	{
-		petRouter.GET("/list", middleware.JWTTokenMiddleware(), handler.GetPetList)
-		petRouter.POST("/create", middleware.JWTTokenMiddleware(), handler.PetInfoCreate)
-		petRouter.PUT("/update", middleware.JWTTokenMiddleware(), handler.UpdatePetInfo)
-		petRouter.DELETE("/delete/:id", middleware.JWTTokenMiddleware(), handler.DeletePetInfo)
+		petRouter.GET("", middleware.JWTTokenMiddleware(), handler.GetPetList)
+		petRouter.POST("", middleware.JWTTokenMiddleware(), handler.PetInfoCreate)
+		petRouter.PATCH("", middleware.JWTTokenMiddleware(), handler.UpdatePetInfo)
+		petRouter.DELETE("/:id", middleware.JWTTokenMiddleware(), handler.DeletePetInfo)
 
-		petRouter.POST("/create/category", handler.CreateRecordCategory)
-		petRouter.GET("/category/list", handler.GetRecordCategoryList)
-		petRouter.DELETE("/category/delete/:id", handler.DeleteRecordCategory)
-		petRouter.POST("/create/categoryList", handler.CreateCategoryList)
+	}
+
+	categoryRouter := r.Group("/v1/categories")
+	{
+		categoryRouter.GET("/common", handler.GetCommonCategories)
+		categoryRouter.POST("/common", handler.CreateCommonCategory)
+		categoryRouter.DELETE("/common/:id", handler.DeleteCommonCategory)
+
+		categoryRouter.GET("", middleware.JWTTokenMiddleware(), handler.GetRecordCategoryList)
+		categoryRouter.POST("", middleware.JWTTokenMiddleware(), handler.CreateRecordCategory)
+		categoryRouter.DELETE("/:id", middleware.JWTTokenMiddleware(), handler.DeleteRecordCategory)
+		categoryRouter.POST("/list", middleware.JWTTokenMiddleware(), handler.CreateCategoryList)
 	}
 }

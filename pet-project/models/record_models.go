@@ -19,7 +19,7 @@ type BaseModel struct {
 type RecordCategory struct {
 	BaseModel
 	User         *UserInfo `json:"user" form:"user"`
-	UserId       uint      `json:"userId" form:"userId"`
+	UserId       *uint     `json:"userId" form:"userId"`
 	CategoryType uint      `json:"categoryType" form:"categoryType" gorm:"default:0"`
 	Name         string    `json:"name" form:"name" binding:"required" gorm:"size:32" binding:"required"`
 	Icon         string    `json:"icon" form:"icon" gorm:"size:64"`
