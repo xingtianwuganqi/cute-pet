@@ -268,7 +268,7 @@ func DeleteReplyHandler(c *gin.Context) {
 
 func GetCommentListHandler(c *gin.Context) {
 	param := models.CommentListModel{}
-	if err := c.ShouldBind(&param); err != nil {
+	if err := c.ShouldBindQuery(&param); err != nil {
 		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 		return
 	}
@@ -292,7 +292,7 @@ func GetCommentListHandler(c *gin.Context) {
 
 func GetReplyListHandler(c *gin.Context) {
 	param := models.ReplyListModel{}
-	if err := c.ShouldBind(&param); err != nil {
+	if err := c.ShouldBindQuery(&param); err != nil {
 		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 		return
 	}

@@ -9,24 +9,18 @@ import (
 
 func RegisterTopicRouter(r *gin.Engine) {
 
-	topicRouter := r.Group("/v1/topic")
+	topicRouter := r.Group("/v1/topics")
 	{
-		topicRouter.POST("/create", middleware.JWTTokenMiddleware(), handler.UserCreateTopic)
-		topicRouter.GET("/list", handler.GetTopicList)
-		topicRouter.DELETE("/delete/:id", middleware.JWTTokenMiddleware(), handler.DeleteUserTopic)
+		topicRouter.POST("", middleware.JWTTokenMiddleware(), handler.UserCreateTopic)
+		topicRouter.GET("", handler.GetTopicList)
+		topicRouter.DELETE("/:id", middleware.JWTTokenMiddleware(), handler.DeleteUserTopic)
 	}
 
-	frontTopicRouter := r.Group("/v1/front/topic")
+	postRouter := r.Group("/v1/posts")
 	{
-		frontTopicRouter.GET("/status/:status", handler.GetStatusTopicList)
-		frontTopicRouter.POST("/status/change", handler.ChangeTopicStatus)
-	}
-
-	postRouter := r.Group("/v1/post")
-	{
-		postRouter.POST("/create", middleware.JWTTokenMiddleware(), handler.CreatePost)
-		postRouter.GET("/list", handler.GetPostList)
-		postRouter.DELETE("/delete/:id", middleware.JWTTokenMiddleware(), handler.DeletePost)
+		postRouter.POST("", middleware.JWTTokenMiddleware(), handler.CreatePost)
+		postRouter.GET("", handler.GetPostList)
+		postRouter.DELETE("/:id", middleware.JWTTokenMiddleware(), handler.DeletePost)
 
 	}
 }

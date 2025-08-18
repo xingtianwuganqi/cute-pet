@@ -3,7 +3,6 @@ package routers
 import (
 	"github.com/gin-gonic/gin"
 	"pet-project/handler"
-	"pet-project/handler/front_api"
 	"pet-project/middleware"
 )
 
@@ -20,12 +19,6 @@ func RegisterUserRouter(r *gin.Engine) {
 		userRouter.POST("/pwd/upload", middleware.JWTTokenMiddleware(), handler.UserUpdatePassword)
 		userRouter.POST("/upload/user/info", middleware.JWTTokenMiddleware(), handler.UploadUserInfo)
 		userRouter.GET("/encryption/code", handler.GetEncryptionCode)
-	}
-
-	userFrontRouter := r.Group("/front")
-	{
-		userFrontRouter.GET("/user/list", front_api.UserList)
-		userFrontRouter.GET("/user/suggestions", front_api.UserSuggestionList)
 	}
 
 }

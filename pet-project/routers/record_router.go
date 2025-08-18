@@ -11,7 +11,7 @@ func RegisterRecordRouter(r *gin.Engine) {
 	recordRouter := r.Group("/v1/records")
 	{
 		recordRouter.POST("", middleware.JWTTokenMiddleware(), handler.CreateRecord)
-		recordRouter.POST("/list", middleware.JWTTokenMiddleware(), handler.GetRecordList)
+		recordRouter.GET("", middleware.JWTTokenMiddleware(), handler.GetRecordList)
 		recordRouter.DELETE("/:id", middleware.JWTTokenMiddleware(), handler.DeleteRecordInfo)
 	}
 
@@ -26,13 +26,13 @@ func RegisterRecordRouter(r *gin.Engine) {
 
 	categoryRouter := r.Group("/v1/categories")
 	{
-		categoryRouter.GET("/common", handler.GetCommonCategories)
-		categoryRouter.POST("/common", handler.CreateCommonCategory)
-		categoryRouter.DELETE("/common/:id", handler.DeleteCommonCategory)
+		categoryRouter.GET("/common", middleware.JWTTokenMiddleware(), handler.GetCommonCategories)
+		categoryRouter.POST("/common", middleware.JWTTokenMiddleware(), handler.CreateCommonCategory)
+		categoryRouter.DELETE("/common/:id", middleware.JWTTokenMiddleware(), handler.DeleteCommonCategory)
+		categoryRouter.POST("/list", middleware.JWTTokenMiddleware(), handler.CreateCommonCategoryList)
 
 		categoryRouter.GET("", middleware.JWTTokenMiddleware(), handler.GetRecordCategoryList)
 		categoryRouter.POST("", middleware.JWTTokenMiddleware(), handler.CreateRecordCategory)
 		categoryRouter.DELETE("/:id", middleware.JWTTokenMiddleware(), handler.DeleteRecordCategory)
-		categoryRouter.POST("/list", middleware.JWTTokenMiddleware(), handler.CreateCategoryList)
 	}
 }

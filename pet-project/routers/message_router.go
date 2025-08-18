@@ -7,17 +7,17 @@ import (
 )
 
 func RegisterMessageRouters(r *gin.Engine) {
-	router := r.Group("/v1/msg")
+	router := r.Group("/v1/messages")
 	{
 		router.POST("/like", middleware.JWTTokenMiddleware(), handler.LikeMessageHandler)
 		router.POST("/collection", middleware.JWTTokenMiddleware(), handler.CollectionMessageHandler)
-		router.POST("/list", middleware.JWTTokenMiddleware(), handler.MessageListHandler)
-		router.GET("/unread", middleware.JWTTokenMiddleware(), handler.UnreadNumberHandler)
-		router.POST("/comment", middleware.JWTTokenMiddleware(), handler.CommentHandler)
-		router.DELETE("/comment/:commentId", middleware.JWTTokenMiddleware(), handler.DeleteCommentHandler)
-		router.POST("/reply", middleware.JWTTokenMiddleware(), handler.ReplyHandler)
-		router.DELETE("/reply/:replyId", middleware.JWTTokenMiddleware(), handler.DeleteReplyHandler)
-		router.POST("/comment/list", handler.GetCommentListHandler)
-		router.POST("/reply/list", handler.GetReplyListHandler)
+		router.GET("", middleware.JWTTokenMiddleware(), handler.MessageListHandler)
+		router.GET("/unreads", middleware.JWTTokenMiddleware(), handler.UnreadNumberHandler)
+		router.POST("/comments", middleware.JWTTokenMiddleware(), handler.CommentHandler)
+		router.DELETE("/comments/:commentId", middleware.JWTTokenMiddleware(), handler.DeleteCommentHandler)
+		router.POST("/replies", middleware.JWTTokenMiddleware(), handler.ReplyHandler)
+		router.DELETE("/replies/:replyId", middleware.JWTTokenMiddleware(), handler.DeleteReplyHandler)
+		router.GET("/comments", handler.GetCommentListHandler)
+		router.GET("/replies", handler.GetReplyListHandler)
 	}
 }
