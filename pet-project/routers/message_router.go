@@ -12,7 +12,7 @@ func RegisterMessageRouters(r *gin.Engine) {
 		router.POST("/like", middleware.JWTTokenMiddleware(), handler.LikeMessageHandler)
 		router.POST("/collection", middleware.JWTTokenMiddleware(), handler.CollectionMessageHandler)
 		router.GET("", middleware.JWTTokenMiddleware(), handler.MessageListHandler)
-		router.GET("/unreads", middleware.JWTTokenMiddleware(), handler.UnreadNumberHandler)
+		router.GET("/unread", middleware.JWTTokenMiddleware(), handler.UnreadNumberHandler)
 		router.POST("/comments", middleware.JWTTokenMiddleware(), handler.CommentHandler)
 		router.DELETE("/comments/:commentId", middleware.JWTTokenMiddleware(), handler.DeleteCommentHandler)
 		router.POST("/replies", middleware.JWTTokenMiddleware(), handler.ReplyHandler)
