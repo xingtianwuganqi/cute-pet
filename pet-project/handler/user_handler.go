@@ -482,11 +482,13 @@ func UserUpdatePassword(c *gin.Context) {
 }
 
 func CreateSuggestion(c *gin.Context) {
+	userId := c.MustGet("userId").(uint)
 	var suggestion models.SuggestionModel
 	if err := c.ShouldBind(&suggestion); err != nil {
 		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 		return
 	}
+	suggestion.UserId = userId
 	result := db.DB.Omit(clause.Associations).Create(&suggestion)
 	if result.Error != nil {
 		response.Fail(c, response.ApiCode.CreateErr, response.ApiMsg.CreateErr)
@@ -500,6 +502,10 @@ func UploadUserInfo(c *gin.Context) {
 	var userInfo models.UploadUserInfoModel
 	if err := c.ShouldBind(&userInfo); err != nil {
 		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
+		return
+	}
+	if len(userInfo.Username) == 0 && len(userInfo.Avatar) == 0 {
+		response.Fail(c, response.ApiCode.ParamLack, response.ApiMsg.ParamLack)
 		return
 	}
 	result := db.DB.Model(&models.UserInfo{}).Where("id = ?", userId).
@@ -521,4 +527,14 @@ func GetUserInfo(c *gin.Context) {
 		return
 	}
 	response.Success(c, userInfo)
+}
+
+func GetUserList(c *gin.Context) {
+	var userList []models.UserInfo
+	result := db.DB.Find(&userList)
+	if result.Error != nil {
+		response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
+		return
+	}
+	response.Success(c, userList)
 }
