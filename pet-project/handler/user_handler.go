@@ -511,3 +511,14 @@ func UploadUserInfo(c *gin.Context) {
 	}
 	response.Success(c, nil)
 }
+
+func GetUserInfo(c *gin.Context) {
+	userId := c.MustGet("userId").(uint)
+	var userInfo models.UserInfo
+	result := db.DB.Where("id = ?", userId).First(&userInfo)
+	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+		response.Fail(c, response.ApiCode.UserNotFound, response.ApiMsg.UserNotFound)
+		return
+	}
+	response.Success(c, userInfo)
+}
