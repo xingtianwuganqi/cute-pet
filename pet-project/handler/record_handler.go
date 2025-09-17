@@ -199,23 +199,37 @@ func DeleteCommonCategory(c *gin.Context) {
 // GetRecordCategoryList 获取宠物行为列表
 func GetRecordCategoryList(c *gin.Context) {
 	var userId = c.MustGet("userId").(uint)
-	var pageModel models.PageModel
+	var pageModel models.CategoryTypeModel
 	if err := c.ShouldBindQuery(&pageModel); err != nil {
 		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 		return
 	}
 	offset := (pageModel.PageNum - 1) * pageModel.PageSize
 	var petActionList []models.RecordCategory
-	result := db.DB.Model(&models.RecordCategory{}).
-		Where("user_id IS NULL").Or("user_id = ?", userId).
-		Offset(offset).
-		Limit(pageModel.PageSize).
-		Find(&petActionList)
-	if result.Error != nil {
-		response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
-		return
+	if pageModel.CategoryType == 1 {
+		result := db.DB.Model(&models.RecordCategory{}).
+			Where("user_id = ?", userId).
+			Offset(offset).
+			Limit(pageModel.PageSize).
+			Find(&petActionList)
+		if result.Error != nil {
+			response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
+			return
+		}
+		response.Success(c, petActionList)
+	} else {
+		result := db.DB.Model(&models.RecordCategory{}).
+			Where("user_id IS NULL").Or("user_id = ?", userId).
+			Offset(offset).
+			Limit(pageModel.PageSize).
+			Find(&petActionList)
+		if result.Error != nil {
+			response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
+			return
+		}
+		response.Success(c, petActionList)
 	}
-	response.Success(c, petActionList)
+
 }
 
 // CreateRecordCategory 添加宠物行为
@@ -238,6 +252,13 @@ func CreateRecordCategory(c *gin.Context) {
 func DeleteRecordCategory(c *gin.Context) {
 	userId := c.MustGet("userId").(uint)
 	id := c.Param("id")
+	// 先查询存不存在
+	recordCategory := models.RecordCategory{}
+	findResult := db.DB.Model(&models.RecordCategory{}).Where("id = ? AND user_id = ?", id, userId).First(&recordCategory)
+	if errors.Is(findResult.Error, gorm.ErrRecordNotFound) {
+		response.Fail(c, response.ApiCode.DataNotExit, response.ApiMsg.DataNotExit)
+		return
+	}
 	result := db.DB.Delete(&models.RecordCategory{}, "id = ? AND user_id = ?", id, userId)
 	if result.Error != nil {
 		response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)

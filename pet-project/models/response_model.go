@@ -89,3 +89,8 @@ type ReplyListModel struct {
 	PageModel
 	CommentId uint `json:"commentId" form:"commentId"`
 }
+
+type CategoryTypeModel struct {
+	CategoryType uint `json:"categoryType" form:"categoryType"` //0:全部的 1:自己的
+	PageModel
+}
