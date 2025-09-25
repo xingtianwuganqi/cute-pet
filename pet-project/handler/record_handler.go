@@ -249,6 +249,32 @@ func CreateRecordCategory(c *gin.Context) {
 	response.Success(c, nil)
 }
 
+func UpdateRecordCategory(c *gin.Context) {
+	userId := c.MustGet("userId").(uint)
+
+	var recordCategory models.RecordCategory
+	if err := c.ShouldBindJSON(&recordCategory); err != nil {
+		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
+		return
+	}
+
+	// 确保这条记录属于当前用户
+	var old models.RecordCategory
+	if err := db.DB.Where("id = ? AND user_id = ?", recordCategory.ID, userId).First(&old).Error; err != nil {
+		response.Fail(c, response.ApiCode.NotFoundErr, response.ApiMsg.NotFoundErr)
+		return
+	}
+
+	// 执行更新
+	result := db.DB.Model(&old).Updates(&recordCategory)
+	if result.Error != nil {
+		response.Fail(c, response.ApiCode.UploadErr, response.ApiMsg.UploadErr)
+		return
+	}
+
+	response.Success(c, nil)
+}
+
 func DeleteRecordCategory(c *gin.Context) {
 	userId := c.MustGet("userId").(uint)
 	id := c.Param("id")

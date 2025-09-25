@@ -33,6 +33,7 @@ func RegisterRecordRouter(r *gin.Engine) {
 
 		categoryRouter.GET("", middleware.JWTTokenMiddleware(), handler.GetRecordCategoryList)
 		categoryRouter.POST("", middleware.JWTTokenMiddleware(), handler.CreateRecordCategory)
+		categoryRouter.PATCH("", middleware.JWTTokenMiddleware(), handler.UpdateRecordCategory)
 		categoryRouter.DELETE("/:id", middleware.JWTTokenMiddleware(), handler.DeleteRecordCategory)
 	}
 }
