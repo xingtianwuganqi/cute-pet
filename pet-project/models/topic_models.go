@@ -10,13 +10,13 @@ type PostModel struct {
 	Images           *StringArray `json:"images" form:"images" gorm:"type:json"`
 	Topic            *TopicModel  `json:"topic" form:"topic" gorm:"-"`
 	TopicId          *uint        `json:"topicId" form:"topicId"`
-	Language         string       `json:"language" form:"language" gorm:"size:32"`
-	Region           string       `json:"region" form:"region" gorm:"size:32"`
 	LikeNum          uint         `json:"likeNum" form:"likeNum" gorm:"default:0"`
 	CollectionNum    uint         `json:"collectionNum" form:"collectionNum" gorm:"default:0"`
 	CommentNum       uint         `json:"commentNum" form:"commentNum" gorm:"default:0"`
 	LikeStatus       uint         `json:"likeStatus" form:"likeStatus" gorm:"-"`
 	CollectionStatus uint         `json:"collectionStatus" form:"collectionStatus" gorm:"-"`
+	Language         string       `json:"language" form:"language" gorm:"size:32"`
+	Region           string       `json:"region" form:"region" gorm:"size:32"`
 }
 
 func (post *PostModel) AfterFind(tx *gorm.DB) (err error) {
