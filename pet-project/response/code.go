@@ -88,7 +88,7 @@ type Codes struct {
 	DataNotExit uint // 404 // RFC 9110, 15.5.5
 
 	// #更新失败
-	UploadErr uint // 500 // RFC 9110, 15.6.1
+	UpdateErr uint // 500 // RFC 9110, 15.6.1
 
 	// #密码错误
 	PasswordErr uint
@@ -119,7 +119,7 @@ var ApiCode = &Codes{
 	CreateErr:     500,
 	UserNotFound:  404,
 	DataNotExit:   404,
-	UploadErr:     500,
+	UpdateErr:     500,
 	PasswordErr:   400,
 	CheckCodeErr:  400,
 }
@@ -189,7 +189,7 @@ type Messages struct {
 	DataNotExit string // 404 // RFC 9110, 15.5.5
 
 	// #更新失败
-	UploadErr string // 500 // RFC 9110, 15.6.1
+	UpdateErr string // 500 // RFC 9110, 15.6.1
 
 	// #密码错误
 	PasswordErr string
@@ -220,7 +220,7 @@ var ApiMsg = &Messages{
 	CreateErr:     "CreateErr",
 	UserNotFound:  "UserNotFound",
 	DataNotExit:   "DataNotExit",
-	UploadErr:     "UploadErr",
+	UpdateErr:     "UpdateErr",
 	PasswordErr:   "PasswordErr",
 	CheckCodeErr:  "CheckCodeErr",
 }

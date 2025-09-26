@@ -47,7 +47,7 @@ func ChangeTopicStatus(c *gin.Context) {
 		Where("id=?", topicModel.TopicId).
 		Update("topic_status", topicModel.Status)
 	if result.Error != nil {
-		response.Fail(c, response.ApiCode.UploadErr, response.ApiMsg.UploadErr)
+		response.Fail(c, response.ApiCode.UpdateErr, response.ApiMsg.UpdateErr)
 		return
 	}
 	response.Success(c, nil)

@@ -91,7 +91,7 @@ func UpdatePetInfo(c *gin.Context) {
 		})
 	if result.Error != nil {
 		log.Println(result.Error)
-		response.Fail(c, response.ApiCode.UploadErr, response.ApiMsg.UploadErr)
+		response.Fail(c, response.ApiCode.UpdateErr, response.ApiMsg.UpdateErr)
 		return
 	}
 	if result.RowsAffected == 0 {
@@ -252,23 +252,39 @@ func CreateRecordCategory(c *gin.Context) {
 func UpdateRecordCategory(c *gin.Context) {
 	userId := c.MustGet("userId").(uint)
 
-	var recordCategory models.RecordCategory
-	if err := c.ShouldBindJSON(&recordCategory); err != nil {
+	// 解析 JSON
+	var req map[string]interface{}
+	if err := c.ShouldBindJSON(&req); err != nil {
 		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 		return
 	}
 
-	// 确保这条记录属于当前用户
+	// 校验 id 是否存在
+	idVal, ok := req["id"]
+	if !ok {
+		response.Fail(c, response.ApiCode.ParamErr, "缺少分类 ID")
+		return
+	}
+	id, ok := idVal.(float64) // JSON number 默认 float64
+	if !ok {
+		response.Fail(c, response.ApiCode.ParamErr, "分类 ID 格式错误")
+		return
+	}
+
+	// 确认该分类属于当前用户
 	var old models.RecordCategory
-	if err := db.DB.Where("id = ? AND user_id = ?", recordCategory.ID, userId).First(&old).Error; err != nil {
+	if err := db.DB.Where("id = ? AND user_id = ?", uint(id), userId).First(&old).Error; err != nil {
 		response.Fail(c, response.ApiCode.NotFoundErr, response.ApiMsg.NotFoundErr)
 		return
 	}
 
-	// 执行更新
-	result := db.DB.Model(&old).Updates(&recordCategory)
-	if result.Error != nil {
-		response.Fail(c, response.ApiCode.UploadErr, response.ApiMsg.UploadErr)
+	// 删除 id/user_id，防止越权修改
+	delete(req, "id")
+	delete(req, "user_id")
+
+	// 执行更新（只更新传入的字段）
+	if err := db.DB.Model(&old).Updates(req).Error; err != nil {
+		response.Fail(c, response.ApiCode.UpdateErr, response.ApiMsg.UpdateErr)
 		return
 	}
 

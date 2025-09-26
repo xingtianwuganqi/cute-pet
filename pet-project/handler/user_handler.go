@@ -512,7 +512,7 @@ func UploadUserInfo(c *gin.Context) {
 		Update("username", userInfo.Username).
 		Update("avatar", userInfo.Avatar)
 	if result.Error != nil {
-		response.Fail(c, response.ApiCode.UploadErr, response.ApiMsg.UploadErr)
+		response.Fail(c, response.ApiCode.UpdateErr, response.ApiMsg.UpdateErr)
 		return
 	}
 	response.Success(c, nil)
