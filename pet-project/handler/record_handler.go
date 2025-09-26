@@ -262,7 +262,7 @@ func UpdateRecordCategory(c *gin.Context) {
 	// 确认该分类属于当前用户
 	var old models.RecordCategory
 	if err := db.DB.Where("id = ? AND user_id = ?", recordCategory.ID, userId).First(&old).Error; err != nil {
-		response.Fail(c, response.ApiCode.NotFoundErr, response.ApiMsg.NotFoundErr)
+		response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
 		return
 	}
 
