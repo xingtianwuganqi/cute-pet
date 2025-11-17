@@ -24,3 +24,11 @@ type SuggestionModel struct {
 	Contact string    `json:"contact" form:"contact" gorm:"size:32"`
 	Content string    `json:"content" form:"content" gorm:"size:256"`
 }
+
+type IPInfo struct {
+	IP          string `json:"ip"`
+	Country     string `json:"country"`
+	CountryName string `json:"country_name"`
+	Region      string `json:"region"`
+	City        string `json:"city"`
+}

@@ -24,6 +24,7 @@ func RegisterUserRouter(r *gin.Engine) {
 		userRouter.GET("/list", handler.GetUserList)
 
 		userRouter.POST("/suggestion", middleware.JWTTokenMiddleware(), handler.CreateSuggestion)
+		userRouter.POST("/ip", handler.GetIpInfo)
 	}
 
 }

@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"gorm.io/gorm/clause"
@@ -495,6 +496,34 @@ func CreateSuggestion(c *gin.Context) {
 		return
 	}
 	response.Success(c, nil)
+}
+
+func GetIpInfo(c *gin.Context) {
+	var ipInfo models.IPInfoModel
+	if err := c.ShouldBind(&ipInfo); err != nil {
+		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
+		return
+	}
+	url := fmt.Sprintf("https://ipapi.co/%s/json/", ipInfo.IP)
+	resp, err := http.Get(url)
+	if err != nil {
+		response.Fail(c, response.ApiCode.ServerErr, response.ApiMsg.ServerErr)
+		return
+	}
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+
+		}
+	}(resp.Body)
+	println("resp is", resp.Body)
+	var info models.IPInfo
+	if err := json.NewDecoder(resp.Body).Decode(&info); err != nil {
+		response.Fail(c, response.ApiCode.ServerErr, response.ApiMsg.ServerErr)
+		return
+	}
+	response.Success(c, info)
+	return
 }
 
 func UploadUserInfo(c *gin.Context) {
