@@ -14,6 +14,7 @@ import (
 	"pet-project/service"
 	"pet-project/settings"
 	"pet-project/util"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -504,11 +505,58 @@ func GetIpInfo(c *gin.Context) {
 		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 		return
 	}
-	url := fmt.Sprintf("https://ipapi.co/%s/json/", ipInfo.IP)
-	resp, err := http.Get(url)
+	url1 := fmt.Sprintf("https://ipapi.co/%s/json/", ipInfo.IP)
+	url2 := fmt.Sprintf("https://ipinfo.io/%s/json", ipInfo.IP)
+	url3 := fmt.Sprintf("https://ip9.com.cn/get?ip=%s", ipInfo.IP)
+	// 获取IP信息
+	ipResult, err := GetIPInfoWith(url1, url2, url3)
 	if err != nil {
-		response.Fail(c, response.ApiCode.ServerErr, response.ApiMsg.ServerErr)
+		response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
 		return
+	}
+
+	response.Success(c, ipResult)
+	return
+}
+
+// GetIPInfoWith 尝试两个URL获取IP信息
+func GetIPInfoWith(url1, url2, url3 string) (*models.IPInfo, error) {
+	// 创建HTTP客户端，设置超时时间
+	client := &http.Client{
+		Timeout: 10 * time.Second,
+	}
+
+	// 先尝试第一个URL
+	info, err := fetchIPInfo(client, url1)
+	if err == nil {
+		return info, nil
+	}
+	fmt.Printf("第一个URL请求失败 (%s): %v\n", url1, err)
+
+	// 第一个失败后尝试第二个URL
+	info, err = fetchIPInfo(client, url2)
+	if err == nil {
+		return info, nil
+	}
+	fmt.Printf("第二个URL请求失败 (%s): %v\n", url2, err)
+
+	// 第一个失败后尝试第二个URL
+	info, err = fetchIPInfo(client, url3)
+	if err == nil {
+		return info, nil
+	}
+	fmt.Printf("第三个URL请求失败 (%s): %v\n", url2, err)
+
+	// 两个都失败，返回错误
+	return nil, errors.New("三个IP查询URL都请求失败")
+}
+
+// fetchIPInfo 从指定URL获取IP信息
+func fetchIPInfo(client *http.Client, url string) (*models.IPInfo, error) {
+	// 发送HTTP GET请求
+	resp, err := client.Get(url)
+	if err != nil {
+		return nil, fmt.Errorf("HTTP请求失败: %w", err)
 	}
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
@@ -516,14 +564,37 @@ func GetIpInfo(c *gin.Context) {
 
 		}
 	}(resp.Body)
-	println("resp is", resp.Body)
-	var info models.IPInfo
-	if err := json.NewDecoder(resp.Body).Decode(&info); err != nil {
-		response.Fail(c, response.ApiCode.ServerErr, response.ApiMsg.ServerErr)
-		return
+
+	// 检查HTTP状态码
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("HTTP状态码错误: %d", resp.StatusCode)
 	}
-	response.Success(c, info)
-	return
+
+	// 读取响应体
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("读取响应体失败: %w", err)
+	}
+
+	// 尝试解析为IPInfo结构体
+	var ipInfo models.IPInfo
+	if err := json.Unmarshal(body, &ipInfo); err != nil {
+		// 如果解析失败，可能是简单的只返回IP的接口
+		// 尝试作为纯文本IP处理
+		ip := string(body)
+		// 清理可能的空格和换行符
+		ip = strings.TrimSpace(ip)
+
+		// 检查是否是纯IP地址（简单验证）
+		if len(ip) > 0 {
+			ipInfo.IP = ip
+			return &ipInfo, nil
+		}
+
+		return nil, fmt.Errorf("JSON解析失败: %w", err)
+	}
+
+	return &ipInfo, nil
 }
 
 func UploadUserInfo(c *gin.Context) {
