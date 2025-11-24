@@ -629,6 +629,23 @@ func GetUserInfo(c *gin.Context) {
 	response.Success(c, userInfo)
 }
 
+// UserDeactivate 用户退出登录
+func UserDeactivate(c *gin.Context) {
+	userId := c.MustGet("userId").(uint)
+	var userInfo models.UserInfo
+	result := db.DB.Model(&userInfo).Where("id = ?", userId)
+	if result.Error != nil {
+		response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
+		return
+	}
+	deactivateResult := result.Delete(&userInfo)
+	if deactivateResult.Error != nil {
+		response.Fail(c, response.ApiCode.UpdateErr, response.ApiMsg.UpdateErr)
+		return
+	}
+	response.Success(c, nil)
+}
+
 func GetUserList(c *gin.Context) {
 	var userList []models.UserInfo
 	result := db.DB.Find(&userList)

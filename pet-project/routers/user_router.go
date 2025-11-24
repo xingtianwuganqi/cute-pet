@@ -20,6 +20,7 @@ func RegisterUserRouter(r *gin.Engine) {
 		userRouter.POST("/info/upload", middleware.JWTTokenMiddleware(), handler.UploadUserInfo)
 		userRouter.GET("/encryption/code", handler.GetEncryptionCode)
 		userRouter.GET("/info", middleware.JWTTokenMiddleware(), handler.GetUserInfo)
+		userRouter.POST("/deactivate", middleware.JWTTokenMiddleware(), handler.UserDeactivate)
 
 		userRouter.GET("/list", handler.GetUserList)
 
