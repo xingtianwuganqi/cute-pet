@@ -1,15 +1,17 @@
 package response
 
 import (
+	"github.com/nicksnyder/go-i18n/v2/i18n"
 	"net/http"
+	"pet-project/service"
 
 	"github.com/gin-gonic/gin"
 )
 
 type BaseResponse struct {
-	Code uint        `json:"code"`
-	Msg  string      `json:"msg"`
-	Data interface{} `json:"data"`
+	Code uint        `json:"code" form:"code"`
+	Msg  string      `json:"msg" form:"msg"`
+	Data interface{} `json:"data" form:"data"`
 }
 
 func Response(c *gin.Context, code uint, data interface{}, msg string) {
@@ -31,5 +33,8 @@ func Success(c *gin.Context, data interface{}) {
 
 // Fail 出错
 func Fail(c *gin.Context, code uint, msg string) {
-	Response(c, code, gin.H{}, msg)
+	lang, _ := c.Get("lang")
+	langObj := lang.(*i18n.Localizer)
+	message := service.LocalizeMsg(langObj, msg)
+	Response(c, code, gin.H{}, message)
 }

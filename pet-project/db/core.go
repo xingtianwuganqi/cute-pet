@@ -41,9 +41,21 @@ func linkInit() {
 }
 
 func autoMigrateTable() {
-	err := DB.AutoMigrate(&models.UserInfo{}, &models.PetActionType{},
-		&models.PetCustomType{}, &models.PetInfo{}, &models.RecordList{},
+	err := DB.AutoMigrate(
+		&models.UserInfo{},
 		&models.SuggestionModel{},
+
+		&models.PetInfo{},
+		&models.RecordCategory{},
+		&models.RecordList{},
+
+		&models.TopicModel{},
+		&models.PostModel{},
+		&models.LikeMessageModel{},
+		&models.CollectionMessageModel{},
+		&models.MessageModel{},
+		&models.CommentModel{},
+		&models.ReplyModel{},
 	)
 	if err != nil {
 		return

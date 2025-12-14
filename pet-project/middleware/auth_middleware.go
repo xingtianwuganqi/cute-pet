@@ -2,10 +2,14 @@ package middleware
 
 import (
 	"errors"
+	"fmt"
+	"github.com/nicksnyder/go-i18n/v2/i18n"
 	"net/http"
 	"pet-project/db"
 	"pet-project/models"
 	"pet-project/response"
+	"pet-project/service"
+	"pet-project/settings"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
@@ -52,10 +56,13 @@ func ParseToken(tokenString string) (*MyClaims, error) {
 func JWTTokenMiddleware() func(c *gin.Context) {
 	return func(c *gin.Context) {
 		token := c.GetHeader("token")
+		if settings.Conf.App.Env != "production" {
+			fmt.Printf("token: %s\n", token)
+		}
 		if len(token) == 0 {
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"code": http.StatusUnauthorized,
-				"msg":  response.AMsg.AuthErr,
+				"msg":  service.LocalizeMsg(c.MustGet("lang").(*i18n.Localizer), response.ApiMsg.AuthErr),
 				"data": map[string]interface{}{},
 			})
 			c.Abort()
@@ -65,7 +72,7 @@ func JWTTokenMiddleware() func(c *gin.Context) {
 		if err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"code": http.StatusUnauthorized,
-				"msg":  response.AMsg.AuthErr,
+				"msg":  service.LocalizeMsg(c.MustGet("lang").(*i18n.Localizer), response.ApiMsg.AuthErr),
 				"data": map[string]interface{}{},
 			})
 			c.Abort()
@@ -76,7 +83,7 @@ func JWTTokenMiddleware() func(c *gin.Context) {
 		var user models.UserInfo
 		userResult := db.DB.Where("ID = ?", mc.UserId).Find(&user)
 		if errors.Is(userResult.Error, gorm.ErrRecordNotFound) {
-			response.Fail(c, response.ApiCode.UserNotFont, response.AMsg.UserNotFound)
+			response.Fail(c, response.ApiCode.UserNotFound, response.ApiMsg.UserNotFound)
 			return
 		}
 

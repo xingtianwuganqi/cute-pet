@@ -1,8 +1,9 @@
 package settings
 
 import (
-	"gopkg.in/yaml.v3"
 	"os"
+
+	"gopkg.in/yaml.v3"
 )
 
 type Config struct {
@@ -38,8 +39,10 @@ type Config struct {
 	} `yaml:"email_service"`
 
 	ApiKeys struct {
-		Google   string `yaml:"google"`
-		Facebook string `yaml:"facebook"`
+		Google         string `yaml:"google"`
+		Facebook       string `yaml:"facebook"`
+		QiniuAccessKey string `yaml:"qiniuAccessKey"`
+		QiniuSecretKey string `yaml:"qiniuSecretKey"`
 	} `yaml:"api_keys"`
 }
 
@@ -58,12 +61,13 @@ func getEnvironment() string {
 
 // LoadConfig 加载配置文件
 func LoadConfig() error {
-	configFile := "config/local.yaml" // 默认使用开发环境配置
-	if env == "production" {
+	configFile := "" // 默认使用开发环境配置
+	switch env {
+	case "production":
 		configFile = "/config/production.yaml"
-	} else if env == "dev" {
+	case "dev":
 		configFile = "/config/dev.yaml"
-	} else {
+	default:
 		configFile = "config/local.yaml"
 	}
 	// 读取配置文件

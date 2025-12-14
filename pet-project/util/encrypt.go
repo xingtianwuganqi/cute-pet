@@ -1,6 +1,7 @@
 package util
 
 import (
+	"bytes"
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/md5"
@@ -8,6 +9,7 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"fmt"
+	"github.com/google/uuid"
 	"io"
 	"regexp"
 	"strconv"
@@ -15,7 +17,14 @@ import (
 	"time"
 )
 
-var key = []byte("伍c七Alz1θVx2ψLHNpfωv九nξ捌τD六053λwGμrMνRuegsη八γ陆jOBX8ρ三E9πFS零bδοmkχ7K6PβϵϕoZ五iυU一Jq柒ydYt四QhW4玖κCIαζTaι二σ")
+var key = []byte("thisis16bytekey!") // 刚好16字节
+
+// UuidString 生成uuid
+func UuidString() string {
+	uuidWithHyphen := uuid.New().String()
+	uuidWithoutHyphen := strings.ReplaceAll(uuidWithHyphen, "-", "")
+	return uuidWithoutHyphen
+}
 
 func Md5String(s string) string {
 	timeStr := string(time.Now().UnixNano())
@@ -33,54 +42,73 @@ func IsValidEmail(email string) bool {
 	return emailRegexp.MatchString(email)
 }
 
-// GenerateDynamicParam 生成包含时间戳的动态参数
-func GenerateDynamicParam() string {
-	timestamp := time.Now().Unix()
-	randomString := "random_string" // 可以使用更多的随机生成逻辑
-	return fmt.Sprintf("%d|%s", timestamp, randomString)
+func pkcs7Padding(data []byte, blockSize int) []byte {
+	padding := blockSize - len(data)%blockSize
+	pad := bytes.Repeat([]byte{byte(padding)}, padding)
+	return append(data, pad...)
 }
 
-// 加密参数
-func encrypt(text string, key []byte) (string, error) {
+func pkcs7UnPadding(data []byte) ([]byte, error) {
+	length := len(data)
+	if length == 0 {
+		return nil, fmt.Errorf("data is empty")
+	}
+	unpadding := int(data[length-1])
+	if unpadding > length {
+		return nil, fmt.Errorf("invalid padding")
+	}
+	return data[:(length - unpadding)], nil
+}
+
+// Encrypt encrypts plain text using AES-CBC with PKCS7 padding
+func Encrypt(plainText string) (string, error) {
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		return "", err
 	}
 
-	b := base64.StdEncoding.EncodeToString([]byte(text))
-	ciphertext := make([]byte, aes.BlockSize+len(b))
-	iv := ciphertext[:aes.BlockSize]
+	plainData := pkcs7Padding([]byte(plainText), aes.BlockSize)
 
+	iv := make([]byte, aes.BlockSize)
 	if _, err := io.ReadFull(rand.Reader, iv); err != nil {
 		return "", err
 	}
 
-	stream := cipher.NewCFBEncrypter(block, iv)
-	stream.XORKeyStream(ciphertext[aes.BlockSize:], []byte(b))
+	mode := cipher.NewCBCEncrypter(block, iv)
+	cipherText := make([]byte, len(plainData))
+	mode.CryptBlocks(cipherText, plainData)
 
-	return base64.URLEncoding.EncodeToString(ciphertext), nil
+	final := append(iv, cipherText...)
+	return base64.StdEncoding.EncodeToString(final), nil
 }
 
-// Decrypt 解密参数
-func Decrypt(cryptoText string) (string, error) {
-	ciphertext, _ := base64.URLEncoding.DecodeString(cryptoText)
+// Decrypt decrypts base64-encoded AES-CBC encrypted text
+func Decrypt(cipherTextBase64 string) (string, error) {
+	data, err := base64.StdEncoding.DecodeString(cipherTextBase64)
+	if err != nil {
+		return "", err
+	}
+	if len(data) < aes.BlockSize {
+		return "", fmt.Errorf("ciphertext too short")
+	}
+
+	iv := data[:aes.BlockSize]
+	cipherData := data[aes.BlockSize:]
 
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		return "", err
 	}
 
-	if len(ciphertext) < aes.BlockSize {
-		return "", fmt.Errorf("ciphertext too short")
+	mode := cipher.NewCBCDecrypter(block, iv)
+	mode.CryptBlocks(cipherData, cipherData)
+
+	plainData, err := pkcs7UnPadding(cipherData)
+	if err != nil {
+		return "", err
 	}
-	iv := ciphertext[:aes.BlockSize]
-	ciphertext = ciphertext[aes.BlockSize:]
 
-	stream := cipher.NewCFBDecrypter(block, iv)
-	stream.XORKeyStream(ciphertext, ciphertext)
-
-	data, _ := base64.StdEncoding.DecodeString(string(ciphertext))
-	return string(data), nil
+	return string(plainData), nil
 }
 
 // IsValidParam isValidParam 验证解密后的参数是否有效

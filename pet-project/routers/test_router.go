@@ -2,7 +2,7 @@ package routers
 
 import (
 	"github.com/gin-gonic/gin"
-	handler "pet-project/handler/api"
+	"pet-project/handler"
 )
 
 func RegisterTestRouter(router *gin.Engine) {

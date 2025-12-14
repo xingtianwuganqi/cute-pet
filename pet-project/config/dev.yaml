@@ -1,5 +1,5 @@
 database:
-  host: 172.17.0.1
+  host: mysql
   port: 3306
   username: petproject
   password: YhKiwmATtRJ2Jhme
@@ -7,14 +7,14 @@ database:
   charset: utf8mb4
 
 redis:
-  host: 172.17.0.1
+  host: redis
   port: 6379
   password:
   DB: 0
 
 app:
   port: 8086
-  debug: true
+  debug: false
   log_level: debug
   secret_key: testsecret
   env: dev
@@ -28,3 +28,5 @@ email_service:
 api_keys:
   google: test-google-api-key
   facebook: test-facebook-api-key
+  qiniuAccessKey: 1vLUgTSJEyyElB_EFpsCzua84QJJqrtrPrueICw2
+  qiniuSecretKey: QvOlYbG0my-CGh7nfjnBnOxVP1j3ClqhR1Ocf0Ug

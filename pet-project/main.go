@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"pet-project/db"
 	"pet-project/routers"
 	"pet-project/settings"
@@ -12,16 +13,23 @@ func main() {
 	}
 	db.LinkDataBase()
 	r := routers.RegisterRouter()
-	if settings.Conf.App.Env == "production" {
-		err := r.Run(":8082")
-		if err != nil {
-			return
-		}
-	} else {
-		err := r.Run(":8086")
-		if err != nil {
-			return
-		}
+	port := fmt.Sprintf(":%d", settings.Conf.App.Port)
+	err := r.Run(port)
+	if err != nil {
+		return
 	}
-
 }
+
+/*
+windows启动redis命令
+
+redis-server.exe redis.windows.conf
+
+
+mac 启动redis
+
+cd /usr/local/bin
+redis-server
+// 终止
+redis-cli shutdown
+*/

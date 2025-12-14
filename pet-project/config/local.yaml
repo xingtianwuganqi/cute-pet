@@ -1,8 +1,8 @@
 database:
-  host: 0.0.0.0
+  host: 127.0.0.1
   port: 3306
   username: root
-  password:
+  password: 123
   database: cutepet
   charset: utf8
 
@@ -28,3 +28,5 @@ email_service:
 api_keys:
   google: test-google-api-key
   facebook: test-facebook-api-key
+  qiniuAccessKey: 1vLUgTSJEyyElB_EFpsCzua84QJJqrtrPrueICw2
+  qiniuSecretKey: QvOlYbG0my-CGh7nfjnBnOxVP1j3ClqhR1Ocf0Ug
