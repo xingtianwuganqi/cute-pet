@@ -1,8 +1,9 @@
 package settings
 
 import (
-	"gopkg.in/yaml.v3"
 	"os"
+
+	"gopkg.in/yaml.v3"
 )
 
 type Config struct {
@@ -61,11 +62,12 @@ func getEnvironment() string {
 // LoadConfig 加载配置文件
 func LoadConfig() error {
 	configFile := "" // 默认使用开发环境配置
-	if env == "production" {
+	switch env {
+	case "production":
 		configFile = "/config/production.yaml"
-	} else if env == "dev" {
+	case "dev":
 		configFile = "/config/dev.yaml"
-	} else {
+	default:
 		configFile = "config/local.yaml"
 	}
 	// 读取配置文件
