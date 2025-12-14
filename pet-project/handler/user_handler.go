@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"gorm.io/gorm/clause"
 	"io"
 	"net/http"
 	"pet-project/db"
@@ -16,6 +15,8 @@ import (
 	"pet-project/util"
 	"strings"
 	"time"
+
+	"gorm.io/gorm/clause"
 
 	"github.com/gin-gonic/gin"
 	"github.com/nicksnyder/go-i18n/v2/i18n"
@@ -636,6 +637,18 @@ func UserDeactivate(c *gin.Context) {
 	result := db.DB.Model(&userInfo).Where("id = ?", userId)
 	if result.Error != nil {
 		response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
+		return
+	}
+	// 删除所有发布的信息
+	recordResult := db.DB.Where("user_id = ?", userId).Delete(&models.RecordList{})
+	if recordResult.Error != nil {
+		response.Fail(c, response.ApiCode.UpdateErr, response.ApiMsg.UpdateErr)
+		return
+	}
+	// 删除所有发布的帖子
+	postResult := db.DB.Where("user_id = ?", userId).Delete(&models.PostModel{})
+	if postResult.Error != nil {
+		response.Fail(c, response.ApiCode.UpdateErr, response.ApiMsg.UpdateErr)
 		return
 	}
 	deactivateResult := result.Delete(&userInfo)

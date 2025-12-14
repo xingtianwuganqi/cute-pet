@@ -1,9 +1,9 @@
 database:
   host: mysql
   port: 3306
-  username: petproject
+  username: cutepetpro
   password: YhKiwmATtRJ2Jhme
-  database: petproject
+  database: project4_prod
   charset: utf8mb4
 
 redis:
