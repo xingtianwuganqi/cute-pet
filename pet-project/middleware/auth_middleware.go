@@ -3,7 +3,6 @@ package middleware
 import (
 	"errors"
 	"fmt"
-	"github.com/nicksnyder/go-i18n/v2/i18n"
 	"net/http"
 	"pet-project/db"
 	"pet-project/models"
@@ -11,6 +10,8 @@ import (
 	"pet-project/service"
 	"pet-project/settings"
 	"time"
+
+	"github.com/nicksnyder/go-i18n/v2/i18n"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"

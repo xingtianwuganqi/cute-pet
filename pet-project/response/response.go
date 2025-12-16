@@ -1,9 +1,10 @@
 package response
 
 import (
-	"github.com/nicksnyder/go-i18n/v2/i18n"
 	"net/http"
 	"pet-project/service"
+
+	"github.com/nicksnyder/go-i18n/v2/i18n"
 
 	"github.com/gin-gonic/gin"
 )
@@ -28,7 +29,10 @@ func Response(c *gin.Context, code uint, data interface{}, msg string) {
 
 // Success 成功
 func Success(c *gin.Context, data interface{}) {
-	Response(c, 200, data, "success")
+	lang, _ := c.Get("lang")
+	langObj := lang.(*i18n.Localizer)
+	message := service.LocalizeMsg(langObj, "Success")
+	Response(c, 200, data, message)
 }
 
 // Fail 出错
