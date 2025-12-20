@@ -26,11 +26,6 @@ func RegisterRecordRouter(r *gin.Engine) {
 
 	categoryRouter := r.Group("/v1/categories")
 	{
-		categoryRouter.GET("/common", middleware.JWTTokenMiddleware(), handler.GetCommonCategories)
-		categoryRouter.POST("/common", middleware.JWTTokenMiddleware(), handler.CreateCommonCategory)
-		categoryRouter.DELETE("/common/:id", middleware.JWTTokenMiddleware(), handler.DeleteCommonCategory)
-		categoryRouter.POST("/list", middleware.JWTTokenMiddleware(), handler.CreateCommonCategoryList)
-
 		categoryRouter.GET("", middleware.JWTTokenMiddleware(), handler.GetRecordCategoryList)
 		categoryRouter.POST("", middleware.JWTTokenMiddleware(), handler.CreateRecordCategory)
 		categoryRouter.PATCH("", middleware.JWTTokenMiddleware(), handler.UpdateRecordCategory)

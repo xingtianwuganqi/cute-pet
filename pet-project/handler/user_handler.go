@@ -517,7 +517,6 @@ func GetIpInfo(c *gin.Context) {
 	}
 
 	response.Success(c, ipResult)
-	return
 }
 
 // GetIPInfoWith 尝试两个URL获取IP信息

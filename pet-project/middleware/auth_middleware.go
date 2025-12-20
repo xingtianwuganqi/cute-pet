@@ -22,6 +22,11 @@ type MyClaims struct {
 	jwt.StandardClaims
 }
 
+const (
+	RoleUser  = "user"
+	RoleAdmin = "admin"
+)
+
 var mySecret = []byte("伍c七Alz1θVx2ψLHNpfωv九nξ捌τD六053λwGμrMνRuegsη八γ陆jOBX8ρ三E9πFS零bδοmkχ7K6PβϵϕoZ五iυU一Jq柒ydYt四QhW4玖κCIαζTaι二σ")
 
 //创建token
@@ -89,6 +94,54 @@ func JWTTokenMiddleware() func(c *gin.Context) {
 
 		// 将当前请求的userId信息保存到请求的上下文c上
 		c.Set("userId", mc.UserId)
+		c.Next()
+	}
+}
+
+func AdminOnly() gin.HandlerFunc {
+  
+	return func(c *gin.Context) {
+		token := c.GetHeader("token")
+		if settings.Conf.App.Env != "production" {
+			fmt.Printf("token: %s\n", token)
+		}
+		if len(token) == 0 {
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"code": http.StatusUnauthorized,
+				"msg":  service.LocalizeMsg(c.MustGet("lang").(*i18n.Localizer), response.ApiMsg.AuthErr),
+				"data": map[string]interface{}{},
+			})
+			c.Abort()
+			return
+		}
+		mc, err := ParseToken(token)
+		if err != nil {
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"code": http.StatusUnauthorized,
+				"msg":  service.LocalizeMsg(c.MustGet("lang").(*i18n.Localizer), response.ApiMsg.AuthErr),
+				"data": map[string]interface{}{},
+			})
+			c.Abort()
+			return
+		}
+
+		// 查询这个user是不是空
+		var user models.UserInfo
+		userResult := db.DB.Where("ID = ?", mc.UserId).Find(&user)
+		if errors.Is(userResult.Error, gorm.ErrRecordNotFound) {
+			response.Fail(c, response.ApiCode.UserNotFound, response.ApiMsg.UserNotFound)
+			return
+		}
+
+		if user.Role != RoleAdmin {
+            c.AbortWithStatusJSON(403, gin.H{
+                "msg": "permission denied",
+            })
+            return
+        }
+
+		// 将当前请求的userId信息保存到请求的上下文c上
+		// c.Set("userId", mc.UserId)
 		c.Next()
 	}
 }

@@ -15,6 +15,7 @@ type UserInfo struct {
 	Location uint   `json:"location" form:"location" gorm:"default:0"`
 	Language string `json:"language" form:"language" gorm:"size:32"`
 	Region   string `json:"region" form:"region" gorm:"size:32"`
+	Role     string `json:"role" gorm:"size:16;default:user" binding:"-"`
 }
 
 type SuggestionModel struct {
