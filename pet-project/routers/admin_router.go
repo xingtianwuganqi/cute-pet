@@ -8,12 +8,15 @@ import (
 )
 
 func RegisterAdminRouter(r *gin.Engine) {
-	admin := r.Group("/admin/categories")
+	admin := r.Group("/admin")
 	admin.Use(middleware.AdminOnly())
 	{
-		admin.GET("/common", handler.GetCommonCategories)
-		admin.POST("/common", handler.CreateCommonCategory)
-		admin.DELETE("/common/:id", handler.DeleteCommonCategory)
-		admin.POST("/list", handler.CreateCommonCategoryList)
+		admin.GET("/categories/common", handler.GetCommonCategories)
+		admin.POST("/categories/common", handler.CreateCommonCategory)
+		admin.DELETE("/categories/common/:id", handler.DeleteCommonCategory)
+		admin.POST("/categories/list", handler.CreateCommonCategoryList)
+
+		admin.GET("user/list", handler.GetUserList)
+
 	}
 }

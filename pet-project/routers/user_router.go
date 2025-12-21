@@ -1,9 +1,10 @@
 package routers
 
 import (
-	"github.com/gin-gonic/gin"
 	"pet-project/handler"
 	"pet-project/middleware"
+
+	"github.com/gin-gonic/gin"
 )
 
 func RegisterUserRouter(r *gin.Engine) {
@@ -21,8 +22,6 @@ func RegisterUserRouter(r *gin.Engine) {
 		userRouter.GET("/encryption/code", handler.GetEncryptionCode)
 		userRouter.GET("/info", middleware.JWTTokenMiddleware(), handler.GetUserInfo)
 		userRouter.POST("/deactivate", middleware.JWTTokenMiddleware(), handler.UserDeactivate)
-
-		userRouter.GET("/list", handler.GetUserList)
 
 		userRouter.POST("/suggestion", middleware.JWTTokenMiddleware(), handler.CreateSuggestion)
 		userRouter.POST("/ip", handler.GetIpInfo)

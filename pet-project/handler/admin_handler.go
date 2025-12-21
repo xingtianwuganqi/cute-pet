@@ -1,12 +1,13 @@
 package handler
 
 import (
-	"github.com/gin-gonic/gin"
-	"gorm.io/gorm/clause"
 	"pet-project/db"
 	"pet-project/models"
 	"pet-project/response"
 	"slices"
+
+	"github.com/gin-gonic/gin"
+	"gorm.io/gorm/clause"
 )
 
 // GetCommonCategories 获取宠物分类
@@ -72,4 +73,14 @@ func DeleteCommonCategory(c *gin.Context) {
 		return
 	}
 	response.Success(c, nil)
+}
+
+func GetUserList(c *gin.Context) {
+	var userList []models.UserInfo
+	result := db.DB.Find(&userList)
+	if result.Error != nil {
+		response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
+		return
+	}
+	response.Success(c, userList)
 }

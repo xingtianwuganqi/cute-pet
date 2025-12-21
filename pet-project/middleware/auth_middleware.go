@@ -3,7 +3,6 @@ package middleware
 import (
 	"errors"
 	"fmt"
-	"github.com/nicksnyder/go-i18n/v2/i18n"
 	"net/http"
 	"pet-project/db"
 	"pet-project/models"
@@ -11,6 +10,8 @@ import (
 	"pet-project/service"
 	"pet-project/settings"
 	"time"
+
+	"github.com/nicksnyder/go-i18n/v2/i18n"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
@@ -99,7 +100,7 @@ func JWTTokenMiddleware() func(c *gin.Context) {
 }
 
 func AdminOnly() gin.HandlerFunc {
-  
+
 	return func(c *gin.Context) {
 		token := c.GetHeader("token")
 		if settings.Conf.App.Env != "production" {
@@ -134,11 +135,11 @@ func AdminOnly() gin.HandlerFunc {
 		}
 
 		if user.Role != RoleAdmin {
-            c.AbortWithStatusJSON(403, gin.H{
-                "msg": "permission denied",
-            })
-            return
-        }
+			c.AbortWithStatusJSON(403, gin.H{
+				"msg": "permission denied",
+			})
+			return
+		}
 
 		// 将当前请求的userId信息保存到请求的上下文c上
 		// c.Set("userId", mc.UserId)
