@@ -24,5 +24,6 @@ func RegisterRouter() *gin.Engine {
 	RegisterTestRouter(r)
 	RegisterMessageRouters(r)
 	RegisterTopicRouter(r)
+	RegisterAdminRouter(r)
 	return r
 }

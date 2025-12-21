@@ -517,7 +517,6 @@ func GetIpInfo(c *gin.Context) {
 	}
 
 	response.Success(c, ipResult)
-	return
 }
 
 // GetIPInfoWith 尝试两个URL获取IP信息
@@ -657,14 +656,4 @@ func UserDeactivate(c *gin.Context) {
 		return
 	}
 	response.Success(c, nil)
-}
-
-func GetUserList(c *gin.Context) {
-	var userList []models.UserInfo
-	result := db.DB.Find(&userList)
-	if result.Error != nil {
-		response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
-		return
-	}
-	response.Success(c, userList)
 }
