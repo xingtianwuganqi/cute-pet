@@ -77,7 +77,18 @@ func DeleteCommonCategory(c *gin.Context) {
 
 func GetUserList(c *gin.Context) {
 	var userList []models.UserInfo
-	result := db.DB.Find(&userList)
+	var page = models.PageModel{}
+	if err := c.ShouldBind(&page); err != nil {
+		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
+		return
+	}
+	offer := (page.PageNum - 1) * page.PageSize
+
+	result := db.DB.Model(models.UserInfo{}).
+	Offset(offer).
+	Limit(page.PageSize).
+	Order("created_at DESC").
+	Find(&userList)
 	if result.Error != nil {
 		response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
 		return
