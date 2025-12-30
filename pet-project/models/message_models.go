@@ -24,7 +24,7 @@ LikeType: # 1.点赞 2.收藏 3.评论 4.回复
 */
 type LikeMessageModel struct {
 	BaseModel
-	LikeType   uint `json:"likeType" form:"likeType" form:"like_type" gorm:"default:0"`
+	LikeType   uint `json:"likeType" form:"likeType" gorm:"default:0"`
 	LikeId     uint `json:"likeId" form:"likeId" gorm:"default:0"`
 	LikeStatus uint `json:"likeStatus" form:"likeStatus" gorm:"default:0"`
 	FromUid    uint `json:"fromUid" form:"fromUid" gorm:"default:0"`
