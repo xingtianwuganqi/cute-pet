@@ -3,13 +3,14 @@ package handler
 import (
 	"errors"
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 	"log"
 	"pet-project/db"
 	"pet-project/models"
 	"pet-project/response"
+
+	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 // PetInfoCreate 提交宠物详情
@@ -73,6 +74,19 @@ func UpdatePetInfo(c *gin.Context) {
 		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 		return
 	}
+
+	var oldPetInfo models.PetInfo
+
+	oldResult := db.DB.Model(&models.PetInfo{}).Where("id = ?", petInfo.ID).First(&oldPetInfo)
+	if errors.Is(oldResult.Error, gorm.ErrRecordNotFound) {
+		response.Fail(c, response.ApiCode.DataNotExit, response.ApiMsg.DataNotExit)
+		return
+	}
+	if oldPetInfo.Avatar != petInfo.Avatar {
+		// 删除旧头像
+		DeleteQiNiuFile(oldPetInfo.Avatar)
+	}
+
 	// 忽略User是因为ShouldBind会创建一个User默认值，导致插入一条新的用户数据
 	petInfo.UserId = userId
 	result := db.DB.Model(&models.PetInfo{}).Where("id = ? AND user_id = ?", petInfo.ID, petInfo.UserId).
@@ -112,6 +126,8 @@ func DeletePetInfo(c *gin.Context) {
 		response.Fail(c, response.ApiCode.DataNotExit, response.ApiMsg.DataNotExit)
 		return
 	}
+	// 删除图片
+	DeleteQiNiuFile(petInfo.Avatar)
 	result := db.DB.Delete(&petInfo, "id = ?", petId)
 	if result.Error != nil {
 		response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
@@ -283,10 +299,19 @@ func GetRecordList(c *gin.Context) {
 func DeleteRecordInfo(c *gin.Context) {
 	userId := c.MustGet("userId").(uint)
 	id := c.Param("id")
+
+	var record models.RecordList
+	_ = db.DB.Where("id=? and user_id=?", id, userId).First(&record)
 	result := db.DB.Where("id=? and user_id=?", id, userId).Delete(&models.RecordList{})
 	if result.Error != nil {
 		response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
 		return
+	}
+	// 删除图片
+	if record.Images != nil {
+		for _, image := range *record.Images {
+			DeleteQiNiuFile(image)
+		}
 	}
 	response.Success(c, map[string]interface{}{})
 }
