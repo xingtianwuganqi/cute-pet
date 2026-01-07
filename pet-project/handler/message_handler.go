@@ -2,11 +2,12 @@ package handler
 
 import (
 	"errors"
-	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 	"pet-project/db"
 	"pet-project/models"
 	"pet-project/response"
+
+	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 func LikeMessageHandler(c *gin.Context) {
