@@ -22,7 +22,7 @@ type RecordCategory struct {
 	User         *UserInfo `json:"user" form:"user"`
 	UserId       *uint     `json:"userId" form:"userId"`
 	CategoryType uint      `json:"categoryType" form:"categoryType" gorm:"default:0"`
-	Name         string    `json:"name" form:"name" binding:"required" gorm:"size:32" binding:"required"`
+	Name         string    `json:"name" form:"name" binding:"required" gorm:"size:32"`
 	Icon         string    `json:"icon" form:"icon" gorm:"size:64"`
 	Color        string    `json:"color" form:"color" gorm:"size:32"`
 	ImageUrl     string    `json:"imageUrl" form:"imageUrl" gorm:"size:64"`
