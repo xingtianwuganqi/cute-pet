@@ -14,6 +14,7 @@ func RegisterAdminRouter(r *gin.Engine) {
 		admin.GET("/categories/common", handler.GetCommonCategories)
 		admin.POST("/categories/common", handler.CreateCommonCategory)
 		admin.DELETE("/categories/common/:id", handler.DeleteCommonCategory)
+		admin.DELETE("/qiniu/:key", handler.QiNiuDeleteFile)
 		admin.POST("/categories/list", handler.CreateCommonCategoryList)
 
 		admin.GET("user/list", handler.GetUserList)
