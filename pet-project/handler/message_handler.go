@@ -229,16 +229,36 @@ func CommentHandler(c *gin.Context) {
 		response.Fail(c, response.ApiCode.CreateErr, response.ApiMsg.CreateErr)
 		return
 	}
+	// 查询fromUser和toUser
+	fromUser := models.UserInfo{}
+	db.DB.Model(models.UserInfo{}).Where("id = ?", commentModel.FromUid).First(&fromUser)
+	toUser := models.UserInfo{}
+	db.DB.Model(models.UserInfo{}).Where("id = ?", commentModel.ToUid).First(&toUser)
+	commentModel.FromUser = &fromUser
+	commentModel.ToUser = &toUser
+	// 查询帖子
+	postInfo := models.PostModel{}
+	db.DB.Model(models.PostModel{}).Where("id = ?", commentModel.TopicId).First(&postInfo)
+	db.DB.Model(&postInfo).Update("comment_num", postInfo.CommentNum+1)
 	response.Success(c, commentModel)
 }
 
 func DeleteCommentHandler(c *gin.Context) {
 	var commentId = c.Param("commentId")
-	result := db.DB.Model(models.CommentModel{}).Delete(&models.CommentModel{}, commentId)
+	var commentModel models.CommentModel
+	result := db.DB.Model(models.CommentModel{}).Where("id = ?", commentId).First(&commentModel)
 	if result.Error != nil {
 		response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
 		return
 	}
+	// 查询帖子
+	postInfo := models.PostModel{}
+	db.DB.Model(models.PostModel{}).Where("id = ?", commentModel.TopicId).First(&postInfo)
+	if postInfo.CommentNum > 0 {
+		num := postInfo.CommentNum - 1
+		db.DB.Model(&postInfo).Update("comment_num", num)
+	}
+	db.DB.Model(models.CommentModel{}).Delete(&models.CommentModel{}, commentId)
 	response.Success(c, nil)
 }
 
@@ -254,6 +274,18 @@ func ReplyHandler(c *gin.Context) {
 		response.Fail(c, response.ApiCode.CreateErr, response.ApiMsg.CreateErr)
 		return
 	}
+	// 查询fromUser和toUser
+	fromUser := models.UserInfo{}
+	db.DB.Model(models.UserInfo{}).Where("id = ?", replyModel.FromUid).First(&fromUser)
+	toUser := models.UserInfo{}
+	db.DB.Model(models.UserInfo{}).Where("id = ?", replyModel.ToUid).First(&toUser)
+	// 查询到post
+	commentModel := models.CommentModel{}
+	db.DB.Model(models.PostModel{}).Where("id = ?", replyModel.CommentId).First(&commentModel)
+	postModel := models.PostModel{}
+	db.DB.Model(models.PostModel{}).Where("id = ?", commentModel.TopicId).First(&postModel)
+	num := postModel.CommentNum + 1
+	db.DB.Model(&postModel).Update("comment_num", num)
 	response.Success(c, replyModel)
 }
 
@@ -263,6 +295,16 @@ func DeleteReplyHandler(c *gin.Context) {
 	if result.Error != nil {
 		response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
 		return
+	}
+	replyModel := models.ReplyModel{}
+	db.DB.Model(models.ReplyModel{}).Where("id = ?", replyId).First(&replyModel)
+	commentModel := models.CommentModel{}
+	db.DB.Model(models.CommentModel{}).Where("id = ?", replyModel.CommentId).First(&commentModel)
+	postModel := models.PostModel{}
+	db.DB.Model(models.PostModel{}).Where("id = ?", commentModel.TopicId).First(&postModel)
+	if postModel.CommentNum > 0 {
+		num := postModel.CommentNum - 1
+		db.DB.Model(&postModel).Update("comment_num", num)
 	}
 	response.Success(c, nil)
 }
