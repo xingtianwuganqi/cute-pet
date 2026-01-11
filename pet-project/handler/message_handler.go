@@ -279,6 +279,9 @@ func ReplyHandler(c *gin.Context) {
 	db.DB.Model(models.UserInfo{}).Where("id = ?", replyModel.FromUid).First(&fromUser)
 	toUser := models.UserInfo{}
 	db.DB.Model(models.UserInfo{}).Where("id = ?", replyModel.ToUid).First(&toUser)
+	replyModel.FromUser = &fromUser
+	replyModel.ToUser = &toUser
+
 	// 查询到post
 	commentModel := models.CommentModel{}
 	db.DB.Model(models.PostModel{}).Where("id = ?", replyModel.CommentId).First(&commentModel)
@@ -286,6 +289,7 @@ func ReplyHandler(c *gin.Context) {
 	db.DB.Model(models.PostModel{}).Where("id = ?", commentModel.TopicId).First(&postModel)
 	num := postModel.CommentNum + 1
 	db.DB.Model(&postModel).Update("comment_num", num)
+
 	response.Success(c, replyModel)
 }
 
