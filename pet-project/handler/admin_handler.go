@@ -98,3 +98,48 @@ func GetUserList(c *gin.Context) {
 	}
 	response.Success(c, userList)
 }
+
+/*
+点赞列表
+*/
+func GetLikeList(c *gin.Context) {
+	var likeList []models.LikeMessageModel
+	var page = models.PageModel{}
+	if err := c.ShouldBindQuery(&page); err != nil {
+		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
+		return
+	}
+	offset := (page.PageNum - 1) * page.PageSize
+	result := db.DB.Model(models.LikeMessageModel{}).
+		Offset(offset).
+		Limit(page.PageSize).
+		Order("created_at DESC").
+		Find(&likeList)
+	if result.Error != nil {
+		response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
+		return
+	}
+	response.Success(c, likeList)
+}
+
+func GetCollectionList(c *gin.Context) {
+	var collectionList []models.CollectionMessageModel
+	var page = models.PageModel{}
+	if err := c.ShouldBindQuery(&page); err != nil {
+		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
+		return
+	}
+
+	offset := (page.PageNum - 1) * page.PageSize
+	result := db.DB.Model(models.CollectionMessageModel{}).
+		Offset(offset).Limit(page.PageSize).
+		Order("created_at DESC").
+		Find(&collectionList)
+
+	if result.Error != nil {
+		response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
+		return
+	}
+	response.Success(c, collectionList)
+
+}

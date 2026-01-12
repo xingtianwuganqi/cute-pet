@@ -19,5 +19,8 @@ func RegisterAdminRouter(r *gin.Engine) {
 
 		admin.GET("user/list", handler.GetUserList)
 
+		admin.GET("/likes", handler.GetLikeList)
+		admin.GET("/collections", handler.GetCollectionList)
+
 	}
 }
