@@ -2,13 +2,14 @@ package handler
 
 import (
 	"errors"
-	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 	"pet-project/db"
 	"pet-project/models"
 	"pet-project/response"
 	"pet-project/util"
+
+	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 // Front api
@@ -171,9 +172,9 @@ func GetPostList(c *gin.Context) {
 		}
 
 		var likedPosts []models.LikeMessageModel
-		db.DB.Where("user_id = ? AND like_id IN ?", userId, postIds).Find(&likedPosts)
+		db.DB.Where("from_uid = ? AND like_id IN ? AND like_status = ?", userId, postIds, 1).Find(&likedPosts)
 		var collectedPosts []models.CollectionMessageModel
-		db.DB.Where("user_id = ? AND collection_id IN ?", userId, postIds).Find(&collectedPosts)
+		db.DB.Where("from_uid = ? AND collection_id IN ? AND like_status = ?", userId, postIds, 1).Find(&collectedPosts)
 
 		likedMap := map[uint]bool{}
 		for _, l := range likedPosts {

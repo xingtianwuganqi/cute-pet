@@ -87,8 +87,8 @@ func JWTTokenMiddleware() func(c *gin.Context) {
 
 		// 查询这个user是不是空
 		var user models.UserInfo
-		userResult := db.DB.Where("ID = ?", mc.UserId).Find(&user)
-		if errors.Is(userResult.Error, gorm.ErrRecordNotFound) {
+		error := db.DB.Where("id = ?", mc.UserId).First(&user).Error
+		if errors.Is(error, gorm.ErrRecordNotFound) {
 			response.Fail(c, response.ApiCode.UserNotFound, response.ApiMsg.UserNotFound)
 			return
 		}
@@ -143,6 +143,45 @@ func AdminOnly() gin.HandlerFunc {
 
 		// 将当前请求的userId信息保存到请求的上下文c上
 		// c.Set("userId", mc.UserId)
+		c.Next()
+	}
+}
+
+
+func OptionalJWTMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// 默认未登录
+		c.Set("userId", uint(0))
+
+		token := c.GetHeader("token")
+		if token == "" {
+			c.Next()
+			return
+		}
+
+		// 解析 token
+		mc, err := ParseToken(token)
+		if err != nil {
+			// token 不合法，当未登录处理
+			c.Next()
+			return
+		}
+
+		// 查询用户是否存在
+		var user models.UserInfo
+		err = db.DB.
+			Select("id").
+			Where("id = ?", mc.UserId).
+			First(&user).Error
+
+		if err != nil {
+			// 用户不存在 / 被删除
+			c.Next()
+			return
+		}
+
+		// 登录态有效
+		c.Set("userId", mc.UserId)
 		c.Next()
 	}
 }
