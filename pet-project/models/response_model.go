@@ -1,5 +1,7 @@
 package models
 
+import "time"
+
 // 登录注册信息
 
 type RegisterInfo struct {
@@ -57,10 +59,14 @@ type UploadUserInfoModel struct {
 	Username string `json:"username" form:"username"`
 }
 
+// record
+
 type RecordListModel struct {
 	PageModel
 	PetInfoId  uint  `json:"petInfoId" form:"petInfoId"`
 	CategoryId *uint `json:"categoryId" form:"categoryId"`
+	StartTime  *time.Time `json:"startTime" form:"startTime"`
+	EndTime    *time.Time `json:"endTime" form:"endTime"`
 }
 
 // 帖子相关
@@ -74,6 +80,8 @@ type PostStatusModel struct {
 	PostId uint `json:"postId" form:"postId"`
 	Status uint `json:"status" form:"status"`
 }
+
+// Message
 
 type MessageListType struct {
 	PageModel

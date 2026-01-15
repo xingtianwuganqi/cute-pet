@@ -1,6 +1,10 @@
-package service
+package internal
 
 import (
+	"pet-project/generate"
+	"pet-project/settings"
+	"strconv"
+
 	_ "github.com/GoAdminGroup/go-admin/adapter/gin" // 引入适配器，必须引入，如若不引入，则需要自己定义
 	"github.com/GoAdminGroup/go-admin/engine"
 	_ "github.com/GoAdminGroup/go-admin/engine"
@@ -11,9 +15,6 @@ import (
 	_ "github.com/GoAdminGroup/go-admin/template/chartjs"
 	_ "github.com/GoAdminGroup/themes/adminlte" // 引入主题，必须引入，不然报错
 	"github.com/gin-gonic/gin"
-	"pet-project/generate"
-	"pet-project/settings"
-	"strconv"
 )
 
 func AdminConfig(r *gin.Engine) {

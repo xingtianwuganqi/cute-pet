@@ -315,3 +315,57 @@ func DeleteRecordInfo(c *gin.Context) {
 	}
 	response.Success(c, map[string]interface{}{})
 }
+
+// 查询宠物花费列表
+func GetPetCostList(c *gin.Context) {
+	userId := c.MustGet("userId").(uint)
+
+	var pageModel models.RecordListModel
+	if err := c.ShouldBindQuery(&pageModel); err != nil {
+		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
+		return
+	}
+
+	offset := (pageModel.PageNum - 1) * pageModel.PageSize
+
+	var recordList []models.RecordList
+
+	// 1️⃣ 先构造基础查询
+	tx := db.DB.
+		Model(&models.RecordList{}).
+		Where("user_id = ? AND spend > ?", userId, 0)
+
+	// 2️⃣ 可选条件：宠物
+	if pageModel.PetInfoId != 0 {
+		tx = tx.Where("pet_info_id = ?", pageModel.PetInfoId)
+	}
+
+	// 3️⃣ 可选条件：分类
+	if pageModel.CategoryId != nil {
+		tx = tx.Where("category_id = ?", *pageModel.CategoryId)
+	}
+
+	// 4️⃣ 可选条件：开始时间
+	if pageModel.StartTime != nil {
+		tx = tx.Where("record_time >= ?", *pageModel.StartTime)
+	}
+
+	// 5️⃣ 可选条件：结束时间
+	if pageModel.EndTime != nil {
+		tx = tx.Where("record_time <= ?", *pageModel.EndTime)
+	}
+
+	// 6️⃣ 排序 + 分页 + 查询
+	result := tx.
+		Order("record_time DESC").
+		Offset(offset).
+		Limit(pageModel.PageSize).
+		Find(&recordList)
+
+	if result.Error != nil {
+		response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
+		return
+	}
+
+	response.Success(c, recordList)
+}

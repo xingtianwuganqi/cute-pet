@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"net/http"
 	"pet-project/db"
+	"pet-project/internal"
 	"pet-project/models"
 	"pet-project/response"
-	"pet-project/service"
 	"pet-project/settings"
 	"time"
 
@@ -68,7 +68,7 @@ func JWTTokenMiddleware() func(c *gin.Context) {
 		if len(token) == 0 {
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"code": http.StatusUnauthorized,
-				"msg":  service.LocalizeMsg(c.MustGet("lang").(*i18n.Localizer), response.ApiMsg.AuthErr),
+				"msg":  internal.LocalizeMsg(c.MustGet("lang").(*i18n.Localizer), response.ApiMsg.AuthErr),
 				"data": map[string]interface{}{},
 			})
 			c.Abort()
@@ -78,7 +78,7 @@ func JWTTokenMiddleware() func(c *gin.Context) {
 		if err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"code": http.StatusUnauthorized,
-				"msg":  service.LocalizeMsg(c.MustGet("lang").(*i18n.Localizer), response.ApiMsg.AuthErr),
+				"msg":  internal.LocalizeMsg(c.MustGet("lang").(*i18n.Localizer), response.ApiMsg.AuthErr),
 				"data": map[string]interface{}{},
 			})
 			c.Abort()
@@ -109,7 +109,7 @@ func AdminOnly() gin.HandlerFunc {
 		if len(token) == 0 {
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"code": http.StatusUnauthorized,
-				"msg":  service.LocalizeMsg(c.MustGet("lang").(*i18n.Localizer), response.ApiMsg.AuthErr),
+				"msg":  internal.LocalizeMsg(c.MustGet("lang").(*i18n.Localizer), response.ApiMsg.AuthErr),
 				"data": map[string]interface{}{},
 			})
 			c.Abort()
@@ -119,7 +119,7 @@ func AdminOnly() gin.HandlerFunc {
 		if err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"code": http.StatusUnauthorized,
-				"msg":  service.LocalizeMsg(c.MustGet("lang").(*i18n.Localizer), response.ApiMsg.AuthErr),
+				"msg":  internal.LocalizeMsg(c.MustGet("lang").(*i18n.Localizer), response.ApiMsg.AuthErr),
 				"data": map[string]interface{}{},
 			})
 			c.Abort()
@@ -146,7 +146,6 @@ func AdminOnly() gin.HandlerFunc {
 		c.Next()
 	}
 }
-
 
 func OptionalJWTMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {

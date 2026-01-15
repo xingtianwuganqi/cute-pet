@@ -1,14 +1,15 @@
-package service
+package internal
 
 import (
 	"errors"
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"github.com/go-redis/redis/v8"
-	"gopkg.in/gomail.v2"
 	"math/rand"
 	"pet-project/db"
 	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/go-redis/redis/v8"
+	"gopkg.in/gomail.v2"
 )
 
 // GenerateValidationCode 生成指定长度的随机数字验证码

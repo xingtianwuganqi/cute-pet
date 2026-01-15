@@ -7,10 +7,10 @@ import (
 	"io"
 	"net/http"
 	"pet-project/db"
+	"pet-project/internal"
 	"pet-project/middleware"
 	"pet-project/models"
 	"pet-project/response"
-	"pet-project/service"
 	"pet-project/settings"
 	"pet-project/util"
 	"strings"
@@ -35,7 +35,7 @@ func GetEmailCode(c *gin.Context) {
 
 	// 查询code是否在redis中（是否已经使用过了）
 	codeKey := fmt.Sprintf("email_code:%s", param.Email)
-	value, err := service.GetCodeFromRedis(c, codeKey)
+	value, err := internal.GetCodeFromRedis(c, codeKey)
 	fmt.Println("value is ", value)
 	fmt.Println("err is ", err)
 	if err != nil {
@@ -66,7 +66,7 @@ func GetEmailCode(c *gin.Context) {
 	}
 
 	email := param.Email
-	code := service.GenerateValidationCode(4)
+	code := internal.GenerateValidationCode(4)
 
 	// 正式环境发验证码
 	if settings.Conf.App.Env == "production" {
@@ -76,24 +76,24 @@ func GetEmailCode(c *gin.Context) {
 		password := settings.Conf.EmailService.Password
 		// 对方的邮箱
 		recipient := email
-		subject := service.LocalizeMsg(lang, "VerificationTitle")
-		body := service.LocalizeMsgCount(lang, "VerificationDesc", code)
+		subject := internal.LocalizeMsg(lang, "VerificationTitle")
+		body := internal.LocalizeMsgCount(lang, "VerificationDesc", code)
 
-		sendErr := service.SendEmail(recipient, subject, body, smptServer, smptPort, username, password)
+		sendErr := internal.SendEmail(recipient, subject, body, smptServer, smptPort, username, password)
 		if sendErr != nil {
 			response.Fail(c, response.ApiCode.ServerErr, sendErr.Error())
 			return
 		}
 	}
 	// 将code保存到redis，设置10分钟失效
-	saveErr := service.SaveAccountCodeInRedis(c, email, code, 10*time.Minute)
+	saveErr := internal.SaveAccountCodeInRedis(c, email, code, 10*time.Minute)
 	if saveErr != nil {
 		response.Fail(c, response.ApiCode.ServerErr, saveErr.Error())
 		return
 	}
 
 	// 保存param.code
-	_ = service.SaveAccountCodeInRedis(c, codeKey, param.Code, 24*time.Hour)
+	_ = internal.SaveAccountCodeInRedis(c, codeKey, param.Code, 24*time.Hour)
 
 	if settings.Conf.App.Env == "production" {
 		c.JSON(http.StatusOK, gin.H{
@@ -119,7 +119,7 @@ func GetPhoneCode(c *gin.Context) {
 	}
 	// 查询code是否在redis中（是否已经使用过了）
 	codeKey := fmt.Sprintf("phone_code:%s", param.Phone)
-	value, err := service.GetCodeFromRedis(c, codeKey)
+	value, err := internal.GetCodeFromRedis(c, codeKey)
 	if err != nil {
 		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 		return
@@ -146,7 +146,7 @@ func GetPhoneCode(c *gin.Context) {
 		return
 	}
 
-	code := service.GenerateValidationCode(4)
+	code := internal.GenerateValidationCode(4)
 
 	if settings.Conf.App.Env == "production" {
 		url := fmt.Sprintf("https://push.spug.cc/send/gL1QGmWdKWjlRD65?key1=%s&key2=%s&key3=%s&targets=%s",
@@ -166,13 +166,13 @@ func GetPhoneCode(c *gin.Context) {
 	}
 
 	// 将code保存到redis，设置10分钟失效
-	saveErr := service.SaveAccountCodeInRedis(c, phone, code, 10*time.Minute)
+	saveErr := internal.SaveAccountCodeInRedis(c, phone, code, 10*time.Minute)
 	if saveErr != nil {
 		response.Fail(c, response.ApiCode.ServerErr, saveErr.Error())
 		return
 	}
 
-	_ = service.SaveAccountCodeInRedis(c, codeKey, param.Code, 24*time.Hour)
+	_ = internal.SaveAccountCodeInRedis(c, codeKey, param.Code, 24*time.Hour)
 
 	if settings.Conf.App.Env == "production" {
 		c.JSON(http.StatusOK, gin.H{
@@ -221,7 +221,7 @@ func CheckRdbCode(c *gin.Context) {
 		return
 	}
 	if len(param.Phone) != 0 {
-		code, err := service.GetCodeFromRedis(c, param.Phone)
+		code, err := internal.GetCodeFromRedis(c, param.Phone)
 		if err != nil {
 			// Redis 查询确实出错了，非 redis.Nil
 			response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
@@ -234,7 +234,7 @@ func CheckRdbCode(c *gin.Context) {
 		}
 
 	} else {
-		code, err := service.GetCodeFromRedis(c, param.Email)
+		code, err := internal.GetCodeFromRedis(c, param.Email)
 		if err != nil {
 			// Redis 查询确实出错了，非 redis.Nil
 			response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
@@ -277,7 +277,7 @@ func UserRegister(c *gin.Context) {
 	if errors.Is(findResult.Error, gorm.ErrRecordNotFound) {
 		// 取出redis中的验证码
 		if len(login.Email) > 0 {
-			code, err := service.GetCodeFromRedis(c, login.Email)
+			code, err := internal.GetCodeFromRedis(c, login.Email)
 			if err != nil {
 				response.Fail(c, response.ApiCode.ServerErr, response.ApiMsg.ServerErr)
 				return
@@ -286,9 +286,9 @@ func UserRegister(c *gin.Context) {
 				response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 				return
 			}
-			_ = service.DeleteCodeFromRedis(c, login.Email)
+			_ = internal.DeleteCodeFromRedis(c, login.Email)
 		} else { // 验证手机验证码
-			code, err := service.GetCodeFromRedis(c, login.Phone)
+			code, err := internal.GetCodeFromRedis(c, login.Phone)
 			if err != nil {
 				response.Fail(c, response.ApiCode.ServerErr, response.ApiMsg.ServerErr)
 				return
@@ -299,7 +299,7 @@ func UserRegister(c *gin.Context) {
 				response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 				return
 			}
-			_ = service.DeleteCodeFromRedis(c, login.Email)
+			_ = internal.DeleteCodeFromRedis(c, login.Email)
 		}
 
 		user := models.UserInfo{
@@ -407,7 +407,7 @@ func UserFindPassword(c *gin.Context) {
 	} else {
 		// 验证验证码
 		if len(loginInfo.Phone) > 0 {
-			code, err := service.GetCodeFromRedis(c, loginInfo.Phone)
+			code, err := internal.GetCodeFromRedis(c, loginInfo.Phone)
 			if err != nil {
 				response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 				return
@@ -424,11 +424,11 @@ func UserFindPassword(c *gin.Context) {
 				return
 			}
 			// redis的数据清除
-			_ = service.DeleteCodeFromRedis(c, loginInfo.Phone)
+			_ = internal.DeleteCodeFromRedis(c, loginInfo.Phone)
 
 			response.Success(c, map[string]interface{}{})
 		} else {
-			code, err := service.GetCodeFromRedis(c, loginInfo.Email)
+			code, err := internal.GetCodeFromRedis(c, loginInfo.Email)
 			if err != nil {
 				fmt.Println("err is", err)
 				response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
@@ -447,7 +447,7 @@ func UserFindPassword(c *gin.Context) {
 			}
 
 			// 删除redis数据
-			_ = service.DeleteCodeFromRedis(c, loginInfo.Email)
+			_ = internal.DeleteCodeFromRedis(c, loginInfo.Email)
 
 			response.Success(c, map[string]interface{}{})
 		}

@@ -1,4 +1,4 @@
-package service
+package internal
 
 import (
 	"github.com/BurntSushi/toml"
