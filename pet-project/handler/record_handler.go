@@ -1,16 +1,13 @@
 package handler
 
 import (
-	"errors"
 	"fmt"
 	"log"
-	"pet-project/db"
 	"pet-project/models"
 	"pet-project/response"
+	"pet-project/service"
 
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 )
 
 // PetInfoCreate 提交宠物详情
@@ -21,14 +18,9 @@ func PetInfoCreate(c *gin.Context) {
 		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 		return
 	}
-	fmt.Println(petInfo.User)
-	// 忽略User是因为ShouldBind会创建一个User默认值，导致插入一条新的用户数据
-	//result := db.DB.Omit("User").Create(&petInfo)
-	//result := db.DB.Omit(clause.Associations).Create(&petInfo)
-	// 现在不会创建关联对象了
-	petInfo.UserId = userId
-	result := db.DB.Omit(clause.Associations).Create(&petInfo)
-	if result.Error != nil {
+
+	err := service.PetInfoCreateService(userId, petInfo)
+	if err != nil {
 		response.Fail(c, response.ApiCode.CreateErr, response.ApiMsg.CreateErr)
 		return
 	}
@@ -37,24 +29,15 @@ func PetInfoCreate(c *gin.Context) {
 
 // GetPetList 获取创建的宠物列表
 func GetPetList(c *gin.Context) {
-	var uerId = c.MustGet("userId").(uint)
-	var petList []models.PetInfo
+	var userId = c.MustGet("userId").(uint)
 	var pageModel models.PageModel
 	if err := c.ShouldBindQuery(&pageModel); err != nil {
 		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 		return
 	}
-	offset := (pageModel.PageNum - 1) * pageModel.PageSize
-	result := db.DB.
-		Preload("User").
-		Model(&models.PetInfo{}).
-		Where("user_id = ?", uerId).
-		Offset(offset).
-		Limit(pageModel.PageSize).
-		Order("created_at DESC").
-		Find(&petList)
 
-	if result.Error != nil {
+	petList, err := service.GetPetListService(userId, pageModel)
+	if err != nil {
 		response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
 		return
 	}
@@ -70,45 +53,16 @@ func UpdatePetInfo(c *gin.Context) {
 		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 		return
 	}
-	if petInfo.ID == 0 {
-		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
-		return
-	}
 
-	var oldPetInfo models.PetInfo
-
-	oldResult := db.DB.Model(&models.PetInfo{}).Where("id = ?", petInfo.ID).First(&oldPetInfo)
-	if errors.Is(oldResult.Error, gorm.ErrRecordNotFound) {
-		response.Fail(c, response.ApiCode.DataNotExit, response.ApiMsg.DataNotExit)
-		return
-	}
-	if oldPetInfo.Avatar != petInfo.Avatar {
-		// 删除旧头像
-		DeleteQiNiuFile(oldPetInfo.Avatar)
-	}
-
-	// 忽略User是因为ShouldBind会创建一个User默认值，导致插入一条新的用户数据
-	petInfo.UserId = userId
-	result := db.DB.Model(&models.PetInfo{}).Where("id = ? AND user_id = ?", petInfo.ID, petInfo.UserId).
-		Updates(models.PetInfo{
-			UserId:   petInfo.UserId,
-			PetType:  petInfo.PetType,
-			Avatar:   petInfo.Avatar,
-			Name:     petInfo.Name,
-			Gender:   petInfo.Gender,
-			BirthDay: petInfo.BirthDay,
-			HomeDay:  petInfo.HomeDay,
-			Weight:   petInfo.Weight,
-			Unit:     petInfo.Unit,
-			Desc:     petInfo.Desc,
-		})
-	if result.Error != nil {
-		log.Println(result.Error)
-		response.Fail(c, response.ApiCode.UpdateErr, response.ApiMsg.UpdateErr)
-		return
-	}
-	if result.RowsAffected == 0 {
-		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
+	err := service.UpdatePetInfoService(userId, petInfo)
+	if err != nil {
+		if err.Error() == "param error" {
+			response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
+		} else if err.Error() == "data not exit" {
+			response.Fail(c, response.ApiCode.DataNotExit, response.ApiMsg.DataNotExit)
+		} else if err.Error() == "update error" {
+			response.Fail(c, response.ApiCode.UpdateErr, response.ApiMsg.UpdateErr)
+		}
 		return
 	}
 	response.Success(c, nil)
@@ -117,20 +71,15 @@ func UpdatePetInfo(c *gin.Context) {
 // DeletePetInfo 删除创建的宠物详情
 func DeletePetInfo(c *gin.Context) {
 	userId := c.MustGet("userId").(uint)
-	petId := c.Param("id")
-	petInfo := models.PetInfo{}
-	findResult := db.DB.Model(&models.PetInfo{}).
-		Where("id = ? AND user_id = ?", petId, userId).
-		First(&petInfo)
-	if errors.Is(findResult.Error, gorm.ErrRecordNotFound) {
-		response.Fail(c, response.ApiCode.DataNotExit, response.ApiMsg.DataNotExit)
-		return
-	}
-	// 删除图片
-	DeleteQiNiuFile(petInfo.Avatar)
-	result := db.DB.Delete(&petInfo, "id = ?", petId)
-	if result.Error != nil {
-		response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
+	petId := getUintFromString(c.Param("id"))
+
+	err := service.DeletePetInfoService(userId, petId)
+	if err != nil {
+		if err.Error() == "data not exit" {
+			response.Fail(c, response.ApiCode.DataNotExit, response.ApiMsg.DataNotExit)
+		} else {
+			response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
+		}
 		return
 	}
 	response.Success(c, nil)
@@ -144,32 +93,13 @@ func GetRecordCategoryList(c *gin.Context) {
 		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 		return
 	}
-	offset := (pageModel.PageNum - 1) * pageModel.PageSize
-	var petActionList []models.RecordCategory
-	if pageModel.CategoryType == 1 {
-		result := db.DB.Model(&models.RecordCategory{}).
-			Where("user_id = ?", userId).
-			Offset(offset).
-			Limit(pageModel.PageSize).
-			Find(&petActionList)
-		if result.Error != nil {
-			response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
-			return
-		}
-		response.Success(c, petActionList)
-	} else {
-		result := db.DB.Model(&models.RecordCategory{}).
-			Where("user_id IS NULL").Or("user_id = ?", userId).
-			Offset(offset).
-			Limit(pageModel.PageSize).
-			Find(&petActionList)
-		if result.Error != nil {
-			response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
-			return
-		}
-		response.Success(c, petActionList)
-	}
 
+	petActionList, err := service.GetRecordCategoryListService(userId, pageModel)
+	if err != nil {
+		response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
+		return
+	}
+	response.Success(c, petActionList)
 }
 
 // CreateRecordCategory 添加宠物行为
@@ -180,9 +110,9 @@ func CreateRecordCategory(c *gin.Context) {
 		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 		return
 	}
-	recordCategory.UserId = &userId
-	result := db.DB.Create(&recordCategory)
-	if result.Error != nil {
+
+	err := service.CreateRecordCategoryService(userId, recordCategory)
+	if err != nil {
 		response.Fail(c, response.ApiCode.CreateErr, response.ApiMsg.CreateErr)
 		return
 	}
@@ -199,16 +129,13 @@ func UpdateRecordCategory(c *gin.Context) {
 		return
 	}
 
-	// 确认该分类属于当前用户
-	var old models.RecordCategory
-	if err := db.DB.Where("id = ? AND user_id = ?", recordCategory.ID, userId).First(&old).Error; err != nil {
-		response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
-		return
-	}
-
-	// 执行更新（只更新传入的字段）
-	if err := db.DB.Model(&old).Updates(recordCategory).Error; err != nil {
-		response.Fail(c, response.ApiCode.UpdateErr, response.ApiMsg.UpdateErr)
+	err := service.UpdateRecordCategoryService(userId, recordCategory)
+	if err != nil {
+		if err.Error() == "query error" {
+			response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
+		} else if err.Error() == "update error" {
+			response.Fail(c, response.ApiCode.UpdateErr, response.ApiMsg.UpdateErr)
+		}
 		return
 	}
 
@@ -217,17 +144,15 @@ func UpdateRecordCategory(c *gin.Context) {
 
 func DeleteRecordCategory(c *gin.Context) {
 	userId := c.MustGet("userId").(uint)
-	id := c.Param("id")
-	// 先查询存不存在
-	recordCategory := models.RecordCategory{}
-	findResult := db.DB.Model(&models.RecordCategory{}).Where("id = ? AND user_id = ?", id, userId).First(&recordCategory)
-	if errors.Is(findResult.Error, gorm.ErrRecordNotFound) {
-		response.Fail(c, response.ApiCode.DataNotExit, response.ApiMsg.DataNotExit)
-		return
-	}
-	result := db.DB.Delete(&models.RecordCategory{}, "id = ? AND user_id = ?", id, userId)
-	if result.Error != nil {
-		response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
+	id := getUintFromString(c.Param("id"))
+
+	err := service.DeleteRecordCategoryService(userId, id)
+	if err != nil {
+		if err.Error() == "data not exit" {
+			response.Fail(c, response.ApiCode.DataNotExit, response.ApiMsg.DataNotExit)
+		} else {
+			response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
+		}
 		return
 	}
 	response.Success(c, nil)
@@ -242,18 +167,14 @@ func CreateRecord(c *gin.Context) {
 		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 		return
 	}
-	// 查一下宠物是否存在
-	var petInfo models.PetInfo
-	petResult := db.DB.Model(&models.PetInfo{}).Where("id = ?", model.PetInfoId).First(&petInfo)
-	if errors.Is(petResult.Error, gorm.ErrRecordNotFound) {
-		response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
-		return
-	}
-	model.UserId = userId
-	fmt.Println(model)
-	result := db.DB.Omit(clause.Associations).Create(&model)
-	if result.Error != nil {
-		response.Fail(c, response.ApiCode.CreateErr, response.ApiMsg.CreateErr)
+
+	err := service.CreateRecordService(userId, model)
+	if err != nil {
+		if err.Error() == "query error" {
+			response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
+		} else {
+			response.Fail(c, response.ApiCode.CreateErr, response.ApiMsg.CreateErr)
+		}
 		return
 	}
 	response.Success(c, model)
@@ -267,27 +188,9 @@ func GetRecordList(c *gin.Context) {
 		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 		return
 	}
-	offset := (pageModel.PageNum - 1) * pageModel.PageSize
-	var recordList []models.RecordList
 
-	// 查询的参数
-	queryParam := models.RecordList{}
-	if pageModel.CategoryId != nil {
-		queryParam.RecordCategoryId = pageModel.CategoryId
-	}
-	if pageModel.PetInfoId != 0 {
-		queryParam.PetInfoId = pageModel.PetInfoId
-	}
-	queryParam.UserId = userId
-
-	result := db.DB.Preload("User").
-		Model(&models.RecordList{}).
-		Where(&queryParam).
-		Offset(offset).
-		Limit(pageModel.PageSize).
-		Order("record_time DESC").
-		Find(&recordList)
-	if result.Error != nil {
+	recordList, err := service.GetRecordListService(userId, pageModel)
+	if err != nil {
 		response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
 		return
 	}
@@ -298,20 +201,12 @@ func GetRecordList(c *gin.Context) {
 // DeleteRecordInfo 删除记录
 func DeleteRecordInfo(c *gin.Context) {
 	userId := c.MustGet("userId").(uint)
-	id := c.Param("id")
+	id := getUintFromString(c.Param("id"))
 
-	var record models.RecordList
-	_ = db.DB.Where("id=? and user_id=?", id, userId).First(&record)
-	result := db.DB.Where("id=? and user_id=?", id, userId).Delete(&models.RecordList{})
-	if result.Error != nil {
+	err := service.DeleteRecordInfoService(userId, id)
+	if err != nil {
 		response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
 		return
-	}
-	// 删除图片
-	if record.Images != nil {
-		for _, image := range *record.Images {
-			DeleteQiNiuFile(image)
-		}
 	}
 	response.Success(c, map[string]interface{}{})
 }
@@ -326,46 +221,18 @@ func GetPetCostList(c *gin.Context) {
 		return
 	}
 
-	offset := (pageModel.PageNum - 1) * pageModel.PageSize
-
-	var recordList []models.RecordList
-
-	// 1️⃣ 先构造基础查询
-	tx := db.DB.
-		Model(&models.RecordList{}).
-		Where("user_id = ? AND spend > ?", userId, 0)
-
-	// 2️⃣ 可选条件：宠物
-	if pageModel.PetInfoId != 0 {
-		tx = tx.Where("pet_info_id = ?", pageModel.PetInfoId)
-	}
-
-	// 3️⃣ 可选条件：分类
-	if pageModel.CategoryId != nil {
-		tx = tx.Where("category_id = ?", *pageModel.CategoryId)
-	}
-
-	// 4️⃣ 可选条件：开始时间
-	if pageModel.StartTime != nil {
-		tx = tx.Where("record_time >= ?", *pageModel.StartTime)
-	}
-
-	// 5️⃣ 可选条件：结束时间
-	if pageModel.EndTime != nil {
-		tx = tx.Where("record_time <= ?", *pageModel.EndTime)
-	}
-
-	// 6️⃣ 排序 + 分页 + 查询
-	result := tx.
-		Order("record_time DESC").
-		Offset(offset).
-		Limit(pageModel.PageSize).
-		Find(&recordList)
-
-	if result.Error != nil {
+	recordList, err := service.GetPetCostListService(userId, pageModel)
+	if err != nil {
 		response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
 		return
 	}
 
 	response.Success(c, recordList)
 }
+
+// // 辅助函数，将字符串转换为uint
+// func getUintFromString(s string) uint {
+// 	var n uint
+// 	fmt.Sscanf(s, "%d", &n)
+// 	return n
+// }

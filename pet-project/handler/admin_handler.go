@@ -1,22 +1,17 @@
 package handler
 
 import (
-	"pet-project/db"
 	"pet-project/models"
 	"pet-project/response"
-	"slices"
+	"pet-project/service"
 
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm/clause"
 )
 
 // GetCommonCategories 获取宠物分类
 func GetCommonCategories(c *gin.Context) {
-	var petActionList []models.RecordCategory
-	result := db.DB.Model(&models.RecordCategory{}).
-		Where("user_id IS NULL").
-		Find(&petActionList)
-	if result.Error != nil {
+	petActionList, err := service.GetCommonCategoriesService()
+	if err != nil {
 		response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
 		return
 	}
@@ -30,9 +25,9 @@ func CreateCommonCategory(c *gin.Context) {
 		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 		return
 	}
-	recordCategory.UserId = nil
-	result := db.DB.Create(&recordCategory)
-	if result.Error != nil {
+	
+	err := service.CreateCommonCategoryService(recordCategory)
+	if err != nil {
 		response.Fail(c, response.ApiCode.CreateErr, response.ApiMsg.CreateErr)
 		return
 	}
@@ -46,18 +41,9 @@ func CreateCommonCategoryList(c *gin.Context) {
 		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 		return
 	}
-	var values []bool
-	for i := range categories {
-		var item = categories[i]
-		item.UserId = nil
-		result := db.DB.Omit(clause.Associations).Create(&categories[i])
-		if result.Error != nil {
-			values = append(values, false)
-		} else {
-			values = append(values, true)
-		}
-	}
-	if slices.Contains(values, false) {
+	
+	err := service.CreateCommonCategoryListService(categories)
+	if err != nil {
 		response.Fail(c, response.ApiCode.CreateErr, response.ApiMsg.CreateErr)
 		return
 	}
@@ -66,9 +52,10 @@ func CreateCommonCategoryList(c *gin.Context) {
 
 // DeleteCommonCategory 删除宠物行为
 func DeleteCommonCategory(c *gin.Context) {
-	id := c.Param("id")
-	result := db.DB.Delete(&models.RecordCategory{}, "id = ? AND user_id IS NULL", id)
-	if result.Error != nil {
+	id := getUintFromString(c.Param("id"))
+	
+	err := service.DeleteCommonCategoryService(id)
+	if err != nil {
 		response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
 		return
 	}
@@ -79,20 +66,14 @@ func DeleteCommonCategory(c *gin.Context) {
 获取用户列表
 */
 func GetUserList(c *gin.Context) {
-	var userList []models.UserInfo
 	var page = models.PageModel{}
 	if err := c.ShouldBind(&page); err != nil {
 		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 		return
 	}
-	offer := (page.PageNum - 1) * page.PageSize
-
-	result := db.DB.Model(models.UserInfo{}).
-		Offset(offer).
-		Limit(page.PageSize).
-		Order("created_at DESC").
-		Find(&userList)
-	if result.Error != nil {
+	
+	userList, err := service.GetUserListService(page)
+	if err != nil {
 		response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
 		return
 	}
@@ -103,19 +84,14 @@ func GetUserList(c *gin.Context) {
 点赞列表
 */
 func GetLikeList(c *gin.Context) {
-	var likeList []models.LikeMessageModel
 	var page = models.PageModel{}
 	if err := c.ShouldBindQuery(&page); err != nil {
 		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 		return
 	}
-	offset := (page.PageNum - 1) * page.PageSize
-	result := db.DB.Model(models.LikeMessageModel{}).
-		Offset(offset).
-		Limit(page.PageSize).
-		Order("created_at DESC").
-		Find(&likeList)
-	if result.Error != nil {
+	
+	likeList, err := service.GetLikeListService(page)
+	if err != nil {
 		response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
 		return
 	}
@@ -123,23 +99,23 @@ func GetLikeList(c *gin.Context) {
 }
 
 func GetCollectionList(c *gin.Context) {
-	var collectionList []models.CollectionMessageModel
 	var page = models.PageModel{}
 	if err := c.ShouldBindQuery(&page); err != nil {
 		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 		return
 	}
 
-	offset := (page.PageNum - 1) * page.PageSize
-	result := db.DB.Model(models.CollectionMessageModel{}).
-		Offset(offset).Limit(page.PageSize).
-		Order("created_at DESC").
-		Find(&collectionList)
-
-	if result.Error != nil {
+	collectionList, err := service.GetCollectionListService(page)
+	if err != nil {
 		response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
 		return
 	}
 	response.Success(c, collectionList)
-
 }
+
+// 辅助函数，将字符串转换为uint
+// func getUintFromString(s string) uint {
+// 	var n uint
+// 	fmt.Sscanf(s, "%d", &n)
+// 	return n
+// }

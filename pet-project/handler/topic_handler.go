@@ -1,15 +1,154 @@
+// package service
+
+// import (
+// 	"errors"
+// 	"pet-project/db"
+// 	"pet-project/models"
+// 	"pet-project/util"
+
+// 	"gorm.io/gorm"
+// 	"gorm.io/gorm/clause"
+// )
+
+// // GetStatusTopicListService 获取待审核话题列表
+// func GetStatusTopicListService(status uint, pageNum, pageSize int) ([]models.TopicModel, error) {
+// 	var topicModels []models.TopicModel
+// 	offset := (pageNum - 1) * pageSize
+// 	result := db.DB.Model(models.TopicModel{}).Preload("User").
+// 		Where("topic_status=?", status).
+// 		Offset(offset).
+// 		Limit(pageSize).
+// 		Order("created_at DESC").
+// 		Find(&topicModels)
+// 	return topicModels, result.Error
+// }
+
+// // ChangeTopicStatusService 修改话题状态
+// func ChangeTopicStatusService(topicId uint, status int) error {
+// 	result := db.DB.Model(models.TopicModel{}).
+// 		Preload("User").
+// 		Where("id=?", topicId).
+// 		Update("topic_status", status)
+// 	return result.Error
+// }
+
+// // GetTopicListService 获取话题列表
+// func GetTopicListService(pageNum, pageSize int) ([]models.TopicModel, error) {
+// 	var topicModels []models.TopicModel
+// 	offset := (pageNum - 1) * pageSize
+// 	result := db.DB.Model(models.TopicModel{}).
+// 		Where("topic_status=?", 1).
+// 		Preload("User").
+// 		Offset(offset).Limit(pageSize).
+// 		Order("created_at DESC").
+// 		Find(&topicModels)
+// 	return topicModels, result.Error
+// }
+
+// // UserCreateTopicService 用户创建话题
+// func UserCreateTopicService(userId uint, topicModel models.TopicModel) error {
+// 	topicModel.UserId = userId
+// 	// 过滤敏感词
+// 	filter := util.NewWordFilter()
+// 	newTitle := filter.Replace(topicModel.Title)
+// 	newContent := filter.Replace(topicModel.Desc)
+// 	topicModel.Title = newTitle
+// 	topicModel.Desc = newContent
+// 	result := db.DB.Omit(clause.Associations).Create(&topicModel)
+// 	return result.Error
+// }
+
+// // DeleteUserTopicService 删除用户话题
+// func DeleteUserTopicService(userId, topicId uint) error {
+// 	var topicModel models.TopicModel
+// 	result := db.DB.Where("id=? and user_id=?", topicId, userId).First(&topicModel)
+// 	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+// 		return errors.New("data not exist")
+// 	}
+// 	if result.Error != nil {
+// 		return result.Error
+// 	}
+// 	result = db.DB.Delete(&topicModel)
+// 	return result.Error
+// }
+
+// // CreatePostService 创建帖子
+// func CreatePostService(userId uint, postModel models.PostModel) error {
+// 	// 过滤敏感词
+// 	filter := util.NewWordFilter()
+// 	newContent := filter.Replace(postModel.Content)
+// 	postModel.UserId = userId
+// 	postModel.Content = newContent
+// 	result := db.DB.Omit("User").Create(&postModel)
+// 	return result.Error
+// }
+
+// // GetPostListService 获取帖子列表
+// func GetPostListService(pageNum, pageSize int, userId uint) ([]models.PostModel, error) {
+// 	var postModels []models.PostModel
+// 	offset := (pageNum - 1) * pageSize
+// 	result := db.DB.Model(models.PostModel{}).
+// 		Preload("User").
+// 		Offset(offset).Limit(pageSize).
+// 		Order("created_at desc").
+// 		Find(&postModels)
+// 	if result.Error != nil {
+// 		return nil, result.Error
+// 	}
+
+// 	// 查询状态
+// 	if userId != 0 {
+// 		var postIds []uint
+// 		for _, post := range postModels {
+// 			postIds = append(postIds, post.ID)
+// 		}
+
+// 		var likedPosts []models.LikeMessageModel
+// 		db.DB.Where("from_uid = ? AND like_id IN ? AND like_status = ?", userId, postIds, 1).Find(&likedPosts)
+// 		var collectedPosts []models.CollectionMessageModel
+// 		db.DB.Where("from_uid = ? AND collection_id IN ? AND like_status = ?", userId, postIds, 1).Find(&collectedPosts)
+
+// 		likedMap := make(map[uint]bool)
+// 		for _, l := range likedPosts {
+// 			likedMap[l.LikeId] = true
+// 		}
+
+// 		collectedMap := make(map[uint]bool)
+// 		for _, collect := range collectedPosts {
+// 			collectedMap[collect.CollectionId] = true
+// 		}
+
+// 		for i := range postModels {
+// 			if likedMap[postModels[i].ID] {
+// 				postModels[i].LikeStatus = 1
+// 			}
+// 			if collectedMap[postModels[i].ID] {
+// 				postModels[i].CollectionStatus = 1
+// 			}
+// 		}
+// 	}
+
+// 	return postModels, nil
+// }
+
+// // DeletePostService 删除帖子
+// func DeletePostService(userId, postId uint) error {
+// 	result := db.DB.Where("id=? and user_id=?", postId, userId).Delete(&models.PostModel{})
+// 	return result.Error
+// }
+
 package handler
 
 import (
 	"errors"
+	"fmt"
 	"pet-project/db"
 	"pet-project/models"
 	"pet-project/response"
-	"pet-project/util"
+	"pet-project/service"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 )
 
 // Front api
@@ -22,19 +161,13 @@ func GetStatusTopicList(c *gin.Context) {
 		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 		return
 	}
-	var topicModel []models.TopicModel
-	offset := (page.PageNum - 1) * page.PageSize
-	result := db.DB.Model(models.TopicModel{}).Preload("User").
-		Where("topic_status=?", status).
-		Offset(offset).
-		Limit(page.PageSize).
-		Order("created_at DESC").
-		Find(&topicModel)
-	if result.Error != nil {
+	
+	topics, err := service.GetStatusTopicListService(uint(getUintFromString(status)), page.PageNum, page.PageSize)
+	if err != nil {
 		response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
 		return
 	}
-	response.Success(c, topicModel)
+	response.Success(c, topics)
 }
 
 func ChangeTopicStatus(c *gin.Context) {
@@ -43,11 +176,9 @@ func ChangeTopicStatus(c *gin.Context) {
 		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 		return
 	}
-	result := db.DB.Model(models.TopicModel{}).
-		Preload("User").
-		Where("id=?", topicModel.TopicId).
-		Update("topic_status", topicModel.Status)
-	if result.Error != nil {
+	
+	err := service.ChangeTopicStatusService(topicModel.TopicId, topicModel.Status)
+	if err != nil {
 		response.Fail(c, response.ApiCode.UpdateErr, response.ApiMsg.UpdateErr)
 		return
 	}
@@ -63,20 +194,13 @@ func GetTopicList(c *gin.Context) {
 		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 		return
 	}
-	var topicModel []models.TopicModel
-	offset := (page.PageNum - 1) * page.PageSize
-	result := db.DB.Model(models.TopicModel{}).
-		Where("topic_status=?", 1).
-		Preload("User").
-		Offset(offset).Limit(page.PageSize).
-		Order("created_at DESC").
-		Find(&topicModel)
-	if result.Error != nil {
+	
+	topics, err := service.GetTopicListService(page.PageNum, page.PageSize)
+	if err != nil {
 		response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
 		return
 	}
-	response.Success(c, topicModel)
-
+	response.Success(c, topics)
 }
 
 func UserCreateTopic(c *gin.Context) {
@@ -86,15 +210,9 @@ func UserCreateTopic(c *gin.Context) {
 		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 		return
 	}
-	topicModel.UserId = userId
-	// 过滤敏感词
-	filter := util.NewWordFilter()
-	newTitle := filter.Replace(topicModel.Title)
-	newContent := filter.Replace(topicModel.Desc)
-	topicModel.Title = newTitle
-	topicModel.Desc = newContent
-	result := db.DB.Omit(clause.Associations).Create(&topicModel)
-	if result.Error != nil {
+	
+	err := service.UserCreateTopicService(userId, topicModel)
+	if err != nil {
 		response.Fail(c, response.ApiCode.CreateErr, response.ApiMsg.CreateErr)
 		return
 	}
@@ -104,15 +222,14 @@ func UserCreateTopic(c *gin.Context) {
 func DeleteUserTopic(c *gin.Context) {
 	userId, _ := c.Get("userId")
 	topicId := c.Param("id")
-	topicModel := models.TopicModel{}
-	result := db.DB.Where("id=? and user_id=?", topicId, userId).First(&topicModel)
-	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-		response.Fail(c, response.ApiCode.DataNotExit, response.ApiMsg.DataNotExit)
-		return
-	}
-	result = db.DB.Delete(&topicModel)
-	if result.Error != nil {
-		response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
+	
+	err := service.DeleteUserTopicService(userId.(uint), getUintFromString(topicId))
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) || err.Error() == "data not exist" {
+			response.Fail(c, response.ApiCode.DataNotExit, response.ApiMsg.DataNotExit)
+		} else {
+			response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
+		}
 		return
 	}
 	response.Success(c, nil)
@@ -127,13 +244,9 @@ func CreatePost(c *gin.Context) {
 		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 		return
 	}
-	// 过滤敏感词
-	filter := util.NewWordFilter()
-	newContent := filter.Replace(postModel.Content)
-	postModel.UserId = userId
-	postModel.Content = newContent
-	result := db.DB.Omit("User").Create(&postModel)
-	if result.Error != nil {
+	
+	err := service.CreatePostService(userId, postModel)
+	if err != nil {
 		response.Fail(c, response.ApiCode.CreateErr, response.ApiMsg.CreateErr)
 		return
 	}
@@ -146,66 +259,46 @@ func GetPostList(c *gin.Context) {
 		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 		return
 	}
-	var postModels []models.PostModel
-	offset := (page.PageNum - 1) * page.PageSize
-	result := db.DB.Model(models.PostModel{}).
-		Preload("User").
-		Offset(offset).Limit(page.PageSize).
-		Order("created_at desc").
-		Find(&postModels)
-	if result.Error != nil {
-		response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
-		return
-	}
 	// 获取 userId
 	userIdInterface, exists := c.Get("userId")
 	var userId uint
 	if exists {
 		userId = userIdInterface.(uint)
 	}
-
-	// 查询状态
-	if userId != 0 {
-		var postIds []uint
-		for _, post := range postModels {
-			postIds = append(postIds, post.ID)
-		}
-
-		var likedPosts []models.LikeMessageModel
-		db.DB.Where("from_uid = ? AND like_id IN ? AND like_status = ?", userId, postIds, 1).Find(&likedPosts)
-		var collectedPosts []models.CollectionMessageModel
-		db.DB.Where("from_uid = ? AND collection_id IN ? AND like_status = ?", userId, postIds, 1).Find(&collectedPosts)
-
-		likedMap := map[uint]bool{}
-		for _, l := range likedPosts {
-			likedMap[l.LikeId] = true
-		}
-
-		collectedMap := map[uint]bool{}
-		for _, collect := range collectedPosts {
-			collectedMap[collect.CollectionId] = true
-		}
-
-		for i := range postModels {
-			if likedMap[postModels[i].ID] {
-				postModels[i].LikeStatus = 1
-			}
-			if collectedMap[postModels[i].ID] {
-				postModels[i].CollectionStatus = 1
-			}
-		}
+	
+	posts, err := service.GetPostListService(page.PageNum, page.PageSize, userId)
+	if err != nil {
+		response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
+		return
 	}
-
-	response.Success(c, postModels)
+	response.Success(c, posts)
 }
 
 func DeletePost(c *gin.Context) {
 	userId := c.MustGet("userId").(uint)
 	postId := c.Param("id")
-	result := db.DB.Where("id=? and user_id=?", postId, userId).Delete(&models.PostModel{})
+	
+	result := db.DB.Where("id=? and user_id=?", getUintFromString(postId), userId).First(&models.PostModel{})
+	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+		response.Fail(c, response.ApiCode.DataNotExit, response.ApiMsg.DataNotExit)
+		return
+	}
 	if result.Error != nil {
 		response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
 		return
 	}
+
+	err := service.DeletePostService(userId, getUintFromString(postId))
+	if err != nil {
+		response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
+		return
+	}
 	response.Success(c, nil)
+}
+
+// 辅助函数，将字符串转换为uint
+func getUintFromString(s string) uint {
+	var n uint
+	_, _ = fmt.Sscanf(s, "%d", &n)
+	return n
 }

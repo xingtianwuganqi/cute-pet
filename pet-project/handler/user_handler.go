@@ -6,21 +6,16 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"pet-project/db"
-	"pet-project/internal"
-	"pet-project/middleware"
 	"pet-project/models"
 	"pet-project/response"
+	"pet-project/service"
 	"pet-project/settings"
 	"pet-project/util"
 	"strings"
 	"time"
 
-	"gorm.io/gorm/clause"
-
 	"github.com/gin-gonic/gin"
 	"github.com/nicksnyder/go-i18n/v2/i18n"
-	"gorm.io/gorm"
 )
 
 func GetEmailCode(c *gin.Context) {
@@ -33,67 +28,12 @@ func GetEmailCode(c *gin.Context) {
 		return
 	}
 
-	// 查询code是否在redis中（是否已经使用过了）
-	codeKey := fmt.Sprintf("email_code:%s", param.Email)
-	value, err := internal.GetCodeFromRedis(c, codeKey)
-	fmt.Println("value is ", value)
-	fmt.Println("err is ", err)
+	// 调用service层的业务逻辑
+	result, err := service.GetEmailCodeService(param.Email, param.Code, lang)
 	if err != nil {
 		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 		return
 	}
-	if len(value) != 0 && value == param.Code {
-		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
-		return
-	}
-	fmt.Println("value is ", value)
-	fmt.Println("err is ", err)
-	// 需要加一个加密信息
-	encryptionStr, err := util.Decrypt(param.Code)
-	if err != nil {
-		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
-		return
-	}
-	// 判断encryptionStr是否今日日期
-	if len(encryptionStr) == 0 || encryptionStr != GetTodayDate() {
-		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
-		return
-	}
-
-	if len(param.Email) == 0 {
-		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
-		return
-	}
-
-	email := param.Email
-	code := internal.GenerateValidationCode(4)
-
-	// 正式环境发验证码
-	if settings.Conf.App.Env == "production" {
-		smptServer := settings.Conf.EmailService.Host
-		smptPort := settings.Conf.EmailService.Port
-		username := settings.Conf.EmailService.Username
-		password := settings.Conf.EmailService.Password
-		// 对方的邮箱
-		recipient := email
-		subject := internal.LocalizeMsg(lang, "VerificationTitle")
-		body := internal.LocalizeMsgCount(lang, "VerificationDesc", code)
-
-		sendErr := internal.SendEmail(recipient, subject, body, smptServer, smptPort, username, password)
-		if sendErr != nil {
-			response.Fail(c, response.ApiCode.ServerErr, sendErr.Error())
-			return
-		}
-	}
-	// 将code保存到redis，设置10分钟失效
-	saveErr := internal.SaveAccountCodeInRedis(c, email, code, 10*time.Minute)
-	if saveErr != nil {
-		response.Fail(c, response.ApiCode.ServerErr, saveErr.Error())
-		return
-	}
-
-	// 保存param.code
-	_ = internal.SaveAccountCodeInRedis(c, codeKey, param.Code, 24*time.Hour)
 
 	if settings.Conf.App.Env == "production" {
 		c.JSON(http.StatusOK, gin.H{
@@ -103,76 +43,25 @@ func GetEmailCode(c *gin.Context) {
 	} else {
 		c.JSON(http.StatusOK, gin.H{
 			"code": http.StatusOK,
-			"data": code,
+			"data": result,
 		})
 	}
-
 }
 
 // GetPhoneCode 获取手机验证码
 func GetPhoneCode(c *gin.Context) {
-	// 手机验证码
 	var param models.SendCodeModel
 	if err := c.ShouldBind(&param); err != nil {
 		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 		return
 	}
-	// 查询code是否在redis中（是否已经使用过了）
-	codeKey := fmt.Sprintf("phone_code:%s", param.Phone)
-	value, err := internal.GetCodeFromRedis(c, codeKey)
+
+	// 调用service层的业务逻辑
+	result, err := service.GetPhoneCodeService(param.Phone, param.Code)
 	if err != nil {
 		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 		return
 	}
-	if len(value) != 0 && value == param.Code {
-		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
-		return
-	}
-	// 需要加一个加密信息
-	encryptionStr, err := util.Decrypt(param.Code)
-	if err != nil {
-		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
-		return
-	}
-	// 判断encryptionStr是否今日日期
-	if len(encryptionStr) == 0 || encryptionStr != GetTodayDate() {
-		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
-		return
-	}
-
-	phone := param.Phone
-	if len(phone) == 0 {
-		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
-		return
-	}
-
-	code := internal.GenerateValidationCode(4)
-
-	if settings.Conf.App.Env == "production" {
-		url := fmt.Sprintf("https://push.spug.cc/send/gL1QGmWdKWjlRD65?key1=%s&key2=%s&key3=%s&targets=%s",
-			"[Pawpal]", code, "10", phone)
-		resp, err := http.Get(url)
-		if err != nil || resp.StatusCode != http.StatusOK {
-			response.Fail(c, response.ApiCode.Fail, response.ApiMsg.Fail)
-			return
-		}
-		defer func(Body io.ReadCloser) {
-			err := Body.Close()
-			if err != nil {
-				response.Fail(c, response.ApiCode.ServerErr, response.ApiMsg.ServerErr)
-				return
-			}
-		}(resp.Body)
-	}
-
-	// 将code保存到redis，设置10分钟失效
-	saveErr := internal.SaveAccountCodeInRedis(c, phone, code, 10*time.Minute)
-	if saveErr != nil {
-		response.Fail(c, response.ApiCode.ServerErr, saveErr.Error())
-		return
-	}
-
-	_ = internal.SaveAccountCodeInRedis(c, codeKey, param.Code, 24*time.Hour)
 
 	if settings.Conf.App.Env == "production" {
 		c.JSON(http.StatusOK, gin.H{
@@ -182,7 +71,7 @@ func GetPhoneCode(c *gin.Context) {
 	} else {
 		c.JSON(http.StatusOK, gin.H{
 			"code": http.StatusOK,
-			"data": code,
+			"data": result,
 		})
 	}
 }
@@ -220,32 +109,12 @@ func CheckRdbCode(c *gin.Context) {
 		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 		return
 	}
-	if len(param.Phone) != 0 {
-		code, err := internal.GetCodeFromRedis(c, param.Phone)
-		if err != nil {
-			// Redis 查询确实出错了，非 redis.Nil
-			response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
-			return
-		}
-		if code == param.Code {
-			response.Success(c, gin.H{})
-		} else {
-			response.Fail(c, response.ApiCode.CheckCodeErr, response.ApiMsg.CheckCodeErr)
-		}
 
+	err := service.CheckRdbCodeService(param.Phone, param.Email, param.Code)
+	if err != nil {
+		response.Fail(c, response.ApiCode.CheckCodeErr, response.ApiMsg.CheckCodeErr)
 	} else {
-		code, err := internal.GetCodeFromRedis(c, param.Email)
-		if err != nil {
-			// Redis 查询确实出错了，非 redis.Nil
-			response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
-			return
-		}
-
-		if code == param.Code {
-			response.Success(c, gin.H{})
-		} else {
-			response.Fail(c, response.ApiCode.CheckCodeErr, response.ApiMsg.CheckCodeErr)
-		}
+		response.Success(c, gin.H{})
 	}
 }
 
@@ -257,79 +126,14 @@ func UserRegister(c *gin.Context) {
 		return
 	}
 
-	var findUser models.UserInfo
-	var findResult *gorm.DB
-	if len(login.Phone) > 0 {
-		findResult = db.DB.Where("phone = ?", login.Phone).First(&findUser)
-	} else if len(login.Email) > 0 {
-		if util.IsValidEmail(login.Email) {
-			findResult = db.DB.Where("email = ?", login.Email).First(&findUser)
-		} else {
-			response.Fail(c, response.ApiCode.EmailErr, response.ApiMsg.EmailErr)
-			return
-		}
-	} else {
-		response.Fail(c, response.ApiCode.ParamLack, response.ApiMsg.ParamLack)
+	// 调用service层的业务逻辑
+	result, err := service.UserRegisterService(login)
+	if err != nil {
+		response.Fail(c, response.ApiCode.CreateErr, response.ApiMsg.CreateErr)
 		return
 	}
 
-	// 如果查不到，则开始验证验证码
-	if errors.Is(findResult.Error, gorm.ErrRecordNotFound) {
-		// 取出redis中的验证码
-		if len(login.Email) > 0 {
-			code, err := internal.GetCodeFromRedis(c, login.Email)
-			if err != nil {
-				response.Fail(c, response.ApiCode.ServerErr, response.ApiMsg.ServerErr)
-				return
-			}
-			if code != login.Code {
-				response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
-				return
-			}
-			_ = internal.DeleteCodeFromRedis(c, login.Email)
-		} else { // 验证手机验证码
-			code, err := internal.GetCodeFromRedis(c, login.Phone)
-			if err != nil {
-				response.Fail(c, response.ApiCode.ServerErr, response.ApiMsg.ServerErr)
-				return
-			}
-
-			// 验证验证码是否正确
-			if code != login.Code {
-				response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
-				return
-			}
-			_ = internal.DeleteCodeFromRedis(c, login.Email)
-		}
-
-		user := models.UserInfo{
-			Phone:    login.Phone,
-			Password: login.Password,
-			Email:    login.Email,
-		}
-		result := db.DB.Create(&user)
-		if result.Error != nil {
-			response.Fail(c, response.ApiCode.CreateErr, response.ApiMsg.CreateErr)
-			return
-		}
-		userId := user.ID
-		token, err := middleware.GenToken(userId)
-		if err != nil {
-			response.Fail(c, response.ApiCode.ServerErr, response.ApiMsg.ServerErr)
-			return
-		}
-		data := models.LoginUserInfo{
-			ID:     user.ID,
-			Phone:  user.Phone,
-			Avatar: user.Avatar,
-			Email:  user.Email,
-			Token:  token,
-		}
-		response.Success(c, data)
-	} else {
-		response.Fail(c, response.ApiCode.UserExistsErr, response.ApiMsg.UserExistsErr)
-	}
-
+	response.Success(c, result)
 }
 
 // UserPhoneLogin 用户登录
@@ -339,44 +143,14 @@ func UserPhoneLogin(c *gin.Context) {
 		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 		return
 	}
-	var findResult *gorm.DB
-	var user models.UserInfo
-	if len(login.Phone) > 0 {
-		findResult = db.DB.Where("phone = ?", login.Phone).First(&user)
-	} else if len(login.Email) > 0 {
-		if util.IsValidEmail(login.Email) {
-			findResult = db.DB.Where("email = ?", login.Email).First(&user)
-		} else {
-			response.Fail(c, response.ApiCode.EmailErr, response.ApiMsg.EmailErr)
-			return
-		}
-	} else {
-		response.Fail(c, response.ApiCode.ParamLack, response.ApiMsg.ParamLack)
-		return
-	}
-	if errors.Is(findResult.Error, gorm.ErrRecordNotFound) {
+
+	result, err := service.UserPhoneLoginService(login)
+	if err != nil {
 		response.Fail(c, response.ApiCode.UserNotFound, response.ApiMsg.UserNotFound)
 		return
 	}
-	if user.Password == login.Password {
-		// 密码正确, 生成token，登录完成
-		userId := user.ID
-		token, err := middleware.GenToken(userId)
-		if err != nil {
-			response.Fail(c, response.ApiCode.ServerErr, response.ApiMsg.ServerErr)
-			return
-		}
-		data := models.LoginUserInfo{
-			ID:     user.ID,
-			Phone:  user.Phone,
-			Avatar: user.Avatar,
-			Email:  user.Email,
-			Token:  token,
-		}
-		response.Success(c, data)
-	} else {
-		response.Fail(c, response.ApiCode.PasswordErr, response.ApiMsg.PasswordErr)
-	}
+
+	response.Success(c, result)
 }
 
 // UserFindPassword MARK: 找回密码
@@ -386,72 +160,14 @@ func UserFindPassword(c *gin.Context) {
 		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 		return
 	}
-	var findResult *gorm.DB
-	var user models.UserInfo
-	if len(loginInfo.Phone) > 0 {
-		findResult = db.DB.Where("phone = ?", loginInfo.Phone).First(&user)
-	} else if len(loginInfo.Email) > 0 {
-		if util.IsValidEmail(loginInfo.Email) {
-			findResult = db.DB.Where("email = ?", loginInfo.Email).First(&user)
-		} else {
-			response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
-			return
-		}
-	} else {
-		response.Fail(c, response.ApiCode.ParamLack, response.ApiMsg.ParamLack)
-		return
-	}
-	if errors.Is(findResult.Error, gorm.ErrRecordNotFound) {
+
+	err := service.UserFindPasswordService(loginInfo)
+	if err != nil {
 		response.Fail(c, response.ApiCode.UserNotFound, response.ApiMsg.UserNotFound)
 		return
-	} else {
-		// 验证验证码
-		if len(loginInfo.Phone) > 0 {
-			code, err := internal.GetCodeFromRedis(c, loginInfo.Phone)
-			if err != nil {
-				response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
-				return
-			}
-			if code != loginInfo.Code {
-				fmt.Println("code error", code)
-				response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
-				return
-			}
-			// 更新密码
-			result := db.DB.Model(&user).Where("phone = ?", loginInfo.Phone).Update("password", loginInfo.Password)
-			if result.Error != nil {
-				response.Fail(c, response.ApiCode.ServerErr, response.ApiMsg.ServerErr)
-				return
-			}
-			// redis的数据清除
-			_ = internal.DeleteCodeFromRedis(c, loginInfo.Phone)
-
-			response.Success(c, map[string]interface{}{})
-		} else {
-			code, err := internal.GetCodeFromRedis(c, loginInfo.Email)
-			if err != nil {
-				fmt.Println("err is", err)
-				response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
-				return
-			}
-
-			if code != loginInfo.Code {
-				fmt.Println("code err is", err)
-				response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
-				return
-			}
-			result := db.DB.Model(&user).Where("email = ?", loginInfo.Email).Update("password", loginInfo.Password)
-			if result.Error != nil {
-				response.Fail(c, response.ApiCode.ServerErr, response.ApiMsg.ServerErr)
-				return
-			}
-
-			// 删除redis数据
-			_ = internal.DeleteCodeFromRedis(c, loginInfo.Email)
-
-			response.Success(c, map[string]interface{}{})
-		}
 	}
+
+	response.Success(c, map[string]interface{}{})
 }
 
 // UserUpdatePassword 用户更新密码
@@ -462,25 +178,13 @@ func UserUpdatePassword(c *gin.Context) {
 		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 		return
 	}
-	if updatePasswordInfo.NewPassword != updatePasswordInfo.ConfirmPassword {
-		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
-		return
-	}
-	var user models.UserInfo
-	result := db.DB.Where("id = ?", userId).First(&user)
-	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-		response.Fail(c, response.ApiCode.UserNotFound, response.ApiMsg.UserNotFound)
-		return
-	}
-	if user.Password != updatePasswordInfo.Password {
-		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
-		return
-	}
-	result = db.DB.Model(&user).Where("id = ?", userId).Update("password", updatePasswordInfo.Password)
-	if result.Error != nil {
+
+	err := service.UserUpdatePasswordService(userId, updatePasswordInfo)
+	if err != nil {
 		response.Fail(c, response.ApiCode.ServerErr, response.ApiMsg.ServerErr)
 		return
 	}
+
 	response.Success(c, map[string]interface{}{})
 }
 
@@ -491,12 +195,13 @@ func CreateSuggestion(c *gin.Context) {
 		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 		return
 	}
-	suggestion.UserId = userId
-	result := db.DB.Omit(clause.Associations).Create(&suggestion)
-	if result.Error != nil {
+
+	err := service.CreateSuggestionService(userId, suggestion)
+	if err != nil {
 		response.Fail(c, response.ApiCode.CreateErr, response.ApiMsg.CreateErr)
 		return
 	}
+
 	response.Success(c, nil)
 }
 
@@ -506,17 +211,14 @@ func GetIpInfo(c *gin.Context) {
 		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 		return
 	}
-	url1 := fmt.Sprintf("https://ipapi.co/%s/json/", ipInfo.IP)
-	url2 := fmt.Sprintf("https://ipinfo.io/%s/json", ipInfo.IP)
-	url3 := fmt.Sprintf("https://ip9.com.cn/get?ip=%s", ipInfo.IP)
-	// 获取IP信息
-	ipResult, err := GetIPInfoWith(url1, url2, url3)
+
+	result, err := service.GetIpInfoService(ipInfo.IP)
 	if err != nil {
 		response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
 		return
 	}
 
-	response.Success(c, ipResult)
+	response.Success(c, result)
 }
 
 // GetIPInfoWith 尝试两个URL获取IP信息
@@ -604,56 +306,37 @@ func UploadUserInfo(c *gin.Context) {
 		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 		return
 	}
-	if len(userInfo.Username) == 0 && len(userInfo.Avatar) == 0 {
-		response.Fail(c, response.ApiCode.ParamLack, response.ApiMsg.ParamLack)
-		return
-	}
-	result := db.DB.Model(&models.UserInfo{}).Where("id = ?", userId).
-		Update("username", userInfo.Username).
-		Update("avatar", userInfo.Avatar)
-	if result.Error != nil {
+
+	err := service.UploadUserInfoService(userId, userInfo)
+	if err != nil {
 		response.Fail(c, response.ApiCode.UpdateErr, response.ApiMsg.UpdateErr)
 		return
 	}
+
 	response.Success(c, nil)
 }
 
 func GetUserInfo(c *gin.Context) {
 	userId := c.MustGet("userId").(uint)
-	var userInfo models.UserInfo
-	result := db.DB.Where("id = ?", userId).First(&userInfo)
-	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+
+	result, err := service.GetUserInfoService(userId)
+	if err != nil {
 		response.Fail(c, response.ApiCode.UserNotFound, response.ApiMsg.UserNotFound)
 		return
 	}
-	response.Success(c, userInfo)
+
+	response.Success(c, result)
 }
 
-// UserDeactivate 用户退出登录
+// UserDeactivate 用户注销
 func UserDeactivate(c *gin.Context) {
 	userId := c.MustGet("userId").(uint)
-	var userInfo models.UserInfo
-	result := db.DB.Model(&userInfo).Where("id = ?", userId)
-	if result.Error != nil {
-		response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
-		return
-	}
-	// 删除所有发布的信息
-	recordResult := db.DB.Where("user_id = ?", userId).Delete(&models.RecordList{})
-	if recordResult.Error != nil {
+
+	err := service.UserDeactivateService(userId)
+	if err != nil {
 		response.Fail(c, response.ApiCode.UpdateErr, response.ApiMsg.UpdateErr)
 		return
 	}
-	// 删除所有发布的帖子
-	postResult := db.DB.Where("user_id = ?", userId).Delete(&models.PostModel{})
-	if postResult.Error != nil {
-		response.Fail(c, response.ApiCode.UpdateErr, response.ApiMsg.UpdateErr)
-		return
-	}
-	deactivateResult := result.Delete(&userInfo)
-	if deactivateResult.Error != nil {
-		response.Fail(c, response.ApiCode.UpdateErr, response.ApiMsg.UpdateErr)
-		return
-	}
+
 	response.Success(c, nil)
 }
