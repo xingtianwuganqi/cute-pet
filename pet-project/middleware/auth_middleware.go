@@ -13,7 +13,8 @@ import (
 
 	"github.com/nicksnyder/go-i18n/v2/i18n"
 
-	"github.com/dgrijalva/jwt-go"
+	// "github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
@@ -33,15 +34,11 @@ var mySecret = []byte("伍c七Alz1θVx2ψLHNpfωv九nξ捌τD六053λwGμrMνRue
 //创建token
 
 func GenToken(userId uint) (string, error) {
-	c := MyClaims{
-		userId, // 自定义字段
-		jwt.StandardClaims{
-			ExpiresAt: time.Now().AddDate(30, 0, 0).Unix(), // 过期时间
-			Issuer:    "pet-project",                       // 签发人
-		},
-	}
+	claims := jwt.MapClaims{}
+    claims["userId"] = userId
+    claims["exp"] = time.Now().AddDate(30, 0, 0).Unix()
 	// 使用指定的签名方法创建签名对象
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, c)
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	// 使用指定的secret签名并获得完整的编码后的字符串token
 	return token.SignedString(mySecret)
 }

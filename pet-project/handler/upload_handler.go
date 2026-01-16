@@ -43,13 +43,3 @@ func QiNiuDeleteFile(c *gin.Context) {
 	response.Success(c, nil)
 }
 
-func DeleteQiNiuFile(key string) error {
-	creds := credentials.NewCredentials(settings.Conf.ApiKeys.QiniuAccessKey, settings.Conf.ApiKeys.QiniuSecretKey)
-	objectsManager := objects.NewObjectsManager(&objects.ObjectsManagerOptions{
-		Options: http_client.Options{Credentials: creds},
-	})
-	bucketName := "petproject"
-	bucket := objectsManager.Bucket(bucketName)
-	err := bucket.Object(key).Delete().Call(context.Background())
-	return err
-}

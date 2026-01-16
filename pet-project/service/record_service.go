@@ -5,6 +5,7 @@ import (
 	"log"
 	"pet-project/db"
 	"pet-project/models"
+	"pet-project/util"
 
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -210,16 +211,28 @@ func GetRecordListService(userId uint, pageModel models.RecordListModel) ([]mode
 
 // DeleteRecordInfoService 删除记录的业务逻辑
 func DeleteRecordInfoService(userId uint, id uint) error {
-	result := db.DB.Where("id=? and user_id=?", id, userId).Delete(&models.RecordList{})
+
+	record := models.RecordList{}
+	findResult := db.DB.Model(&models.RecordList{}).
+		Where("id = ? AND user_id = ?", id, userId).
+		First(&record)
+
+	if errors.Is(findResult.Error, gorm.ErrRecordNotFound) {
+		return errors.New("data not exit")
+	}
+
+	// TODO: 删除图片
+	if record.Images != nil {
+		for _, image := range *record.Images {
+			util.DeleteQiNiuFile(image)
+		}
+	}
+
+	result := db.DB.Delete(&record)
 	if result.Error != nil {
 		return result.Error
 	}
-	// TODO: 删除图片
-	// if record.Images != nil {
-	// 	for _, image := range *record.Images {
-	// 		DeleteQiNiuFile(image)
-	// 	}
-	// }
+
 	return nil
 }
 

@@ -63,8 +63,8 @@ type UploadUserInfoModel struct {
 
 type RecordListModel struct {
 	PageModel
-	PetInfoId  uint  `json:"petInfoId" form:"petInfoId"`
-	CategoryId *uint `json:"categoryId" form:"categoryId"`
+	PetInfoId  uint       `json:"petInfoId" form:"petInfoId"`
+	CategoryId *uint      `json:"categoryId" form:"categoryId"`
 	StartTime  *time.Time `json:"startTime" form:"startTime"`
 	EndTime    *time.Time `json:"endTime" form:"endTime"`
 }

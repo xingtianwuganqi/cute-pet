@@ -22,7 +22,7 @@ func GetCommonCategoriesService() ([]models.RecordCategory, error) {
 // CreateCommonCategoryService 创建宠物分类的业务逻辑
 func CreateCommonCategoryService(recordCategory models.RecordCategory) error {
 	recordCategory.UserId = nil
-	result := db.DB.Create(&recordCategory)
+	result := db.DB.Omit(clause.Associations).Create(&recordCategory)
 	if result.Error != nil {
 		return result.Error
 	}
