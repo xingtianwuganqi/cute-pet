@@ -1,9 +1,11 @@
 package handler
 
 import (
+	"pet-project/logger"
 	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
+	"go.uber.org/zap"
 )
 
 // 还有一个问题，ShouldBind是动态获取userInfo的类型，并找到这个结构体里的值，要想被找到值，u结构内的值必须大写
@@ -18,6 +20,8 @@ type user struct {
 http://localhost:8082/v1/test/get/test?nickName=张胜男&password=126
 */
 func QueryTestNetworking(c *gin.Context) {
+	logger.Logger.Info("QueryTestNetworking handler called", zap.String("clientIP", c.ClientIP()))
+
 	name := c.Query("nickName")
 	password := c.DefaultQuery("password", "123")
 	code, _ := c.GetQuery("code")
@@ -29,8 +33,11 @@ func QueryTestNetworking(c *gin.Context) {
 }
 
 func FormTestNetworking(c *gin.Context) {
+	logger.Logger.Info("FormTestNetworking handler called", zap.String("clientIP", c.ClientIP()))
+
 	var param user
 	if err := c.ShouldBind(&param); err != nil {
+		logger.Logger.Warn("Invalid parameters for FormTestNetworking", zap.Error(err))
 		c.JSON(200, gin.H{
 			"code":    400,
 			"message": "error",
@@ -46,11 +53,15 @@ func FormTestNetworking(c *gin.Context) {
 }
 
 func PathTestNetworking(c *gin.Context) {
+	logger.Logger.Info("PathTestNetworking handler called", zap.String("clientIP", c.ClientIP()))
+
 	name := c.Param("name")
 	c.JSON(http.StatusOK, gin.H{"name": name})
 }
 
 func BindingNetworking(c *gin.Context) {
+	logger.Logger.Info("BindingNetworking handler called", zap.String("clientIP", c.ClientIP()))
+
 	ip := c.ClientIP()
 	log.Println("ip is", ip)
 	header := c.Request.Header

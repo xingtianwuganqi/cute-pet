@@ -1,6 +1,7 @@
 package routers
 
 import (
+	"pet-project/handler"
 	"pet-project/internal"
 	"pet-project/middleware"
 	"pet-project/settings"
@@ -16,6 +17,10 @@ func RegisterRouter() *gin.Engine {
 	}
 	bundle := internal.ReloadLocalBundle()
 	r := gin.Default()
+	
+	// 添加健康检查路由
+	r.GET("/health", handler.HealthCheck)
+	
 	// 添加admin配置
 	//internal.AdminConfig(r)
 	r.Use(middleware.LocaleMiddleware(bundle))

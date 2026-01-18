@@ -13,7 +13,6 @@ import (
 
 	"github.com/nicksnyder/go-i18n/v2/i18n"
 
-	// "github.com/dgrijalva/jwt-go"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"

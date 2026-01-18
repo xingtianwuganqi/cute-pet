@@ -4,7 +4,7 @@ import "gorm.io/gorm"
 
 type PostModel struct {
 	BaseModel
-	User             *UserInfo    `json:"user"`
+	User             *UserInfo    `json:"user" form:"user" gorm:"foreignKey:UserId;references:ID"`
 	UserId           uint         `json:"userId" form:"userId"`
 	Content          string       `json:"content" form:"content" binding:"required" gorm:"size:1024"`
 	Images           *StringArray `json:"images" form:"images" gorm:"type:json"`
@@ -33,7 +33,7 @@ func (post *PostModel) AfterFind(tx *gorm.DB) (err error) {
 // /*
 type TopicModel struct {
 	BaseModel
-	User        *UserInfo `json:"user"`
+	User        *UserInfo `json:"user" form:"user" gorm:"foreignKey:UserId;references:ID"`
 	UserId      uint      `json:"userId" form:"userId"`
 	TopicType   uint      `json:"topicType" form:"topicType" binding:"required" gorm:"default:0"`
 	Title       string    `json:"title" form:"title" gorm:"size:64"`

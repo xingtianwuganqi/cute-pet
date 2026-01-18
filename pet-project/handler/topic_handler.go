@@ -141,13 +141,15 @@ package handler
 
 import (
 	"errors"
-	"fmt"
 	"pet-project/db"
+	"pet-project/internal"
 	"pet-project/models"
 	"pet-project/response"
 	"pet-project/service"
+	"pet-project/logger"
 
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 	"gorm.io/gorm"
 )
 
@@ -155,33 +157,43 @@ import (
 
 // GetStatusTopicList 获取待审核话题列表
 func GetStatusTopicList(c *gin.Context) {
+	logger.Logger.Info("GetStatusTopicList handler called", zap.String("clientIP", c.ClientIP()))
+
 	status := c.Param("status")
 	var page models.PageModel
 	if err := c.ShouldBindQuery(&page); err != nil {
+		logger.Logger.Warn("Invalid parameters for GetStatusTopicList", zap.Error(err))
 		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 		return
 	}
 	
-	topics, err := service.GetStatusTopicListService(uint(getUintFromString(status)), page.PageNum, page.PageSize)
+	topics, err := service.GetStatusTopicListService(uint(internal.GetUintFromString(status)), page.PageNum, page.PageSize)
 	if err != nil {
+		logger.Logger.Error("Failed to get status topic list", zap.Error(err))
 		response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
 		return
 	}
+	logger.Logger.Info("Successfully retrieved status topic list", zap.Int("count", len(topics)))
 	response.Success(c, topics)
 }
 
 func ChangeTopicStatus(c *gin.Context) {
+	logger.Logger.Info("ChangeTopicStatus handler called", zap.String("clientIP", c.ClientIP()))
+
 	var topicModel models.TopicStatusModel
 	if err := c.ShouldBind(&topicModel); err != nil {
+		logger.Logger.Warn("Invalid parameters for ChangeTopicStatus", zap.Error(err))
 		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 		return
 	}
 	
 	err := service.ChangeTopicStatusService(topicModel.TopicId, topicModel.Status)
 	if err != nil {
+		logger.Logger.Error("Failed to change topic status", zap.Error(err))
 		response.Fail(c, response.ApiCode.UpdateErr, response.ApiMsg.UpdateErr)
 		return
 	}
+	logger.Logger.Info("Successfully changed topic status", zap.Uint("topicId", topicModel.TopicId), zap.Uint("status", topicModel.Status))
 	response.Success(c, nil)
 }
 
@@ -189,42 +201,55 @@ func ChangeTopicStatus(c *gin.Context) {
 
 // GetTopicList 获取话题列表
 func GetTopicList(c *gin.Context) {
+	logger.Logger.Info("GetTopicList handler called", zap.String("clientIP", c.ClientIP()))
+
 	var page models.PageModel
 	if err := c.ShouldBindQuery(&page); err != nil {
+		logger.Logger.Warn("Invalid parameters for GetTopicList", zap.Error(err))
 		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 		return
 	}
 	
 	topics, err := service.GetTopicListService(page.PageNum, page.PageSize)
 	if err != nil {
+		logger.Logger.Error("Failed to get topic list", zap.Error(err))
 		response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
 		return
 	}
+	logger.Logger.Info("Successfully retrieved topic list", zap.Int("count", len(topics)))
 	response.Success(c, topics)
 }
 
 func UserCreateTopic(c *gin.Context) {
+	logger.Logger.Info("UserCreateTopic handler called", zap.String("clientIP", c.ClientIP()))
+
 	userId := c.MustGet("userId").(uint)
 	var topicModel models.TopicModel
 	if err := c.ShouldBind(&topicModel); err != nil {
+		logger.Logger.Warn("Invalid parameters for UserCreateTopic", zap.Error(err))
 		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 		return
 	}
 	
 	err := service.UserCreateTopicService(userId, topicModel)
 	if err != nil {
+		logger.Logger.Error("Failed to create user topic", zap.Error(err))
 		response.Fail(c, response.ApiCode.CreateErr, response.ApiMsg.CreateErr)
 		return
 	}
+	logger.Logger.Info("Successfully created user topic", zap.Uint("userId", userId), zap.Uint("topicId", topicModel.ID))
 	response.Success(c, nil)
 }
 
 func DeleteUserTopic(c *gin.Context) {
+	logger.Logger.Info("DeleteUserTopic handler called", zap.String("clientIP", c.ClientIP()))
+
 	userId, _ := c.Get("userId")
 	topicId := c.Param("id")
 	
-	err := service.DeleteUserTopicService(userId.(uint), getUintFromString(topicId))
+	err := service.DeleteUserTopicService(userId.(uint), internal.GetUintFromString(topicId))
 	if err != nil {
+		logger.Logger.Error("Failed to delete user topic", zap.Error(err))
 		if errors.Is(err, gorm.ErrRecordNotFound) || err.Error() == "data not exist" {
 			response.Fail(c, response.ApiCode.DataNotExit, response.ApiMsg.DataNotExit)
 		} else {
@@ -232,30 +257,39 @@ func DeleteUserTopic(c *gin.Context) {
 		}
 		return
 	}
+	logger.Logger.Info("Successfully deleted user topic", zap.Uint("userId", userId.(uint)), zap.Uint("topicId", internal.GetUintFromString(topicId)))
 	response.Success(c, nil)
 }
 
 // Post api
 
 func CreatePost(c *gin.Context) {
+	logger.Logger.Info("CreatePost handler called", zap.String("clientIP", c.ClientIP()))
+
 	userId := c.MustGet("userId").(uint)
 	postModel := models.PostModel{}
 	if err := c.ShouldBind(&postModel); err != nil {
+		logger.Logger.Warn("Invalid parameters for CreatePost", zap.Error(err))
 		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 		return
 	}
 	
 	err := service.CreatePostService(userId, postModel)
 	if err != nil {
+		logger.Logger.Error("Failed to create post", zap.Error(err))
 		response.Fail(c, response.ApiCode.CreateErr, response.ApiMsg.CreateErr)
 		return
 	}
+	logger.Logger.Info("Successfully created post", zap.Uint("userId", userId), zap.Uint("postId", postModel.ID))
 	response.Success(c, nil)
 }
 
 func GetPostList(c *gin.Context) {
+	logger.Logger.Info("GetPostList handler called", zap.String("clientIP", c.ClientIP()))
+
 	var page models.PageModel
 	if err := c.ShouldBindQuery(&page); err != nil {
+		logger.Logger.Warn("Invalid parameters for GetPostList", zap.Error(err))
 		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 		return
 	}
@@ -268,37 +302,40 @@ func GetPostList(c *gin.Context) {
 	
 	posts, err := service.GetPostListService(page.PageNum, page.PageSize, userId)
 	if err != nil {
+		logger.Logger.Error("Failed to get post list", zap.Error(err))
 		response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
 		return
 	}
+	logger.Logger.Info("Successfully retrieved post list", zap.Int("count", len(posts)))
 	response.Success(c, posts)
 }
 
 func DeletePost(c *gin.Context) {
+	logger.Logger.Info("DeletePost handler called", zap.String("clientIP", c.ClientIP()))
+
 	userId := c.MustGet("userId").(uint)
 	postId := c.Param("id")
 	
-	result := db.DB.Where("id=? and user_id=?", getUintFromString(postId), userId).First(&models.PostModel{})
+	result := db.DB.Where("id=? and user_id=?", internal.GetUintFromString(postId), userId).First(&models.PostModel{})
 	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+		logger.Logger.Warn("Post not found for deletion", zap.Uint("userId", userId), zap.Uint("postId", internal.GetUintFromString(postId)))
 		response.Fail(c, response.ApiCode.DataNotExit, response.ApiMsg.DataNotExit)
 		return
 	}
 	if result.Error != nil {
+		logger.Logger.Error("Database error during post deletion", zap.Error(result.Error))
 		response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
 		return
 	}
 
-	err := service.DeletePostService(userId, getUintFromString(postId))
+	err := service.DeletePostService(userId, internal.GetUintFromString(postId))
 	if err != nil {
+		logger.Logger.Error("Failed to delete post", zap.Error(err))
 		response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
 		return
 	}
+	logger.Logger.Info("Successfully deleted post", zap.Uint("userId", userId), zap.Uint("postId", internal.GetUintFromString(postId)))
 	response.Success(c, nil)
 }
 
-// 辅助函数，将字符串转换为uint
-func getUintFromString(s string) uint {
-	var n uint
-	_, _ = fmt.Sscanf(s, "%d", &n)
-	return n
-}
+
