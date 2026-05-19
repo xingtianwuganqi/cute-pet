@@ -1,5 +1,7 @@
 package models
 
+import "gorm.io/gorm"
+
 // MessageModel 消息
 /*
 msg_type: # 1.点赞 2.收藏 3.评论 4.回复
@@ -24,7 +26,7 @@ LikeType: # 1.点赞 2.收藏 3.评论 4.回复
 */
 type LikeMessageModel struct {
 	BaseModel
-	LikeType   uint `json:"likeType" form:"likeType" form:"like_type" gorm:"default:0"`
+	LikeType   uint `json:"likeType" form:"likeType" gorm:"default:0"`
 	LikeId     uint `json:"likeId" form:"likeId" gorm:"default:0"`
 	LikeStatus uint `json:"likeStatus" form:"likeStatus" gorm:"default:0"`
 	FromUid    uint `json:"fromUid" form:"fromUid" gorm:"default:0"`
@@ -46,7 +48,7 @@ type CollectionMessageModel struct {
 }
 
 /*
-topic_type:  领养1， 秀宠2，找宠3
+topic_type:  广场1
 */
 // CommentModel
 
@@ -59,6 +61,35 @@ type CommentModel struct {
 	ToUid     uint   `json:"toUid" form:"toUid" binding:"required" gorm:"default:0"`
 	// GORM 关联
 	ReplyList []ReplyModel `json:"replyList" gorm:"foreignKey:CommentId;references:ID"` // 不加 form 标签，避免表单绑定
+	FromUser  *UserInfo    `json:"fromUser" form:"fromUser" gorm:"-"`
+	ToUser    *UserInfo    `json:"toUser" form:"toUser" gorm:"-"`
+}
+
+func (comment *CommentModel) AfterFind(tx *gorm.DB) (err error) {
+	if comment.FromUid != 0 {
+		var userInfo UserInfo
+		result := tx.Model(&UserInfo{}).
+			Where("id = ?", comment.FromUid).
+			First(&userInfo)
+		if result.Error != nil {
+			comment.FromUser = &UserInfo{}
+		} else {
+			comment.FromUser = &userInfo
+		}
+	}
+
+	if comment.ToUid != 0 {
+		var userInfo UserInfo
+		result := tx.Model(&UserInfo{}).
+			Where("id = ?", comment.ToUid).
+			First(&userInfo)
+		if result.Error != nil {
+			comment.ToUser = &UserInfo{}
+		} else {
+			comment.ToUser = &userInfo
+		}
+	}
+	return
 }
 
 /*
@@ -70,10 +101,39 @@ type CommentModel struct {
 // 通过commentId和replyId判断是回复的评论还是回复的回复
 type ReplyModel struct {
 	BaseModel
-	CommentId uint   `json:"commentId" form:"commentId" binding:"required" gorm:"index"` // 建议加 index
-	ReplyId   uint   `json:"replyId" form:"replyId" binding:"required" gorm:"default:0"`
-	ReplyType uint   `json:"replyType" form:"replyType" binding:"required" gorm:"default:0"`
-	Content   string `json:"content" form:"content" binding:"required" gorm:"size:256"`
-	FromUid   uint   `json:"fromUid" form:"fromUid" binding:"required" gorm:"default:0"`
-	ToUid     uint   `json:"toUid" form:"toUid" binding:"required" gorm:"default:0"`
+	CommentId uint      `json:"commentId" form:"commentId" binding:"required" gorm:"index"` // 建议加 index
+	ReplyId   uint      `json:"replyId" form:"replyId" binding:"required" gorm:"default:0"`
+	ReplyType uint      `json:"replyType" form:"replyType" binding:"required" gorm:"default:0"`
+	Content   string    `json:"content" form:"content" binding:"required" gorm:"size:256"`
+	FromUid   uint      `json:"fromUid" form:"fromUid" binding:"required" gorm:"default:0"`
+	ToUid     uint      `json:"toUid" form:"toUid" binding:"required" gorm:"default:0"`
+	FromUser  *UserInfo `json:"fromUser" form:"fromUser" gorm:"-"`
+	ToUser    *UserInfo `json:"toUser" form:"toUser" gorm:"-"`
+}
+
+func (reply *ReplyModel) AfterFind(tx *gorm.DB) (err error) {
+	if reply.FromUid != 0 {
+		var userInfo UserInfo
+		result := tx.Model(&UserInfo{}).
+			Where("id = ?", reply.FromUid).
+			First(&userInfo)
+		if result.Error != nil {
+			reply.FromUser = &UserInfo{}
+		} else {
+			reply.FromUser = &userInfo
+		}
+	}
+
+	if reply.ToUid != 0 {
+		var userInfo UserInfo
+		result := tx.Model(&UserInfo{}).
+			Where("id = ?", reply.ToUid).
+			First(&userInfo)
+		if result.Error != nil {
+			reply.ToUser = &UserInfo{}
+		} else {
+			reply.ToUser = &userInfo
+		}
+	}
+	return
 }

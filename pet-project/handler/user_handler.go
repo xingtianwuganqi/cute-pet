@@ -6,8 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"pet-project/db"
-	"pet-project/middleware"
+	"pet-project/logger"
 	"pet-project/models"
 	"pet-project/response"
 	"pet-project/service"
@@ -16,84 +15,35 @@ import (
 	"strings"
 	"time"
 
-	"gorm.io/gorm/clause"
-
 	"github.com/gin-gonic/gin"
 	"github.com/nicksnyder/go-i18n/v2/i18n"
-	"gorm.io/gorm"
+	"go.uber.org/zap"
 )
 
 func GetEmailCode(c *gin.Context) {
+	logger.Logger.Info("Received request for email verification code", 
+		zap.String("clientIP", c.ClientIP()), 
+		zap.String("method", c.Request.Method))
+	
 	// 验证码
 	lang := c.MustGet("lang").(*i18n.Localizer)
 	var param models.SendCodeModel
 	paramErr := c.ShouldBind(&param)
 	if paramErr != nil {
+		logger.Logger.Warn("Invalid parameters for email code request", zap.Error(paramErr))
 		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 		return
 	}
 
-	// 查询code是否在redis中（是否已经使用过了）
-	codeKey := fmt.Sprintf("email_code:%s", param.Email)
-	value, err := service.GetCodeFromRedis(c, codeKey)
-	fmt.Println("value is ", value)
-	fmt.Println("err is ", err)
+	// 调用service层的业务逻辑
+	result, err := service.GetEmailCodeService(param.Email, param.Code, lang)
 	if err != nil {
-		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
-		return
-	}
-	if len(value) != 0 && value == param.Code {
-		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
-		return
-	}
-	fmt.Println("value is ", value)
-	fmt.Println("err is ", err)
-	// 需要加一个加密信息
-	encryptionStr, err := util.Decrypt(param.Code)
-	if err != nil {
-		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
-		return
-	}
-	// 判断encryptionStr是否今日日期
-	if len(encryptionStr) == 0 || encryptionStr != GetTodayDate() {
+		logger.Logger.Error("Failed to send email verification code", zap.Error(err))
 		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 		return
 	}
 
-	if len(param.Email) == 0 {
-		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
-		return
-	}
-
-	email := param.Email
-	code := service.GenerateValidationCode(4)
-
-	// 正式环境发验证码
-	if settings.Conf.App.Env == "production" {
-		smptServer := settings.Conf.EmailService.Host
-		smptPort := settings.Conf.EmailService.Port
-		username := settings.Conf.EmailService.Username
-		password := settings.Conf.EmailService.Password
-		// 对方的邮箱
-		recipient := email
-		subject := service.LocalizeMsg(lang, "VerificationTitle")
-		body := service.LocalizeMsgCount(lang, "VerificationDesc", code)
-
-		sendErr := service.SendEmail(recipient, subject, body, smptServer, smptPort, username, password)
-		if sendErr != nil {
-			response.Fail(c, response.ApiCode.ServerErr, sendErr.Error())
-			return
-		}
-	}
-	// 将code保存到redis，设置10分钟失效
-	saveErr := service.SaveAccountCodeInRedis(c, email, code, 10*time.Minute)
-	if saveErr != nil {
-		response.Fail(c, response.ApiCode.ServerErr, saveErr.Error())
-		return
-	}
-
-	// 保存param.code
-	_ = service.SaveAccountCodeInRedis(c, codeKey, param.Code, 24*time.Hour)
+	logger.Logger.Info("Email verification code request processed successfully", zap.String("email", param.Email))
 
 	if settings.Conf.App.Env == "production" {
 		c.JSON(http.StatusOK, gin.H{
@@ -103,76 +53,33 @@ func GetEmailCode(c *gin.Context) {
 	} else {
 		c.JSON(http.StatusOK, gin.H{
 			"code": http.StatusOK,
-			"data": code,
+			"data": result,
 		})
 	}
-
 }
 
 // GetPhoneCode 获取手机验证码
 func GetPhoneCode(c *gin.Context) {
-	// 手机验证码
+	logger.Logger.Info("Received request for phone verification code", 
+		zap.String("clientIP", c.ClientIP()), 
+		zap.String("method", c.Request.Method))
+	
 	var param models.SendCodeModel
 	if err := c.ShouldBind(&param); err != nil {
+		logger.Logger.Warn("Invalid parameters for phone code request", zap.Error(err))
 		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 		return
 	}
-	// 查询code是否在redis中（是否已经使用过了）
-	codeKey := fmt.Sprintf("phone_code:%s", param.Phone)
-	value, err := service.GetCodeFromRedis(c, codeKey)
+
+	// 调用service层的业务逻辑
+	result, err := service.GetPhoneCodeService(param.Phone, param.Code)
 	if err != nil {
-		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
-		return
-	}
-	if len(value) != 0 && value == param.Code {
-		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
-		return
-	}
-	// 需要加一个加密信息
-	encryptionStr, err := util.Decrypt(param.Code)
-	if err != nil {
-		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
-		return
-	}
-	// 判断encryptionStr是否今日日期
-	if len(encryptionStr) == 0 || encryptionStr != GetTodayDate() {
+		logger.Logger.Error("Failed to send phone verification code", zap.Error(err))
 		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 		return
 	}
 
-	phone := param.Phone
-	if len(phone) == 0 {
-		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
-		return
-	}
-
-	code := service.GenerateValidationCode(4)
-
-	if settings.Conf.App.Env == "production" {
-		url := fmt.Sprintf("https://push.spug.cc/send/gL1QGmWdKWjlRD65?key1=%s&key2=%s&key3=%s&targets=%s",
-			"[Pawpal]", code, "10", phone)
-		resp, err := http.Get(url)
-		if err != nil || resp.StatusCode != http.StatusOK {
-			response.Fail(c, response.ApiCode.Fail, response.ApiMsg.Fail)
-			return
-		}
-		defer func(Body io.ReadCloser) {
-			err := Body.Close()
-			if err != nil {
-				response.Fail(c, response.ApiCode.ServerErr, response.ApiMsg.ServerErr)
-				return
-			}
-		}(resp.Body)
-	}
-
-	// 将code保存到redis，设置10分钟失效
-	saveErr := service.SaveAccountCodeInRedis(c, phone, code, 10*time.Minute)
-	if saveErr != nil {
-		response.Fail(c, response.ApiCode.ServerErr, saveErr.Error())
-		return
-	}
-
-	_ = service.SaveAccountCodeInRedis(c, codeKey, param.Code, 24*time.Hour)
+	logger.Logger.Info("Phone verification code request processed successfully", zap.String("phone", param.Phone))
 
 	if settings.Conf.App.Env == "production" {
 		c.JSON(http.StatusOK, gin.H{
@@ -182,7 +89,7 @@ func GetPhoneCode(c *gin.Context) {
 	} else {
 		c.JSON(http.StatusOK, gin.H{
 			"code": http.StatusOK,
-			"data": code,
+			"data": result,
 		})
 	}
 }
@@ -199,14 +106,20 @@ func GetTodayDate() string {
 // 如果加密过程中发生错误，它会发送一个失败的 HTTP 响应并返回
 // 如果成功，它将返回一个包含加密密钥的 JSON 响应
 func GetEncryptionCode(c *gin.Context) {
+	logger.Logger.Info("Received request for encryption code", 
+		zap.String("clientIP", c.ClientIP()), 
+		zap.String("method", c.Request.Method))
+	
 	// 调用 Encrypt 函数对今天的日期进行加密
 	encryptionCode, err := util.Encrypt(GetTodayDate())
 	if err != nil {
+		logger.Logger.Error("Failed to encrypt date", zap.Error(err))
 		// 如果加密过程中出现错误，发送失败的 HTTP 响应
 		response.Fail(c, response.ApiCode.ServerErr, response.ApiMsg.ServerErr)
 		return
 	}
 	// 发送包含加密密钥的 JSON 响应
+	logger.Logger.Info("Encryption code generated successfully")
 	c.JSON(200, gin.H{
 		"code": http.StatusOK,
 		"data": encryptionCode,
@@ -215,308 +128,172 @@ func GetEncryptionCode(c *gin.Context) {
 
 // CheckRdbCode 校验验证码
 func CheckRdbCode(c *gin.Context) {
+	logger.Logger.Info("Received request to check verification code", 
+		zap.String("clientIP", c.ClientIP()), 
+		zap.String("method", c.Request.Method))
+	
 	var param models.SendCodeModel
 	if err := c.ShouldBind(&param); err != nil {
+		logger.Logger.Warn("Invalid parameters for verification code check", zap.Error(err))
 		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 		return
 	}
-	if len(param.Phone) != 0 {
-		code, err := service.GetCodeFromRedis(c, param.Phone)
-		if err != nil {
-			// Redis 查询确实出错了，非 redis.Nil
-			response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
-			return
-		}
-		if code == param.Code {
-			response.Success(c, gin.H{})
-		} else {
-			response.Fail(c, response.ApiCode.CheckCodeErr, response.ApiMsg.CheckCodeErr)
-		}
 
+	err := service.CheckRdbCodeService(param.Phone, param.Email, param.Code)
+	if err != nil {
+		logger.Logger.Warn("Verification code check failed", zap.Error(err))
+		response.Fail(c, response.ApiCode.CheckCodeErr, response.ApiMsg.CheckCodeErr)
 	} else {
-		code, err := service.GetCodeFromRedis(c, param.Email)
-		if err != nil {
-			// Redis 查询确实出错了，非 redis.Nil
-			response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
-			return
-		}
-
-		if code == param.Code {
-			response.Success(c, gin.H{})
-		} else {
-			response.Fail(c, response.ApiCode.CheckCodeErr, response.ApiMsg.CheckCodeErr)
-		}
+		logger.Logger.Info("Verification code checked successfully")
+		response.Success(c, gin.H{})
 	}
 }
 
 // UserRegister 注册
 func UserRegister(c *gin.Context) {
+	logger.Logger.Info("Received user registration request", 
+		zap.String("clientIP", c.ClientIP()), 
+		zap.String("method", c.Request.Method))
+	
 	var login models.RegisterInfo
 	if err := c.ShouldBind(&login); err != nil {
+		logger.Logger.Warn("Invalid parameters for user registration", zap.Error(err))
 		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 		return
 	}
 
-	var findUser models.UserInfo
-	var findResult *gorm.DB
-	if len(login.Phone) > 0 {
-		findResult = db.DB.Where("phone = ?", login.Phone).First(&findUser)
-	} else if len(login.Email) > 0 {
-		if util.IsValidEmail(login.Email) {
-			findResult = db.DB.Where("email = ?", login.Email).First(&findUser)
-		} else {
-			response.Fail(c, response.ApiCode.EmailErr, response.ApiMsg.EmailErr)
-			return
-		}
-	} else {
-		response.Fail(c, response.ApiCode.ParamLack, response.ApiMsg.ParamLack)
+	// 调用service层的业务逻辑
+	result, err := service.UserRegisterService(login)
+	if err != nil {
+		logger.Logger.Error("User registration failed", zap.Error(err))
+		response.Fail(c, response.ApiCode.CreateErr, response.ApiMsg.CreateErr)
 		return
 	}
 
-	// 如果查不到，则开始验证验证码
-	if errors.Is(findResult.Error, gorm.ErrRecordNotFound) {
-		// 取出redis中的验证码
-		if len(login.Email) > 0 {
-			code, err := service.GetCodeFromRedis(c, login.Email)
-			if err != nil {
-				response.Fail(c, response.ApiCode.ServerErr, response.ApiMsg.ServerErr)
-				return
-			}
-			if code != login.Code {
-				response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
-				return
-			}
-			_ = service.DeleteCodeFromRedis(c, login.Email)
-		} else { // 验证手机验证码
-			code, err := service.GetCodeFromRedis(c, login.Phone)
-			if err != nil {
-				response.Fail(c, response.ApiCode.ServerErr, response.ApiMsg.ServerErr)
-				return
-			}
-
-			// 验证验证码是否正确
-			if code != login.Code {
-				response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
-				return
-			}
-			_ = service.DeleteCodeFromRedis(c, login.Email)
-		}
-
-		user := models.UserInfo{
-			Phone:    login.Phone,
-			Password: login.Password,
-			Email:    login.Email,
-		}
-		result := db.DB.Create(&user)
-		if result.Error != nil {
-			response.Fail(c, response.ApiCode.CreateErr, response.ApiMsg.CreateErr)
-			return
-		}
-		userId := user.ID
-		token, err := middleware.GenToken(userId)
-		if err != nil {
-			response.Fail(c, response.ApiCode.ServerErr, response.ApiMsg.ServerErr)
-			return
-		}
-		data := models.LoginUserInfo{
-			ID:     user.ID,
-			Phone:  user.Phone,
-			Avatar: user.Avatar,
-			Email:  user.Email,
-			Token:  token,
-		}
-		response.Success(c, data)
-	} else {
-		response.Fail(c, response.ApiCode.UserExistsErr, response.ApiMsg.UserExistsErr)
-	}
-
+	logger.Logger.Info("User registration successful", zap.Uint("userID", result.ID))
+	response.Success(c, result)
 }
 
 // UserPhoneLogin 用户登录
 func UserPhoneLogin(c *gin.Context) {
+	logger.Logger.Info("Received user login request", 
+		zap.String("clientIP", c.ClientIP()), 
+		zap.String("method", c.Request.Method))
+	
 	var login models.LoginInfo
 	if err := c.ShouldBind(&login); err != nil {
+		logger.Logger.Warn("Invalid parameters for user login", zap.Error(err))
 		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 		return
 	}
-	var findResult *gorm.DB
-	var user models.UserInfo
-	if len(login.Phone) > 0 {
-		findResult = db.DB.Where("phone = ?", login.Phone).First(&user)
-	} else if len(login.Email) > 0 {
-		if util.IsValidEmail(login.Email) {
-			findResult = db.DB.Where("email = ?", login.Email).First(&user)
-		} else {
-			response.Fail(c, response.ApiCode.EmailErr, response.ApiMsg.EmailErr)
-			return
-		}
-	} else {
-		response.Fail(c, response.ApiCode.ParamLack, response.ApiMsg.ParamLack)
-		return
-	}
-	if errors.Is(findResult.Error, gorm.ErrRecordNotFound) {
+
+	result, err := service.UserPhoneLoginService(login)
+	if err != nil {
+		logger.Logger.Error("User login failed", zap.Error(err))
 		response.Fail(c, response.ApiCode.UserNotFound, response.ApiMsg.UserNotFound)
 		return
 	}
-	if user.Password == login.Password {
-		// 密码正确, 生成token，登录完成
-		userId := user.ID
-		token, err := middleware.GenToken(userId)
-		if err != nil {
-			response.Fail(c, response.ApiCode.ServerErr, response.ApiMsg.ServerErr)
-			return
-		}
-		data := models.LoginUserInfo{
-			ID:     user.ID,
-			Phone:  user.Phone,
-			Avatar: user.Avatar,
-			Email:  user.Email,
-			Token:  token,
-		}
-		response.Success(c, data)
-	} else {
-		response.Fail(c, response.ApiCode.PasswordErr, response.ApiMsg.PasswordErr)
-	}
+
+	logger.Logger.Info("User login successful", zap.Uint("userID", result.ID))
+	response.Success(c, result)
 }
 
 // UserFindPassword MARK: 找回密码
 func UserFindPassword(c *gin.Context) {
+	logger.Logger.Info("Received user password recovery request", 
+		zap.String("clientIP", c.ClientIP()), 
+		zap.String("method", c.Request.Method))
+	
 	var loginInfo models.RegisterInfo
 	if err := c.ShouldBind(&loginInfo); err != nil {
+		logger.Logger.Warn("Invalid parameters for password recovery", zap.Error(err))
 		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 		return
 	}
-	var findResult *gorm.DB
-	var user models.UserInfo
-	if len(loginInfo.Phone) > 0 {
-		findResult = db.DB.Where("phone = ?", loginInfo.Phone).First(&user)
-	} else if len(loginInfo.Email) > 0 {
-		if util.IsValidEmail(loginInfo.Email) {
-			findResult = db.DB.Where("email = ?", loginInfo.Email).First(&user)
-		} else {
-			response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
-			return
-		}
-	} else {
-		response.Fail(c, response.ApiCode.ParamLack, response.ApiMsg.ParamLack)
-		return
-	}
-	if errors.Is(findResult.Error, gorm.ErrRecordNotFound) {
+
+	err := service.UserFindPasswordService(loginInfo)
+	if err != nil {
+		logger.Logger.Error("User password recovery failed", zap.Error(err))
 		response.Fail(c, response.ApiCode.UserNotFound, response.ApiMsg.UserNotFound)
 		return
-	} else {
-		// 验证验证码
-		if len(loginInfo.Phone) > 0 {
-			code, err := service.GetCodeFromRedis(c, loginInfo.Phone)
-			if err != nil {
-				response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
-				return
-			}
-			if code != loginInfo.Code {
-				fmt.Println("code error", code)
-				response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
-				return
-			}
-			// 更新密码
-			result := db.DB.Model(&user).Where("phone = ?", loginInfo.Phone).Update("password", loginInfo.Password)
-			if result.Error != nil {
-				response.Fail(c, response.ApiCode.ServerErr, response.ApiMsg.ServerErr)
-				return
-			}
-			// redis的数据清除
-			_ = service.DeleteCodeFromRedis(c, loginInfo.Phone)
-
-			response.Success(c, map[string]interface{}{})
-		} else {
-			code, err := service.GetCodeFromRedis(c, loginInfo.Email)
-			if err != nil {
-				fmt.Println("err is", err)
-				response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
-				return
-			}
-
-			if code != loginInfo.Code {
-				fmt.Println("code err is", err)
-				response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
-				return
-			}
-			result := db.DB.Model(&user).Where("email = ?", loginInfo.Email).Update("password", loginInfo.Password)
-			if result.Error != nil {
-				response.Fail(c, response.ApiCode.ServerErr, response.ApiMsg.ServerErr)
-				return
-			}
-
-			// 删除redis数据
-			_ = service.DeleteCodeFromRedis(c, loginInfo.Email)
-
-			response.Success(c, map[string]interface{}{})
-		}
 	}
+
+	logger.Logger.Info("User password recovery successful")
+	response.Success(c, map[string]interface{}{})
 }
 
 // UserUpdatePassword 用户更新密码
 func UserUpdatePassword(c *gin.Context) {
-	var userId = c.MustGet("userId").(uint)
+	userId := c.MustGet("userId").(uint)
+	logger.Logger.Info("Received user password update request", 
+		zap.Uint("userID", userId),
+		zap.String("clientIP", c.ClientIP()), 
+		zap.String("method", c.Request.Method))
+	
 	var updatePasswordInfo models.UploadPasswordModel
 	if err := c.ShouldBind(&updatePasswordInfo); err != nil {
+		logger.Logger.Warn("Invalid parameters for password update", zap.Error(err))
 		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 		return
 	}
-	if updatePasswordInfo.NewPassword != updatePasswordInfo.ConfirmPassword {
-		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
-		return
-	}
-	var user models.UserInfo
-	result := db.DB.Where("id = ?", userId).First(&user)
-	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-		response.Fail(c, response.ApiCode.UserNotFound, response.ApiMsg.UserNotFound)
-		return
-	}
-	if user.Password != updatePasswordInfo.Password {
-		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
-		return
-	}
-	result = db.DB.Model(&user).Where("id = ?", userId).Update("password", updatePasswordInfo.Password)
-	if result.Error != nil {
+
+	err := service.UserUpdatePasswordService(userId, updatePasswordInfo)
+	if err != nil {
+		logger.Logger.Error("User password update failed", zap.Error(err))
 		response.Fail(c, response.ApiCode.ServerErr, response.ApiMsg.ServerErr)
 		return
 	}
+
+	logger.Logger.Info("User password updated successfully", zap.Uint("userID", userId))
 	response.Success(c, map[string]interface{}{})
 }
 
 func CreateSuggestion(c *gin.Context) {
 	userId := c.MustGet("userId").(uint)
+	logger.Logger.Info("Received user suggestion creation request", 
+		zap.Uint("userID", userId),
+		zap.String("clientIP", c.ClientIP()), 
+		zap.String("method", c.Request.Method))
+	
 	var suggestion models.SuggestionModel
 	if err := c.ShouldBind(&suggestion); err != nil {
+		logger.Logger.Warn("Invalid parameters for suggestion creation", zap.Error(err))
 		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 		return
 	}
-	suggestion.UserId = userId
-	result := db.DB.Omit(clause.Associations).Create(&suggestion)
-	if result.Error != nil {
+
+	err := service.CreateSuggestionService(userId, suggestion)
+	if err != nil {
+		logger.Logger.Error("User suggestion creation failed", zap.Error(err))
 		response.Fail(c, response.ApiCode.CreateErr, response.ApiMsg.CreateErr)
 		return
 	}
+
+	logger.Logger.Info("User suggestion created successfully", zap.Uint("userID", userId), zap.Uint("suggestionID", suggestion.ID))
 	response.Success(c, nil)
 }
 
 func GetIpInfo(c *gin.Context) {
+	logger.Logger.Info("Received IP info request", 
+		zap.String("clientIP", c.ClientIP()), 
+		zap.String("method", c.Request.Method))
+	
 	var ipInfo models.IPInfoModel
 	if err := c.ShouldBind(&ipInfo); err != nil {
+		logger.Logger.Warn("Invalid parameters for IP info request", zap.Error(err))
 		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 		return
 	}
-	url1 := fmt.Sprintf("https://ipapi.co/%s/json/", ipInfo.IP)
-	url2 := fmt.Sprintf("https://ipinfo.io/%s/json", ipInfo.IP)
-	url3 := fmt.Sprintf("https://ip9.com.cn/get?ip=%s", ipInfo.IP)
-	// 获取IP信息
-	ipResult, err := GetIPInfoWith(url1, url2, url3)
+
+	result, err := service.GetIpInfoService(ipInfo.IP)
 	if err != nil {
+		logger.Logger.Error("Failed to get IP info", zap.Error(err))
 		response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
 		return
 	}
 
-	response.Success(c, ipResult)
+	logger.Logger.Info("IP info retrieved successfully", zap.String("IP", ipInfo.IP))
+	response.Success(c, result)
 }
 
 // GetIPInfoWith 尝试两个URL获取IP信息
@@ -531,21 +308,21 @@ func GetIPInfoWith(url1, url2, url3 string) (*models.IPInfo, error) {
 	if err == nil {
 		return info, nil
 	}
-	fmt.Printf("第一个URL请求失败 (%s): %v\n", url1, err)
+	logger.Logger.Debug("First URL request failed", zap.String("url", url1), zap.Error(err))
 
 	// 第一个失败后尝试第二个URL
 	info, err = fetchIPInfo(client, url2)
 	if err == nil {
 		return info, nil
 	}
-	fmt.Printf("第二个URL请求失败 (%s): %v\n", url2, err)
+	logger.Logger.Debug("Second URL request failed", zap.String("url", url2), zap.Error(err))
 
 	// 第一个失败后尝试第二个URL
 	info, err = fetchIPInfo(client, url3)
 	if err == nil {
 		return info, nil
 	}
-	fmt.Printf("第三个URL请求失败 (%s): %v\n", url2, err)
+	logger.Logger.Debug("Third URL request failed", zap.String("url", url3), zap.Error(err))
 
 	// 两个都失败，返回错误
 	return nil, errors.New("三个IP查询URL都请求失败")
@@ -599,61 +376,62 @@ func fetchIPInfo(client *http.Client, url string) (*models.IPInfo, error) {
 
 func UploadUserInfo(c *gin.Context) {
 	userId := c.MustGet("userId").(uint)
+	logger.Logger.Info("Received user info update request", 
+		zap.Uint("userID", userId),
+		zap.String("clientIP", c.ClientIP()), 
+		zap.String("method", c.Request.Method))
+	
 	var userInfo models.UploadUserInfoModel
 	if err := c.ShouldBind(&userInfo); err != nil {
+		logger.Logger.Warn("Invalid parameters for user info update", zap.Error(err))
 		response.Fail(c, response.ApiCode.ParamErr, response.ApiMsg.ParamErr)
 		return
 	}
-	if len(userInfo.Username) == 0 && len(userInfo.Avatar) == 0 {
-		response.Fail(c, response.ApiCode.ParamLack, response.ApiMsg.ParamLack)
-		return
-	}
-	result := db.DB.Model(&models.UserInfo{}).Where("id = ?", userId).
-		Update("username", userInfo.Username).
-		Update("avatar", userInfo.Avatar)
-	if result.Error != nil {
+
+	err := service.UploadUserInfoService(userId, userInfo)
+	if err != nil {
+		logger.Logger.Error("User info update failed", zap.Error(err))
 		response.Fail(c, response.ApiCode.UpdateErr, response.ApiMsg.UpdateErr)
 		return
 	}
+
+	logger.Logger.Info("User info updated successfully", zap.Uint("userID", userId))
 	response.Success(c, nil)
 }
 
 func GetUserInfo(c *gin.Context) {
 	userId := c.MustGet("userId").(uint)
-	var userInfo models.UserInfo
-	result := db.DB.Where("id = ?", userId).First(&userInfo)
-	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+	logger.Logger.Info("Received user info retrieval request", 
+		zap.Uint("userID", userId),
+		zap.String("clientIP", c.ClientIP()), 
+		zap.String("method", c.Request.Method))
+
+	result, err := service.GetUserInfoService(userId)
+	if err != nil {
+		logger.Logger.Error("Failed to retrieve user info", zap.Error(err))
 		response.Fail(c, response.ApiCode.UserNotFound, response.ApiMsg.UserNotFound)
 		return
 	}
-	response.Success(c, userInfo)
+
+	logger.Logger.Info("User info retrieved successfully", zap.Uint("userID", userId))
+	response.Success(c, result)
 }
 
-// UserDeactivate 用户退出登录
+// UserDeactivate 用户注销
 func UserDeactivate(c *gin.Context) {
 	userId := c.MustGet("userId").(uint)
-	var userInfo models.UserInfo
-	result := db.DB.Model(&userInfo).Where("id = ?", userId)
-	if result.Error != nil {
-		response.Fail(c, response.ApiCode.QueryErr, response.ApiMsg.QueryErr)
-		return
-	}
-	// 删除所有发布的信息
-	recordResult := db.DB.Where("user_id = ?", userId).Delete(&models.RecordList{})
-	if recordResult.Error != nil {
+	logger.Logger.Info("Received user deactivation request", 
+		zap.Uint("userID", userId),
+		zap.String("clientIP", c.ClientIP()), 
+		zap.String("method", c.Request.Method))
+
+	err := service.UserDeactivateService(userId)
+	if err != nil {
+		logger.Logger.Error("User deactivation failed", zap.Error(err))
 		response.Fail(c, response.ApiCode.UpdateErr, response.ApiMsg.UpdateErr)
 		return
 	}
-	// 删除所有发布的帖子
-	postResult := db.DB.Where("user_id = ?", userId).Delete(&models.PostModel{})
-	if postResult.Error != nil {
-		response.Fail(c, response.ApiCode.UpdateErr, response.ApiMsg.UpdateErr)
-		return
-	}
-	deactivateResult := result.Delete(&userInfo)
-	if deactivateResult.Error != nil {
-		response.Fail(c, response.ApiCode.UpdateErr, response.ApiMsg.UpdateErr)
-		return
-	}
+
+	logger.Logger.Info("User deactivated successfully", zap.Uint("userID", userId))
 	response.Success(c, nil)
 }

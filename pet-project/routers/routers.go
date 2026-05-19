@@ -1,8 +1,9 @@
 package routers
 
 import (
+	"pet-project/handler"
+	"pet-project/internal"
 	"pet-project/middleware"
-	"pet-project/service"
 	"pet-project/settings"
 
 	"github.com/gin-gonic/gin"
@@ -14,10 +15,14 @@ func RegisterRouter() *gin.Engine {
 	} else {
 		gin.SetMode(gin.DebugMode)
 	}
-	bundle := service.ReloadLocalBundle()
+	bundle := internal.ReloadLocalBundle()
 	r := gin.Default()
+	
+	// 添加健康检查路由
+	r.GET("/health", handler.HealthCheck)
+	
 	// 添加admin配置
-	//service.AdminConfig(r)
+	//internal.AdminConfig(r)
 	r.Use(middleware.LocaleMiddleware(bundle))
 	RegisterUserRouter(r)
 	RegisterRecordRouter(r)

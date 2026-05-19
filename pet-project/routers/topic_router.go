@@ -19,7 +19,7 @@ func RegisterTopicRouter(r *gin.Engine) {
 	postRouter := r.Group("/v1/posts")
 	{
 		postRouter.POST("", middleware.JWTTokenMiddleware(), handler.CreatePost)
-		postRouter.GET("", handler.GetPostList)
+		postRouter.GET("",middleware.OptionalJWTMiddleware(), handler.GetPostList)
 		postRouter.DELETE("/:id", middleware.JWTTokenMiddleware(), handler.DeletePost)
 
 	}

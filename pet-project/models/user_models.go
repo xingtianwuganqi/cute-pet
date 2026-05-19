@@ -20,7 +20,7 @@ type UserInfo struct {
 
 type SuggestionModel struct {
 	BaseModel
-	User    *UserInfo `json:"user" form:"user"`
+	User    *UserInfo `json:"user" form:"user" gorm:"foreignKey:UserId;references:ID"`
 	UserId  uint      `json:"userId" form:"userId"`
 	Contact string    `json:"contact" form:"contact" gorm:"size:32"`
 	Content string    `json:"content" form:"content" gorm:"size:256"`

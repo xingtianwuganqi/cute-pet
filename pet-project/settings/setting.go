@@ -31,6 +31,15 @@ type Config struct {
 		Env       string `yaml:"env"`
 	} `yaml:"app"`
 
+	// 添加日志配置
+	Log struct {
+		Filename   string `yaml:"filename"`
+		MaxSize    int    `yaml:"max_size"`     // MB
+		MaxBackups int    `yaml:"max_backups"`  // number
+		MaxAge     int    `yaml:"max_age"`      // days
+		Compress   bool   `yaml:"compress"`     // compress rotated files
+	} `yaml:"log"`
+
 	EmailService struct {
 		Host     string `yaml:"host"`
 		Port     int    `yaml:"port"`

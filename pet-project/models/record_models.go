@@ -1,8 +1,9 @@
 package models
 
 import (
-	"gorm.io/gorm"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 type BaseModel struct {
@@ -18,10 +19,10 @@ type BaseModel struct {
 
 type RecordCategory struct {
 	BaseModel
-	User         *UserInfo `json:"user" form:"user"`
-	UserId       *uint     `json:"userId" form:"userId"`
+	User         *UserInfo `json:"user" form:"user" gorm:"foreignKey:UserId;references:ID"` // 修正外键关联标签
+	UserId       *uint     `json:"userId" form:"userId" gorm:"index"`
 	CategoryType uint      `json:"categoryType" form:"categoryType" gorm:"default:0"`
-	Name         string    `json:"name" form:"name" binding:"required" gorm:"size:32" binding:"required"`
+	Name         string    `json:"name" form:"name" binding:"required" gorm:"size:32"`
 	Icon         string    `json:"icon" form:"icon" gorm:"size:64"`
 	Color        string    `json:"color" form:"color" gorm:"size:32"`
 	ImageUrl     string    `json:"imageUrl" form:"imageUrl" gorm:"size:64"`
@@ -38,7 +39,7 @@ Gender：1:公 2:母
 */
 type PetInfo struct {
 	BaseModel
-	User     *UserInfo `json:"user" form:"user"`
+	User     *UserInfo `json:"user" form:"user" gorm:"foreignKey:UserId;references:ID"`
 	UserId   uint      `json:"userId" form:"userId"`
 	Avatar   string    `json:"avatar" form:"avatar" gorm:"size:64" binding:"required"`
 	Name     string    `json:"name" form:"name" gorm:"size:32" binding:"required"`
@@ -49,16 +50,16 @@ type PetInfo struct {
 	Desc     string    `json:"desc" form:"desc" gorm:"size:256"`
 	Weight   float32   `json:"weight" form:"weight" gorm:"default:0"`
 	Unit     uint      `json:"unit" form:"unit" gorm:"size:32"`
-	//Language string    `json:"language" form:"language" gorm:"size:32"`
-	//Region   string    `json:"region" form:"region" gorm:"size:32"`
+	Language string    `json:"language" form:"language" gorm:"size:32"`
+	Region   string    `json:"region" form:"region" gorm:"size:32"`
 }
 
 // RecordList Type 是日常还花销 1：共同日常，2：自定义日常，3：共同花销，4：自定花销
 // 是哪个宠物
 type RecordList struct {
 	BaseModel
-	User             *UserInfo       `json:"user"`
-	UserId           uint            `json:"userId" form:"userId"`
+	User             *UserInfo       `json:"user" gorm:"foreignKey:UserId;references:ID"`
+	UserId           uint            `json:"userId" form:"userId" gorm:"index"`
 	PetInfo          *PetInfo        `json:"petInfo" gorm:"-" binding:"-"`
 	PetInfoId        uint            `json:"petInfoId" form:"petInfoId"`
 	RecordCategory   *RecordCategory `json:"recordCategory" gorm:"-"`
@@ -66,7 +67,7 @@ type RecordList struct {
 	Spend            *float32        `json:"spend" form:"spend" gorm:"default:0"`
 	Desc             string          `json:"desc" form:"desc" gorm:"size:512"  binding:"required"`
 	Images           *StringArray    `json:"images" form:"images" gorm:"type:json"`
-	RecordTime       time.Time       `json:"recordTime" form:"recordTime"`
+	RecordTime       time.Time       `json:"recordTime" form:"recordTime" gorm:"index"`
 	Language         string          `json:"language" form:"language" gorm:"size:32"`
 	Region           string          `json:"region" form:"region" gorm:"size:32"`
 }

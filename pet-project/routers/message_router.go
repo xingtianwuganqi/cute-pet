@@ -1,9 +1,10 @@
 package routers
 
 import (
-	"github.com/gin-gonic/gin"
 	"pet-project/handler"
 	"pet-project/middleware"
+
+	"github.com/gin-gonic/gin"
 )
 
 func RegisterMessageRouters(r *gin.Engine) {

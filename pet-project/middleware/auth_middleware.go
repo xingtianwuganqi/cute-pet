@@ -5,15 +5,15 @@ import (
 	"fmt"
 	"net/http"
 	"pet-project/db"
+	"pet-project/internal"
 	"pet-project/models"
 	"pet-project/response"
-	"pet-project/service"
 	"pet-project/settings"
 	"time"
 
 	"github.com/nicksnyder/go-i18n/v2/i18n"
 
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
@@ -33,15 +33,11 @@ var mySecret = []byte("伍c七Alz1θVx2ψLHNpfωv九nξ捌τD六053λwGμrMνRue
 //创建token
 
 func GenToken(userId uint) (string, error) {
-	c := MyClaims{
-		userId, // 自定义字段
-		jwt.StandardClaims{
-			ExpiresAt: time.Now().AddDate(30, 0, 0).Unix(), // 过期时间
-			Issuer:    "pet-project",                       // 签发人
-		},
-	}
+	claims := jwt.MapClaims{}
+    claims["userId"] = userId
+    claims["exp"] = time.Now().AddDate(30, 0, 0).Unix()
 	// 使用指定的签名方法创建签名对象
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, c)
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	// 使用指定的secret签名并获得完整的编码后的字符串token
 	return token.SignedString(mySecret)
 }
@@ -68,7 +64,7 @@ func JWTTokenMiddleware() func(c *gin.Context) {
 		if len(token) == 0 {
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"code": http.StatusUnauthorized,
-				"msg":  service.LocalizeMsg(c.MustGet("lang").(*i18n.Localizer), response.ApiMsg.AuthErr),
+				"msg":  internal.LocalizeMsg(c.MustGet("lang").(*i18n.Localizer), response.ApiMsg.AuthErr),
 				"data": map[string]interface{}{},
 			})
 			c.Abort()
@@ -78,7 +74,7 @@ func JWTTokenMiddleware() func(c *gin.Context) {
 		if err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"code": http.StatusUnauthorized,
-				"msg":  service.LocalizeMsg(c.MustGet("lang").(*i18n.Localizer), response.ApiMsg.AuthErr),
+				"msg":  internal.LocalizeMsg(c.MustGet("lang").(*i18n.Localizer), response.ApiMsg.AuthErr),
 				"data": map[string]interface{}{},
 			})
 			c.Abort()
@@ -87,8 +83,8 @@ func JWTTokenMiddleware() func(c *gin.Context) {
 
 		// 查询这个user是不是空
 		var user models.UserInfo
-		userResult := db.DB.Where("ID = ?", mc.UserId).Find(&user)
-		if errors.Is(userResult.Error, gorm.ErrRecordNotFound) {
+		error := db.DB.Where("id = ?", mc.UserId).First(&user).Error
+		if errors.Is(error, gorm.ErrRecordNotFound) {
 			response.Fail(c, response.ApiCode.UserNotFound, response.ApiMsg.UserNotFound)
 			return
 		}
@@ -109,7 +105,7 @@ func AdminOnly() gin.HandlerFunc {
 		if len(token) == 0 {
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"code": http.StatusUnauthorized,
-				"msg":  service.LocalizeMsg(c.MustGet("lang").(*i18n.Localizer), response.ApiMsg.AuthErr),
+				"msg":  internal.LocalizeMsg(c.MustGet("lang").(*i18n.Localizer), response.ApiMsg.AuthErr),
 				"data": map[string]interface{}{},
 			})
 			c.Abort()
@@ -119,7 +115,7 @@ func AdminOnly() gin.HandlerFunc {
 		if err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"code": http.StatusUnauthorized,
-				"msg":  service.LocalizeMsg(c.MustGet("lang").(*i18n.Localizer), response.ApiMsg.AuthErr),
+				"msg":  internal.LocalizeMsg(c.MustGet("lang").(*i18n.Localizer), response.ApiMsg.AuthErr),
 				"data": map[string]interface{}{},
 			})
 			c.Abort()
@@ -143,6 +139,44 @@ func AdminOnly() gin.HandlerFunc {
 
 		// 将当前请求的userId信息保存到请求的上下文c上
 		// c.Set("userId", mc.UserId)
+		c.Next()
+	}
+}
+
+func OptionalJWTMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// 默认未登录
+		c.Set("userId", uint(0))
+
+		token := c.GetHeader("token")
+		if token == "" {
+			c.Next()
+			return
+		}
+
+		// 解析 token
+		mc, err := ParseToken(token)
+		if err != nil {
+			// token 不合法，当未登录处理
+			c.Next()
+			return
+		}
+
+		// 查询用户是否存在
+		var user models.UserInfo
+		err = db.DB.
+			Select("id").
+			Where("id = ?", mc.UserId).
+			First(&user).Error
+
+		if err != nil {
+			// 用户不存在 / 被删除
+			c.Next()
+			return
+		}
+
+		// 登录态有效
+		c.Set("userId", mc.UserId)
 		c.Next()
 	}
 }
