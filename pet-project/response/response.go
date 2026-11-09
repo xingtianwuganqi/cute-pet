@@ -3,11 +3,7 @@ package response
 import (
 	"net/http"
 	"pet-project/internal"
-
 	"github.com/nicksnyder/go-i18n/v2/i18n"
-
-	"github.com/nicksnyder/go-i18n/v2/i18n"
-
 	"github.com/gin-gonic/gin"
 )
 
@@ -33,7 +29,7 @@ func Response(c *gin.Context, code uint, data interface{}, msg string) {
 func Success(c *gin.Context, data interface{}) {
 	lang, _ := c.Get("lang")
 	langObj := lang.(*i18n.Localizer)
-	message := service.LocalizeMsg(langObj, "Success")
+	message := internal.LocalizeMsg(langObj, "Success")
 	Response(c, 200, data, message)
 }
 
